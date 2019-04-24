@@ -6,6 +6,7 @@
 #include "GameFramework/SpectatorPawn.h"
 #include "CameraState.h"
 #include "PlacementState.h"
+#include "Placeables/PlacementRuler.h"
 #include "RTSPlayerEye.generated.h"
 
 enum class EAbstractInputEvent : size_t
@@ -66,8 +67,9 @@ class CANYON_API ARTSPlayerEye : public ASpectatorPawn
 
 public:
 	ARTSPlayerEye();
-	
-	void NotifyNewBuildingPreview(class ABuildingPreview *pNewPreview, class ARTSStructureFactory *pFactory);
+
+	UFUNCTION(BlueprintCallable)
+		void CreateNewPlacable(TSubclassOf<class APlaceableBase> NewPlaceableClass);
 
 	void AddForwardMovement(float AxisValue);
 
@@ -90,15 +92,11 @@ public:
 
 	void SetPreviewCursorPosWs(const FVector &NewPos);
 
-	void UpdatePreviewCursorPos();
+	void UpdateCurrentPlaceable();
 
-	void UpdateBuildingPreviewProperties();
+	bool TryCommitPlaceable();
 
-	bool TryCommitBuildingPreview();
-
-	void DiscardBuildingPreview();
-
-	void ShowMenuItemOnClick();
+	void DiscardCurrentPlaceable();
 
 
 	const static FName s_AxisMouseX;
@@ -116,6 +114,8 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void BeginPlay() override;
+
+	bool IsCurrentPlaceablePlaceable(FHitResult *pOutHit = nullptr);
 
 
 	virtual void SetupPlayerInputComponent(UInputComponent *pInputComponent) override;
@@ -166,7 +166,10 @@ protected:
 	UPROPERTY()
 		USceneComponent *m_pCursorRoot;
 
-	bool m_bBuildingPreviewWasPlacable;
+	UPROPERTY()
+		class APlaceableBase *m_pPlaceableCurrent;
+
+	bool m_bWasPlaceablePlaceable;
 	FVector2D m_MouseShufflePreMousePos;
 	float m_ZoomTargetDist;
 	float m_ZoomTargetPitch;
@@ -176,6 +179,7 @@ protected:
 
 	CCameraStateMachine m_CameraState;
 	CPlacementStateMachine m_PlacementState;
+	CPlacementRuler m_PlacementRuler;
 
 
 

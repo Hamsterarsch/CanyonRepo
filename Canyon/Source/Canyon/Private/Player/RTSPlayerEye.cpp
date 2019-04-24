@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "RTSPlayerEye.h"
+#include "Misc/CanyonLogs.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
@@ -8,8 +9,9 @@
 #include "GameFramework/PawnMovementComponent.h"
 #include "Engine/GameInstance.h"
 #include "Engine/GameViewportClient.h"
+#include "Placeables/PlaceableBase.h"
 #include "RTSPlayerController.h"
-
+#include "Engine/World.h"
 
 
 const FName ARTSPlayerEye::s_AxisMouseX{ TEXT("MouseX") };
@@ -23,7 +25,7 @@ ARTSPlayerEye::ARTSPlayerEye() :
 	m_MouseTurnSpeed{ 1 },
 	m_CameraMaxPitch{ 90 },
 	m_CameraMinPitch{ 0 },
-	m_bBuildingPreviewWasPlacable{ false },
+	m_bWasPlaceablePlaceable{ false },
 	m_ZoomTargetDist{ 300 },
 	m_ZoomTargetPitch{ -30 },
 	m_CursorLastPosition{ 0, 0, 0},
@@ -56,18 +58,28 @@ ARTSPlayerEye::ARTSPlayerEye() :
 
 }
 
-void ARTSPlayerEye::NotifyNewBuildingPreview(class ABuildingPreview *pNewPreview, class ARTSStructureFactory *pFactory)
+void ARTSPlayerEye::CreateNewPlacable(TSubclassOf<APlaceableBase> NewPlaceableClass)
 {
-	/*
-	DiscardBuildingPreview();
-	UE_LOG(RTS_StructurePlacement, Log, TEXT("OnNewPreviewBuilding"));
-	
-	m_pBuildingPreviewCurrent = pNewPreview;
-	m_pBuildingPreviewCurrent->AttachToComponent(m_pCursorRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	m_pBuildingPreviewCurrent->SetActorRelativeLocation({ 0,0,0 });
+	auto *pClass{ NewPlaceableClass.Get() };
+	if (!pClass)
+	{
+		UE_LOG(LogCanyonPlacement, Error, TEXT("Tried to create a new placeable with null class."))
+		return;
+	}
 
-	m_pCurrentTargetFactory = pFactory;
-	*/
+	auto *pNewPlaceable{ GetWorld()->SpawnActor<APlaceableBase>(pClass) };
+	if(!pNewPlaceable)
+	{
+		UE_LOG(LogCanyonPlacement, Error, TEXT("Could not spawn new placeable from class."))
+		return;
+	}
+
+	DiscardCurrentPlaceable();
+
+	m_pPlaceableCurrent = pNewPlaceable;
+	m_pPlaceableCurrent->AttachToComponent(m_pCursorRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	m_pPlaceableCurrent->SetActorRelativeLocation({ 0,0,0 });
+	
 	m_PlacementState.HandleInput(EAbstractInputEvent::PlaceBuilding_Start);
 	
 
@@ -212,115 +224,59 @@ void ARTSPlayerEye::SetPreviewCursorPosWs(const FVector &NewPos)
 
 }
 
-void ARTSPlayerEye::UpdatePreviewCursorPos()
+void ARTSPlayerEye::UpdateCurrentPlaceable()
 {
-	/*
-	auto *pCtrl = Cast<APlayerController>(GetController());
-	if (!pCtrl || !m_pCurrentTargetFactory)
+	if(!m_pPlaceableCurrent)
 	{
 		return;
 	}
 
-	//Hit queries --		THIS SHOULD BE REPLACED WITH POLAR COLLISION FUNCTIONS		--
-	FHitResult LayerPlaceableHit;
-	pCtrl->GetHitResultUnderCursor(ARTSPlayerEye::s_CollisionLayerPlaceable, false, LayerPlaceableHit);
-	if (LayerPlaceableHit.IsValidBlockingHit())
+	FHitResult Hit;
+	bool bIsCurrentPlaceablePlaceable{ IsCurrentPlaceablePlaceable(&Hit) };
+	
+	if(bIsCurrentPlaceablePlaceable)
 	{
-		auto GridPosition{ m_pCurrentTargetFactory->Discretize(LayerPlaceableHit.Location) };
-		m_pCursorRoot->SetWorldLocation(GridPosition);
-
-		if(GridPosition != m_CursorLastPosition)
+		if(!m_bWasPlaceablePlaceable)
 		{
-			if(m_pBuildingPreviewCurrent)
-			{
-				m_pBuildingPreviewCurrent->RefreshPolarCollision();
-			}
-			m_CursorLastPosition = GridPosition;
+			m_pPlaceableCurrent->NotifyPlaceable();
+			m_bWasPlaceablePlaceable = true;
 		}
-
+		m_pCursorRoot->SetWorldLocation(Hit.ImpactPoint);		
 	}
-	*/
+	else if(m_bWasPlaceablePlaceable)
+	{
+		m_pPlaceableCurrent->NotifyUnplaceable();
+		m_bWasPlaceablePlaceable = false;
+	}
+	
 
 }
 
-void ARTSPlayerEye::UpdateBuildingPreviewProperties()
+bool ARTSPlayerEye::TryCommitPlaceable()
 {
-	/*
-	auto *pCtrl = Cast<APlayerController>(GetController());
-	if (!pCtrl || !m_pCurrentTargetFactory)
+	if(!m_pPlaceableCurrent)
 	{
-		return;
+		return false;
 	}
 
-	auto *pGInst = Cast<URTSGameInstance>(GetGameInstance());
-	if (!pGInst)
+	if(IsCurrentPlaceablePlaceable())
 	{
-		return;
+		m_pPlaceableCurrent->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);		
 	}
+	return true;
 
-	auto *pSelectedFactory{ pGInst->GetSelectedStructureFactory() };
-	if (!pSelectedFactory)
-	{
-		return;
-	}
-
-	//Update cursor root rotation
-	auto NewRot{ (pSelectedFactory->GetCenteredRootLocation() - m_pBuildingPreviewCurrent->GetActorLocation()).GetSafeNormal2D().ToOrientationQuat() };
-	m_pBuildingPreviewCurrent->SetActorRotation(NewRot);
-
-	//If placement loacation is occluded
-	if (pGInst->GetMainStructureFactory()->HasIntersectionsWithChildBuildings(m_pBuildingPreviewCurrent))
-	{
-		//first occluded frame
-		if (m_bBuildingPreviewWasPlacable)
-		{
-			UE_LOG(RTS_InputDebug, Log, TEXT("Building switches to non-placable mode"));
-			//defer feedback to actor
-			m_pBuildingPreviewCurrent->NotifyNonPlacable();
-			m_bBuildingPreviewWasPlacable = false;
-
-		}
-
-	}
-	else
-	{
-		//first unoccluded frame
-		if (!m_bBuildingPreviewWasPlacable)
-		{
-			UE_LOG(RTS_InputDebug, Log, TEXT("Building switches to placable mode"));
-			//defer feedback to actor
-			m_pBuildingPreviewCurrent->NotifyPlacable();
-			m_bBuildingPreviewWasPlacable = true;
-
-		}
-
-	}
-	*/
 
 }
 
-bool ARTSPlayerEye::TryCommitBuildingPreview()
+void ARTSPlayerEye::DiscardCurrentPlaceable()
 {
-	/*
-	m_pBuildingPreviewCurrent->SetActorLocation(m_pCursorRoot->GetComponentLocation());
-	return m_pCurrentTargetFactory->TryCommitPreviewBuilding(m_pBuildingPreviewCurrent);
-	*/
-	return false;
-
-}
-
-void ARTSPlayerEye::DiscardBuildingPreview()
-{
-	/*
-	UE_LOG(RTS_StructurePlacement, Log, TEXT("Stopping building preview"));
-	if (m_pBuildingPreviewCurrent)
+	if(m_pPlaceableCurrent)
 	{
-		m_pBuildingPreviewCurrent->Destroy();
-
+		UE_LOG(LogCanyonPlacement, Log, TEXT("Discarding current placeable."));
+		m_pPlaceableCurrent->Destroy();
 	}
-	//Set to unplaceable so a new building is checked in the first frame
-	m_bBuildingPreviewWasPlacable = false;
-	*/
+	m_bWasPlaceablePlaceable = false;
+
 
 }
 
@@ -352,17 +308,27 @@ void ARTSPlayerEye::BeginPlay()
 {
 	Super::BeginPlay();
 
-	/*
-	if (auto *pClass{ m_BuildingWidgetClass.Get() })
+
+}
+
+bool ARTSPlayerEye::IsCurrentPlaceablePlaceable(FHitResult *pOutHit)
+{
+	if(!m_pPlaceableCurrent)
 	{
-		if (auto *pCtrl{ Cast<APlayerController>(GetController()) })
-		{
-			m_pBuildingWidget = CreateWidget<UBuildingWidgetBase>(pCtrl, pClass);
-			m_pBuildingWidget->Hide();
-			m_pBuildingWidget->AddToViewport();
-		}
+		return false;
 	}
-	*/
+
+	FHitResult Hit{};
+	FHitResult &CursorHit{ pOutHit != nullptr ? *pOutHit : Hit };
+
+	//If any hit
+	if (GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, CursorHit))
+	{
+		//If building can be placed
+		return m_PlacementRuler.TryEnforceBuildingRules(CursorHit, m_pPlaceableCurrent);
+	}
+	return false;
+		
 
 }
 
@@ -439,46 +405,3 @@ void ARTSPlayerEye::LeaveSeamlessRotation()
 
 #pragma endregion
 
-
-void ARTSPlayerEye::ShowMenuItemOnClick()
-{
-	/*
-	auto *pCtrl{ Cast<APlayerController>(GetController()) };
-	if(!pCtrl)
-	{
-		return;
-	}
-
-	FHitResult Hit{};
-	if(pCtrl->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit))
-	{
-		if(!m_pBuildingWidget)
-		{
-			return;
-		}
-
-		if (auto *pActor{ Hit.Actor.Get() })
-		{
-			UE_LOG(LogTemp, Log, TEXT("%s"), *pActor->GetName());
-			if(pActor->GetClass()->IsChildOf<ABuildingAssignable>())
-			{
-				m_pBuildingWidget->SetTargetBuilding(Cast<ABuildingAssignable>(pActor));
-				m_pBuildingWidget->UpdateBuildingExtension(EBuildingWidgetExtension::Assignable);
-				m_pBuildingWidget->Show();
-			}
-			else if(pActor->GetClass()->IsChildOf<ABuildingBase>())
-			{
-				m_pBuildingWidget->SetTargetBuilding(Cast<ABuildingBase>(pActor));
-				m_pBuildingWidget->UpdateBuildingExtension(EBuildingWidgetExtension::None);
-				m_pBuildingWidget->Show();				
-			}
-			else
-			{
-				m_pBuildingWidget->SetTargetBuilding(nullptr);
-				m_pBuildingWidget->Hide();
-			}
-		}
-	}
-	*/
-
-}

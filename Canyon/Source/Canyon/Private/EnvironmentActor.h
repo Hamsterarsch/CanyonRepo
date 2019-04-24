@@ -4,16 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "PlacableBase.generated.h"
+#include "EnvironmentActor.generated.h"
 
 UCLASS()
-class APlacableBase : public AActor
+class AEnvironmentActor : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	APlacableBase();
+	AEnvironmentActor();
 
 protected:
 	// Called when the game starts or when spawned

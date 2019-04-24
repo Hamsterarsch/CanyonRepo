@@ -2,7 +2,7 @@
 	"BuildId": "5660361",
 	"Modules": 
 	{
-		"Canyon": "UE4Editor-Canyon.dll",
-		"CanyonEditor": "UE4Editor-CanyonEditor.dll"
+		"Canyon": "UE4Editor-Canyon-0006.dll",
+		"CanyonEditor": "UE4Editor-CanyonEditor-0006.dll"
 	}
 }
