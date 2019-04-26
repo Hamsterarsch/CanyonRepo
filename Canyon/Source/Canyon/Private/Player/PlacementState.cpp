@@ -64,7 +64,7 @@ std::unique_ptr<IPlacementState> CPlacementState_PlacementBuilding::HandleInput(
 	switch (Input)
 	{
 	case EAbstractInputEvent::ActionSelect_Start:
-		if (pParent->GetEye()->TryCommitPlaceable())
+		if (pParent->GetEye()->TryCommitPlaceablePreview())
 		{
 			return std::make_unique<CPlacementState_Idle>();
 		}
@@ -76,7 +76,7 @@ std::unique_ptr<IPlacementState> CPlacementState_PlacementBuilding::HandleInput(
 		auto m_PassedTime{ pParent->GetEye()->GetWorld()->GetTimeSeconds() - m_AbortStartTime };
 		if (m_PassedTime < m_AbortSuccessTime)
 		{
-			pParent->GetEye()->DiscardCurrentPlaceable();
+			pParent->GetEye()->DiscardCurrentPlaceablePreview();
 			return std::make_unique<CPlacementState_Idle>();
 		}
 		break;
@@ -92,7 +92,7 @@ void CPlacementState_PlacementBuilding::Update(CPlacementStateMachine *pParent)
 	//todo: recheck pParent->GetEye()->UpdatePreviewCursorPos();	
 
 	//notify preview about placable state
-	pParent->GetEye()->UpdateCurrentPlaceable();
+	pParent->GetEye()->UpdateCurrentPlaceablePreview();
 
 
 }

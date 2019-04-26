@@ -3,6 +3,7 @@
 
 #include "PlaceableBase.h"
 #include "Misc/CanyonLogs.h"
+#include "Components/StaticMeshCanyonComp.h"
 
 // Sets default values
 APlaceableBase::APlaceableBase()
@@ -48,5 +49,12 @@ void APlaceableBase::NotifyPlaceable()
 void APlaceableBase::NotifyUnplaceable()
 {
 	UE_LOG(LogCanyonPlacement, Log, TEXT("Notfiy building unplaceable."));
+}
+
+TArray<UActorComponent *> APlaceableBase::GetPlaceableMeshComps()
+{
+	return GetComponentsByClass(UStaticMeshCanyonComp::StaticClass());
+
+
 }
 

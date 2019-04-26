@@ -69,7 +69,7 @@ public:
 	ARTSPlayerEye();
 
 	UFUNCTION(BlueprintCallable)
-		void CreateNewPlacable(TSubclassOf<class APlaceableBase> NewPlaceableClass);
+		void CreateNewPlacablePreview(TSubclassOf<class APlaceableBase> NewPlaceableClass);
 
 	void AddForwardMovement(float AxisValue);
 
@@ -92,11 +92,11 @@ public:
 
 	void SetPreviewCursorPosWs(const FVector &NewPos);
 
-	void UpdateCurrentPlaceable();
+	void UpdateCurrentPlaceablePreview();
 
-	bool TryCommitPlaceable();
+	bool TryCommitPlaceablePreview();
 
-	void DiscardCurrentPlaceable();
+	void DiscardCurrentPlaceablePreview();
 
 
 	const static FName s_AxisMouseX;
@@ -167,7 +167,7 @@ protected:
 		USceneComponent *m_pCursorRoot;
 
 	UPROPERTY()
-		class APlaceableBase *m_pPlaceableCurrent;
+		class APlaceablePreview *m_pPlaceablePreviewCurrent;
 
 	bool m_bWasPlaceablePlaceable;
 	FVector2D m_MouseShufflePreMousePos;

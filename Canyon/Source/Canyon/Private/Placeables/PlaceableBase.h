@@ -20,12 +20,14 @@ public:
 	float GetPlaceableNormalZMin() const;
 
 	float GetPlaceableNormalZMax() const;
-
+	
 	EPhysicalSurface GetPlacableSurfaceType() const { return m_TargetSurface.GetValue(); };
 
 	void NotifyPlaceable();
 
 	void NotifyUnplaceable();
+
+	TArray<class UActorComponent *> GetPlaceableMeshComps();
 
 
 protected:

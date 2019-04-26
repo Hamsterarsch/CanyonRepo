@@ -1,3 +1,6 @@
+#resharper files
+*.DotSettings.user
+
 #gtest files
 **.tlog
 

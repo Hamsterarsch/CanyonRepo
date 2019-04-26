@@ -4,18 +4,24 @@
 	"Category": "",
 	"Description": "",
 	"Modules": [
-    {
-      "Name": "Canyon",
-      "Type": "Runtime",
-      "LoadingPhase": "Default",
-      "AdditionalDependencies": [
-        "Engine"
-      ]
-    },
-    {
-      "Name": "CanyonEditor",
-      "Type": "Editor",
-      "LoadingPhase":  "PostEngineInit" 
-    }
+		{
+			"Name": "Canyon",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		},
+		{
+			"Name": "CanyonEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "Niagara",
+			"Enabled": true
+		}
 	]
 }

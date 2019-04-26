@@ -14,7 +14,21 @@ class APlaceablePreview : public APlaceableBase
 {
 	GENERATED_BODY()
 
+public:
+	APlaceablePreview();
 
+	static APlaceablePreview *SpawnPlaceablePreview
+	(
+		class UWorld *pWorld,
+		const FTransform &Transform, 
+		TSubclassOf<APlaceableBase> PreviewedPlaceableClass
+	);
+
+	UClass *GetPreviewedClass() const;
+
+
+private:
+	TSubclassOf<APlaceableBase> m_PreviewedClass;
 
 
 };

@@ -2,6 +2,8 @@
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Components/StaticMeshCanyonComp.h"
+#include "Misc/CollisionChannels.h"
 //#include "Env/EnvironmentActor.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 
@@ -9,11 +11,11 @@ bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceab
 {
 	//preconditions
 	//ForHit resulted form a trace against a per se valid placement surface (not surface type valid)
-
+	
 	if(!pPlaceable)
 	{
 		return false;
-	}	
+	}
 
 	//Normal constraint
 	constexpr float NormalTolerance{ 10e-6 };
@@ -50,6 +52,43 @@ bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceab
 		
 	}
 	*/
+
+	for(auto &&pMeshComp : pPlaceable->GetPlaceableMeshComps())
+	{
+		UStaticMeshCanyonComp *pAsCanyonComp;
+		pAsCanyonComp = Cast<UStaticMeshCanyonComp>(pMeshComp);
+		if(!pAsCanyonComp)
+		{
+			//log
+			continue;
+		}
+
+		TArray<FOverlapResult> aOverlaps;
+
+		FCollisionObjectQueryParams ObjectQueryParams{FCollisionObjectQueryParams::DefaultObjectQueryParam};
+		ObjectQueryParams.AddObjectTypesToQuery(GetCCTerrain());
+		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
+
+
+		pAsCanyonComp->ComponentOverlapMulti
+		(
+			aOverlaps,
+			pPlaceable->GetWorld(),
+			ForHit.ImpactPoint,
+			pAsCanyonComp->GetComponentQuat(),
+			ECollisionChannel::ECC_Visibility,
+			FComponentQueryParams::DefaultComponentQueryParams,
+			ObjectQueryParams
+		);
+				
+		if(aOverlaps.Num() > 0)
+		{
+			return false;
+		}
+		
+
+	}
+
 	return true;
 
 

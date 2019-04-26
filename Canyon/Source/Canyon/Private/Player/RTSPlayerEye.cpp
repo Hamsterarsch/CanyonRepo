@@ -12,6 +12,10 @@
 #include "Placeables/PlaceableBase.h"
 #include "RTSPlayerController.h"
 #include "Engine/World.h"
+#include "Misc/CollisionChannels.h"
+#include "Misc/CanyonHelpers.h"
+#include "Components/StaticMeshCanyonComp.h"
+#include "Placeables/PlaceablePreview.h"
 
 
 const FName ARTSPlayerEye::s_AxisMouseX{ TEXT("MouseX") };
@@ -58,7 +62,7 @@ ARTSPlayerEye::ARTSPlayerEye() :
 
 }
 
-void ARTSPlayerEye::CreateNewPlacable(TSubclassOf<APlaceableBase> NewPlaceableClass)
+void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlaceableClass)
 {
 	auto *pClass{ NewPlaceableClass.Get() };
 	if (!pClass)
@@ -67,18 +71,18 @@ void ARTSPlayerEye::CreateNewPlacable(TSubclassOf<APlaceableBase> NewPlaceableCl
 		return;
 	}
 
-	auto *pNewPlaceable{ GetWorld()->SpawnActor<APlaceableBase>(pClass) };
+	auto *pNewPlaceable{ APlaceablePreview::SpawnPlaceablePreview(GetWorld(), FTransform::Identity, NewPlaceableClass) };
 	if(!pNewPlaceable)
 	{
 		UE_LOG(LogCanyonPlacement, Error, TEXT("Could not spawn new placeable from class."))
 		return;
 	}
 
-	DiscardCurrentPlaceable();
+	DiscardCurrentPlaceablePreview();
 
-	m_pPlaceableCurrent = pNewPlaceable;
-	m_pPlaceableCurrent->AttachToComponent(m_pCursorRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	m_pPlaceableCurrent->SetActorRelativeLocation({ 0,0,0 });
+	m_pPlaceablePreviewCurrent = pNewPlaceable;
+	m_pPlaceablePreviewCurrent->AttachToComponent(m_pCursorRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	m_pPlaceablePreviewCurrent->SetActorRelativeLocation({ 0,0,0 });
 	
 	m_PlacementState.HandleInput(EAbstractInputEvent::PlaceBuilding_Start);
 	
@@ -224,56 +228,71 @@ void ARTSPlayerEye::SetPreviewCursorPosWs(const FVector &NewPos)
 
 }
 
-void ARTSPlayerEye::UpdateCurrentPlaceable()
+void ARTSPlayerEye::UpdateCurrentPlaceablePreview()
 {
-	if(!m_pPlaceableCurrent)
+	if(!m_pPlaceablePreviewCurrent)
 	{
 		return;
 	}
 
 	FHitResult Hit;
+	//GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECC_GameTraceChannel3, true, Hit);
+	
 	bool bIsCurrentPlaceablePlaceable{ IsCurrentPlaceablePlaceable(&Hit) };
 	
 	if(bIsCurrentPlaceablePlaceable)
 	{
 		if(!m_bWasPlaceablePlaceable)
 		{
-			m_pPlaceableCurrent->NotifyPlaceable();
+			m_pPlaceablePreviewCurrent->NotifyPlaceable();
 			m_bWasPlaceablePlaceable = true;
 		}
-		m_pCursorRoot->SetWorldLocation(Hit.ImpactPoint);		
 	}
 	else if(m_bWasPlaceablePlaceable)
 	{
-		m_pPlaceableCurrent->NotifyUnplaceable();
+		m_pPlaceablePreviewCurrent->NotifyUnplaceable();
 		m_bWasPlaceablePlaceable = false;
 	}
+	
+	if(Hit.IsValidBlockingHit())
+	{
+		m_pCursorRoot->SetWorldLocation(Hit.ImpactPoint);
+	}
+
+
 	
 
 }
 
-bool ARTSPlayerEye::TryCommitPlaceable()
+bool ARTSPlayerEye::TryCommitPlaceablePreview()
 {
-	if(!m_pPlaceableCurrent)
+	if(!m_pPlaceablePreviewCurrent)
 	{
 		return false;
 	}
 
-	if(IsCurrentPlaceablePlaceable())
+	auto *pClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
+	if(pClass && IsCurrentPlaceablePlaceable())
 	{
-		m_pPlaceableCurrent->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);		
+		auto Transform{ m_pCursorRoot->GetComponentTransform() };
+		GetWorld()->SpawnActor(pClass, &Transform);
+
+		m_pPlaceablePreviewCurrent->Destroy();
+		m_pPlaceablePreviewCurrent = nullptr;
+		
+		return true;
 	}
-	return true;
+	return false;
 
 
 }
 
-void ARTSPlayerEye::DiscardCurrentPlaceable()
+void ARTSPlayerEye::DiscardCurrentPlaceablePreview()
 {
-	if(m_pPlaceableCurrent)
+	if(m_pPlaceablePreviewCurrent)
 	{
 		UE_LOG(LogCanyonPlacement, Log, TEXT("Discarding current placeable."));
-		m_pPlaceableCurrent->Destroy();
+		m_pPlaceablePreviewCurrent->Destroy();
 	}
 	m_bWasPlaceablePlaceable = false;
 
@@ -313,19 +332,19 @@ void ARTSPlayerEye::BeginPlay()
 
 bool ARTSPlayerEye::IsCurrentPlaceablePlaceable(FHitResult *pOutHit)
 {
-	if(!m_pPlaceableCurrent)
+	if(!m_pPlaceablePreviewCurrent)
 	{
 		return false;
 	}
 
 	FHitResult Hit{};
 	FHitResult &CursorHit{ pOutHit != nullptr ? *pOutHit : Hit };
-
+		
 	//If any hit
-	if (GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, CursorHit))
-	{
+	if (GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel3, true, CursorHit))
+	{		
 		//If building can be placed
-		return m_PlacementRuler.TryEnforceBuildingRules(CursorHit, m_pPlaceableCurrent);
+		return m_PlacementRuler.TryEnforceBuildingRules(CursorHit, m_pPlaceablePreviewCurrent);
 	}
 	return false;
 		
