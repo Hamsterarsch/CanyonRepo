@@ -15,7 +15,7 @@
 		{
 			"Name": "CanyonEditor",
 			"Type": "Editor",
-			"LoadingPhase": "PostEngineInit"
+      "LoadingPhase": "PostEngineInit"
 		}
 	],
 	"Plugins": [

@@ -29,6 +29,8 @@ public:
 
 	TArray<class UActorComponent *> GetPlaceableMeshComps();
 
+	inline float GetInfluenceRadius() const { return m_InfluenceRadius; }
+	   
 
 protected:
 	virtual void BeginPlay() override;
@@ -42,6 +44,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 		TEnumAsByte<EPhysicalSurface> m_TargetSurface;
+
+	UPROPERTY(EditDefaultsOnly)
+		float m_InfluenceRadius;
 
 
 };
