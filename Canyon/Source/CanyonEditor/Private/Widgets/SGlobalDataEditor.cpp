@@ -1,7 +1,6 @@
 #include "Widgets/SGlobalDataEditor.h"
 #include "ModuleManager.h"
 #include "PropertyEditorModule.h"
-#include "DetailsCustom/CanyonGlobalDataDetailsCustom.h"
 #include "Canyon/Private/Misc/CanyonGlobalData.h"
 
 void SGlobalDataEditor::Construct(const FArguments& Args)
