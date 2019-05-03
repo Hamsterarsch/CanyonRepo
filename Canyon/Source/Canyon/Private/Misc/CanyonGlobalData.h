@@ -3,14 +3,14 @@
 #include "CoreMinimal.h"
 #include "CanyonGlobalData.generated.h"
 
-UCLASS()
+UCLASS(Blueprintable)
 class CANYON_API UCanyonGlobalData : public UObject
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditDefaultsOnly)
-	FName m_TestPropertyName{ "Test" };
+		class UStaticMesh *pSphereMesh;
 	
 
 };
