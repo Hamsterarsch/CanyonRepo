@@ -8,12 +8,15 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(CustomConstructor, Meta=(BlueprintSpawnableComponent))
 class URadiusVisComp : public UStaticMeshComponent
 {
 	GENERATED_BODY()
 
 public:
+	URadiusVisComp();
 
-	
+	void SetRadius(float Radius);
+
+	   	
 };

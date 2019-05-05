@@ -274,12 +274,12 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 	auto *pClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
 	if(pClass && IsCurrentPlaceablePlaceable())
 	{
-		auto Transform{ m_pCursorRoot->GetComponentTransform() };
-		GetWorld()->SpawnActor(pClass, &Transform);
-
 		m_pPlaceablePreviewCurrent->Destroy();
 		m_pPlaceablePreviewCurrent = nullptr;
-		
+
+		auto Transform{ m_pCursorRoot->GetComponentTransform() };
+		GetWorld()->SpawnActor(pClass, &Transform);
+				
 		return true;
 	}
 	return false;

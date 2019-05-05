@@ -34,5 +34,8 @@ private:
 
 	FEditPropertyChain *m_pCurrentPropertyChain;
 
+	TMap < FString, TMap<FString, int32> > m_InfluenceMapping;
+	TMap < FString, TSoftClassPtr<class UUserWidget> > m_UiMapping;
+
 
 };

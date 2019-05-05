@@ -9,13 +9,14 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
-				"Engine"
+				"Engine",
+				"UMG"
 			]
 		},
 		{
 			"Name": "CanyonEditor",
 			"Type": "Editor",
-      "LoadingPhase": "PostEngineInit"
+			"LoadingPhase": "PostEngineInit"
 		}
 	],
 	"Plugins": [

@@ -4,26 +4,33 @@
 #include "PlaceableBase.h"
 #include "Misc/CanyonLogs.h"
 #include "Components/StaticMeshCanyonComp.h"
+#include "Misc/CanyonGM.h"
+#include "WidgetComponent.h"
+#include "WidgetBase/InfluenceDisplayWidgetBase.h"
 
-// Sets default values
+
 APlaceableBase::APlaceableBase()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
+
+	SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
+	m_pInfluenceWidgetComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("InfluenceWidget"));
+	m_pInfluenceWidgetComp->SetupAttachment(GetRootComponent());
 
 }
 
-// Called when the game starts or when spawned
-void APlaceableBase::BeginPlay()
+
+FString APlaceableBase::GetInfluenceQualifier(const TSubclassOf<APlaceableBase>& ForClass)
 {
-	Super::BeginPlay();
+	auto *pClass{ ForClass.Get() };
+	auto *pCdo{ Cast<APlaceableBase>(pClass->ClassDefaultObject) };
 	
-}
+	auto InfluenceEnumVal{ pCdo->GetInfluenceEnumValue() };
+	auto *pInfluenceEnumType{ pCdo->GetInfluenceEnumClass() };
 
-// Called every frame
-void APlaceableBase::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
+	auto EnumDisplayText{ pInfluenceEnumType->GetDisplayNameTextByIndex(InfluenceEnumVal) };	
+	return  EnumDisplayText.ToString();
+
 
 }
 
@@ -58,3 +65,85 @@ TArray<UActorComponent *> APlaceableBase::GetPlaceableMeshComps()
 
 }
 
+UClass* APlaceableBase::GetInfluenceWidgetClass() const
+{
+	return m_InfluenceDisplayWidgetClass.Get();
+
+
+}
+
+int32 APlaceableBase::BeginInfluenceVisFor(const TSubclassOf<APlaceableBase> &TargetClass)
+{
+	auto *pOtherClass{ TargetClass.Get() };
+	auto *pGM{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
+	if(!pOtherClass || !pGM)
+	{
+		return 0;
+	}
+	
+	auto Influence
+	{
+		pGM->GetInfluenceForPlaceable
+		(
+			GetInfluenceQualifier(this->GetClass()),
+			GetInfluenceQualifier(pOtherClass)
+		)
+	};
+
+	if(Influence != 0)
+	{
+		SetInfluenceDisplayed(Influence);
+
+	}
+
+	return Influence;
+
+
+}
+
+int32 APlaceableBase::EndInfluenceVis()
+{
+	auto *pWidget{ Cast<UInfluenceDisplayWidgetBase>(m_pInfluenceWidgetComp->GetUserWidgetObject()) };
+	if (pWidget)
+	{
+		return pWidget->EndDisplayInfluence();
+	}
+
+	return 0;
+
+
+}
+
+void APlaceableBase::SetInfluenceDisplayed(const int32 Influence)
+{
+	auto *pWidget{ Cast<UInfluenceDisplayWidgetBase>(m_pInfluenceWidgetComp->GetUserWidgetObject()) };
+	if (pWidget)
+	{
+		pWidget->BeginDisplayInfluence(Influence);
+	}
+
+
+}
+
+void APlaceableBase::InitInfluenceDisplayWidget(UClass *pClass)
+{
+	m_pInfluenceWidgetComp->SetWidgetClass(pClass);
+	m_pInfluenceWidgetComp->InitWidget();
+	m_pInfluenceWidgetComp->SetWidgetSpace(EWidgetSpace::Screen);
+		
+	m_pInfluenceWidgetComp->GetUserWidgetObject()->SetVisibility(ESlateVisibility::Collapsed);
+
+
+}
+
+void APlaceableBase::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if(auto *pClass{ m_InfluenceDisplayWidgetClass.Get() })
+	{
+		InitInfluenceDisplayWidget(pClass);
+	}
+
+
+}

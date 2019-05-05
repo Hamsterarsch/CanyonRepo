@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Engine/UserDefinedEnum.h"
 #include "PlaceableBase.generated.h"
+
 
 UCLASS()
 class APlaceableBase : public AActor
@@ -12,10 +14,7 @@ class APlaceableBase : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	APlaceableBase();
-
-	virtual void Tick(float DeltaTime) override;
 
 	float GetPlaceableNormalZMin() const;
 
@@ -30,11 +29,30 @@ public:
 	TArray<class UActorComponent *> GetPlaceableMeshComps();
 
 	inline float GetInfluenceRadius() const { return m_InfluenceRadius; }
-	   
+
+	UClass *GetInfluenceWidgetClass() const;
+
+	int32 BeginInfluenceVisFor(const TSubclassOf<APlaceableBase> &TargetClass);
+
+	int32 EndInfluenceVis();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		int32 GetInfluenceEnumValue();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		UUserDefinedEnum *GetInfluenceEnumClass();
+
 
 protected:
-	virtual void BeginPlay() override;
+	void SetInfluenceDisplayed(int32 Influence);
 
+	void InitInfluenceDisplayWidget(UClass *pClass);
+	
+	virtual void BeginPlay() override;
+		
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UInfluenceDisplayWidgetBase> m_InfluenceDisplayWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Meta = (ClampMin = "0", ClampMax = "180"))
 		float m_PlaceableMinSlopeAngle;
@@ -47,6 +65,13 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 		float m_InfluenceRadius;
+
+	UPROPERTY()
+		class UWidgetComponent *m_pInfluenceWidgetComp;
+		
+
+private:
+	static FString GetInfluenceQualifier(const TSubclassOf<APlaceableBase>& ForClass);
 
 
 };
