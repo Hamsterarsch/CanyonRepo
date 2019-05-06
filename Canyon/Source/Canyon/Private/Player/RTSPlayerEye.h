@@ -115,7 +115,7 @@ protected:
 
 	virtual void BeginPlay() override;
 
-	bool IsCurrentPlaceablePlaceable(FHitResult *pOutHit = nullptr);
+	bool IsCurrentPlaceablePlaceableAtCursor(FHitResult *pOutHit = nullptr);
 
 
 	virtual void SetupPlayerInputComponent(UInputComponent *pInputComponent) override;
@@ -175,7 +175,7 @@ protected:
 	float m_ZoomTargetPitch;
 	int32 m_ZoomIndex;
 	FVector m_SeamlessRotationPrePos;
-	FVector m_CursorLastPosition;
+	FVector m_CursorRootLastPlaceablePos;
 
 	CCameraStateMachine m_CameraState;
 	CPlacementStateMachine m_PlacementState;

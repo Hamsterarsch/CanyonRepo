@@ -32,7 +32,7 @@ ARTSPlayerEye::ARTSPlayerEye() :
 	m_bWasPlaceablePlaceable{ false },
 	m_ZoomTargetDist{ 300 },
 	m_ZoomTargetPitch{ -30 },
-	m_CursorLastPosition{ 0, 0, 0},
+	m_CursorRootLastPlaceablePos{ 0, 0, 0},
 	m_CameraState{ this },
 	m_PlacementState{ this }
 {
@@ -71,6 +71,7 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 		return;
 	}
 
+	DiscardCurrentPlaceablePreview();
 	auto *pNewPlaceable{ APlaceablePreview::SpawnPlaceablePreview(GetWorld(), FTransform::Identity, NewPlaceableClass) };
 	if(!pNewPlaceable)
 	{
@@ -78,7 +79,6 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 		return;
 	}
 
-	DiscardCurrentPlaceablePreview();
 
 	m_pPlaceablePreviewCurrent = pNewPlaceable;
 	m_pPlaceablePreviewCurrent->AttachToComponent(m_pCursorRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
@@ -238,7 +238,7 @@ void ARTSPlayerEye::UpdateCurrentPlaceablePreview()
 	FHitResult Hit;
 	//GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECC_GameTraceChannel3, true, Hit);
 	
-	bool bIsCurrentPlaceablePlaceable{ IsCurrentPlaceablePlaceable(&Hit) };
+	bool bIsCurrentPlaceablePlaceable{ IsCurrentPlaceablePlaceableAtCursor(&Hit) };
 	
 	if(bIsCurrentPlaceablePlaceable)
 	{
@@ -247,18 +247,26 @@ void ARTSPlayerEye::UpdateCurrentPlaceablePreview()
 			m_pPlaceablePreviewCurrent->NotifyPlaceable();
 			m_bWasPlaceablePlaceable = true;
 		}
+		m_CursorRootLastPlaceablePos = Hit.ImpactPoint;
+		m_pCursorRoot->SetWorldLocation(Hit.ImpactPoint);
 	}
+	else
+	{
+		m_pCursorRoot->SetWorldLocation(m_CursorRootLastPlaceablePos);
+	}
+
+	/*
 	else if(m_bWasPlaceablePlaceable)
 	{
 		m_pPlaceablePreviewCurrent->NotifyUnplaceable();
 		m_bWasPlaceablePlaceable = false;
 	}
-	
-	if(Hit.IsValidBlockingHit())
+	if(bIsCurrentPlaceablePlaceable)
 	{
-		m_pCursorRoot->SetWorldLocation(Hit.ImpactPoint);
 	}
-
+	*/
+	
+	
 
 	
 
@@ -271,9 +279,9 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 		return false;
 	}
 
-	auto *pClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
-	if(pClass && IsCurrentPlaceablePlaceable())
+	if(m_bWasPlaceablePlaceable)
 	{
+		auto *pClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
 		m_pPlaceablePreviewCurrent->Destroy();
 		m_pPlaceablePreviewCurrent = nullptr;
 
@@ -330,7 +338,7 @@ void ARTSPlayerEye::BeginPlay()
 
 }
 
-bool ARTSPlayerEye::IsCurrentPlaceablePlaceable(FHitResult *pOutHit)
+bool ARTSPlayerEye::IsCurrentPlaceablePlaceableAtCursor(FHitResult *pOutHit)
 {
 	if(!m_pPlaceablePreviewCurrent)
 	{

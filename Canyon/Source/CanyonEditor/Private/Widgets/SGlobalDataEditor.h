@@ -26,16 +26,15 @@ public:
 
 	virtual void NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, FEditPropertyChain* PropertyThatChanged) override;
 
-	UObject *GetTargetDco() const { return m_pTargetDCO; }
+	UObject *GetTargetDco() const { return m_pTargetDataObject; }
 
 
 private:
-	UObject *m_pTargetDCO;
+	UObject *m_pTargetDataObject;
 
 	FEditPropertyChain *m_pCurrentPropertyChain;
 
-	TMap < FString, TMap<FString, int32> > m_InfluenceMapping;
-	TMap < FString, TSoftClassPtr<class UUserWidget> > m_UiMapping;
+
 
 
 };

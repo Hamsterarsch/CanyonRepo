@@ -17,6 +17,7 @@ APlaceableBase::APlaceableBase()
 	m_pInfluenceWidgetComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("InfluenceWidget"));
 	m_pInfluenceWidgetComp->SetupAttachment(GetRootComponent());
 
+
 }
 
 
@@ -48,16 +49,6 @@ float APlaceableBase::GetPlaceableNormalZMax() const
 
 }
 
-void APlaceableBase::NotifyPlaceable()
-{
-	UE_LOG(LogCanyonPlacement, Log, TEXT("Notfiy building placeable."));
-}
-
-void APlaceableBase::NotifyUnplaceable()
-{
-	UE_LOG(LogCanyonPlacement, Log, TEXT("Notfiy building unplaceable."));
-}
-
 TArray<UActorComponent *> APlaceableBase::GetPlaceableMeshComps()
 {
 	return GetComponentsByClass(UStaticMeshCanyonComp::StaticClass());
@@ -85,8 +76,8 @@ int32 APlaceableBase::BeginInfluenceVisFor(const TSubclassOf<APlaceableBase> &Ta
 	{
 		pGM->GetInfluenceForPlaceable
 		(
-			GetInfluenceQualifier(this->GetClass()),
-			GetInfluenceQualifier(pOtherClass)
+			GetInfluenceQualifier(pOtherClass),
+			GetInfluenceQualifier(this->GetClass())
 		)
 	};
 

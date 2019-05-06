@@ -1,14 +1,15 @@
 #include "Widgets/SGlobalDataEditor.h"
 #include "ModuleManager.h"
 #include "PropertyEditorModule.h"
+#include "GlobalDataEditorMetadata.h"
 #include "Canyon/Private/Misc/CanyonGlobalData.h"
 
 void SGlobalDataEditor::Construct(const FArguments& Args)
 {
 	auto &PropertyModule{ FModuleManager::LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor")) };
 			
-	m_pTargetDCO = UCanyonGlobalData::StaticClass()->ClassDefaultObject;
-	if(!m_pTargetDCO)
+	m_pTargetDataObject = NewObject<UGlobalDataEditorMetadata>();
+	if(!m_pTargetDataObject)
 	{
 		return;
 	}	
@@ -27,7 +28,7 @@ void SGlobalDataEditor::Construct(const FArguments& Args)
 	auto DetailView{ PropertyModule.CreateDetailView(ViewArgs) };
 
 
-	DetailView->SetObject(m_pTargetDCO, false);
+	DetailView->SetObject(m_pTargetDataObject, false);
 	ChildSlot[DetailView];
 
 	
@@ -39,12 +40,12 @@ void SGlobalDataEditor::OnFinishedChangingProperties(const FPropertyChangedEvent
 
 void SGlobalDataEditor::NotifyPreChange(UProperty* PropertyAboutToChange)
 {
-	if(!m_pTargetDCO)
+	if(!m_pTargetDataObject)
 	{
 		return;
 	}
 
-	m_pTargetDCO->PreEditChange(PropertyAboutToChange);
+	m_pTargetDataObject->PreEditChange(PropertyAboutToChange);
 	
 
 }
@@ -53,19 +54,19 @@ void SGlobalDataEditor::NotifyPreChange(FEditPropertyChain* PropertyAboutToChang
 {
 	m_pCurrentPropertyChain = PropertyAboutToChange;
 
-	if (!m_pTargetDCO)
+	if (!m_pTargetDataObject)
 	{
 		return;
 	}
 
-	m_pTargetDCO->PreEditChange(PropertyAboutToChange->GetActiveNode()->GetValue());
+	m_pTargetDataObject->PreEditChange(PropertyAboutToChange->GetActiveNode()->GetValue());
 
 
 }
 
 void SGlobalDataEditor::NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent,	UProperty* PropertyThatChanged)
 {
-	if (!m_pTargetDCO)
+	if (!m_pTargetDataObject)
 	{
 		return;
 	}
@@ -77,11 +78,11 @@ void SGlobalDataEditor::NotifyPostChange(const FPropertyChangedEvent& PropertyCh
 		if (PropertyThatChanged->IsA<UStructProperty>())
 		{
 			FPropertyChangedChainEvent Event{ *m_pCurrentPropertyChain, ChangedEvent };
-			m_pTargetDCO->PostEditChangeChainProperty(Event);
+			m_pTargetDataObject->PostEditChangeChainProperty(Event);
 
 			return;
 		}		
-		m_pTargetDCO->PostEditChangeProperty(ChangedEvent);		
+		m_pTargetDataObject->PostEditChangeProperty(ChangedEvent);		
 	}
 
 
@@ -90,7 +91,7 @@ void SGlobalDataEditor::NotifyPostChange(const FPropertyChangedEvent& PropertyCh
 
 void SGlobalDataEditor::NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent,	FEditPropertyChain* PropertyThatChanged)
 {
-	if (!m_pTargetDCO)
+	if (!m_pTargetDataObject)
 	{
 		return;
 	}
@@ -103,11 +104,11 @@ void SGlobalDataEditor::NotifyPostChange(const FPropertyChangedEvent& PropertyCh
 		if (pChangedProperty->IsA<UStructProperty>())
 		{
 			FPropertyChangedChainEvent Event{ *PropertyThatChanged, ChangedEvent };
-			m_pTargetDCO->PostEditChangeChainProperty(Event);
+			m_pTargetDataObject->PostEditChangeChainProperty(Event);
 
 			return;
 		}
-		m_pTargetDCO->PostEditChangeProperty(ChangedEvent);
+		m_pTargetDataObject->PostEditChangeProperty(ChangedEvent);
 	}
 
 

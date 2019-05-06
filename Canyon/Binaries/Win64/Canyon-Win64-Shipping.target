@@ -9,9 +9,9 @@
 	{
 		"MajorVersion": 4,
 		"MinorVersion": 22,
-		"PatchVersion": 0,
-		"Changelist": 5660361,
-		"CompatibleChangelist": 0,
+		"PatchVersion": 1,
+		"Changelist": 6063286,
+		"CompatibleChangelist": 5660361,
 		"IsLicenseeVersion": 0,
 		"IsPromotedBuild": 1,
 		"BranchName": "++UE4+Release-4.22",
@@ -1232,6 +1232,10 @@
 		{
 			"Path": "$(EngineDir)/Content/SlateDebug/Fonts/LastResort.ttf",
 			"Type": "DebugNonUFS"
+		},
+		{
+			"Path": "$(EngineDir)/Binaries/ThirdParty/libsndfile/Win64/libsndfile-1.dll",
+			"Type": "NonUFS"
 		},
 		{
 			"Path": "$(EngineDir)/Binaries/ThirdParty/NVIDIA/NVaftermath/Win64/GFSDK_Aftermath_Lib.x64.dll",

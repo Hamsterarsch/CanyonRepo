@@ -22,10 +22,6 @@ public:
 	
 	EPhysicalSurface GetPlacableSurfaceType() const { return m_TargetSurface.GetValue(); };
 
-	void NotifyPlaceable();
-
-	void NotifyUnplaceable();
-
 	TArray<class UActorComponent *> GetPlaceableMeshComps();
 
 	inline float GetInfluenceRadius() const { return m_InfluenceRadius; }

@@ -26,6 +26,10 @@ public:
 
 	UClass *GetPreviewedClass() const;
 
+	void NotifyPlaceable();
+
+	void NotifyUnplaceable();
+
 
 private:
 	UFUNCTION()
@@ -48,7 +52,15 @@ private:
 			int32 OtherBodyIndex
 		);
 
+	UFUNCTION()
+		void ActorBeginOverlap(AActor *pOverlappedActor, AActor *pOtherActor);
+
+	UFUNCTION()
+		void ActorEndOverlap(AActor *pOverlappedActor, AActor *pOtherActor);
+
 	void SetInfluenceRadius(float Radius);
+
+	void SetMaterialForAllMeshes(UMaterialInterface *pMaterial);
 
 
 	UPROPERTY()
@@ -56,6 +68,12 @@ private:
 
 	UPROPERTY()
 		class URadiusVisComp *m_pRadiusVisComp;
+
+	UPROPERTY()
+		UMaterialInterface *m_pMaterialUnplaceable;
+
+	UPROPERTY()
+		UMaterialInterface *m_pMaterialPlaceable; 
 
 	int32 m_InfluenceCurrentGain;
 

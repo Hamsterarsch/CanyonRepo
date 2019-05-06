@@ -6,6 +6,8 @@
 #include "Widgets/SGlobalDataEditor.h"
 #include "TabManager.h"
 #include "FileHelpers.h"
+#include "PropertyEditorModule.h"
+#include "DetailsCustom/GlobalDataEditorMetadataDetailsCustom.h"
 
 IMPLEMENT_MODULE(FCanyonEditorModule, CanyonEditor);
 
@@ -35,12 +37,12 @@ void FCanyonEditorModule::StartupModule()
 	);
 
 	FGlobalTabmanager::Get()->RegisterTabSpawner
-	(
-		s_TabNameGlobalData,
-		FOnSpawnTab::CreateRaw(this, &FCanyonEditorModule::HandleSpawnGlobalDataTab)
-	)
-	.SetDisplayName(LOCTEXT("GlobalDataEditorTabTitle", "Global Data"))
-	.SetTooltipText(LOCTEXT("GlobalDataEditorTooltipText", "Open the global data tab."));
+	                        (
+		                        s_TabNameGlobalData,
+		                        FOnSpawnTab::CreateRaw(this, &FCanyonEditorModule::HandleSpawnGlobalDataTab)
+	                        )
+	                        .SetDisplayName(LOCTEXT("GlobalDataEditorTabTitle", "Global Data"))
+	                        .SetTooltipText(LOCTEXT("GlobalDataEditorTooltipText", "Open the global data tab."));
 		
 	FGlobalTabmanager::RegisterDefaultTabWindowSize(s_TabNameGlobalData, { 1000, 750 });
 	
@@ -59,7 +61,24 @@ void FCanyonEditorModule::StartupModule()
 		);
 		LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(NewMenuExtender);
 	}
-	
+
+
+	//Customs registry
+	{
+		auto &PropertyModule{ FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor") };
+
+		PropertyModule.RegisterCustomClassLayout
+		(
+			TEXT("GlobalDataEditorMetadata"),
+			FOnGetDetailCustomizationInstance::CreateStatic
+			(				
+				&FGlobalDataEditorMetadataDetailsCustom::MakeInstance
+			)
+		);
+
+		PropertyModule.NotifyCustomizationModuleChanged();
+	}
+
 	
 }
 
@@ -68,6 +87,13 @@ void FCanyonEditorModule::ShutdownModule()
 	FCanyonEditorCommands::Unregister();
 
 	FGlobalTabmanager::Get()->UnregisterTabSpawner(s_TabNameGlobalData);
+
+	{
+		auto &PropertyModule{ FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor") };
+
+		PropertyModule.UnregisterCustomClassLayout(TEXT("GlobalDataEditorMetadata"));
+
+	}
 
 	UE_LOG(LogCanyonEditor, Warning, TEXT("CanyonEditor Shutdown"));
 		

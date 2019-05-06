@@ -54,35 +54,32 @@ bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceab
 	*/
 
 	for(auto &&pMeshComp : pPlaceable->GetPlaceableMeshComps())
-	{
-		UStaticMeshCanyonComp *pAsCanyonComp;
-		pAsCanyonComp = Cast<UStaticMeshCanyonComp>(pMeshComp);
-		if(!pAsCanyonComp)
-		{
-			//log
-			continue;
-		}
+	{		
+		auto pAsCanyonComp{ Cast<UStaticMeshCanyonComp>(pMeshComp) };
 
 		TArray<FOverlapResult> aOverlaps;
 
-		FCollisionObjectQueryParams ObjectQueryParams{FCollisionObjectQueryParams::DefaultObjectQueryParam};
+		auto ObjectQueryParams{FCollisionObjectQueryParams::DefaultObjectQueryParam};
 		ObjectQueryParams.AddObjectTypesToQuery(GetCCTerrain());
 		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
 
+		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
+		ComponentQueryParams.AddIgnoredActor(pPlaceable);
 
 		pAsCanyonComp->ComponentOverlapMulti
 		(
 			aOverlaps,
 			pPlaceable->GetWorld(),
-			ForHit.ImpactPoint,
+			ForHit.ImpactPoint + pAsCanyonComp->RelativeLocation,
 			pAsCanyonComp->GetComponentQuat(),
 			ECollisionChannel::ECC_Visibility,
-			FComponentQueryParams::DefaultComponentQueryParams,
+			ComponentQueryParams,
 			ObjectQueryParams
 		);
 				
 		if(aOverlaps.Num() > 0)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("%i"), aOverlaps.Num());
 			return false;
 		}
 		
