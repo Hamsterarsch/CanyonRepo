@@ -1,5 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+using System;
 using UnrealBuildTool;
 
 public class CanyonEditor : ModuleRules
@@ -12,7 +13,10 @@ public class CanyonEditor : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
 		
-		PrivateDependencyModuleNames.AddRange(new string[] { "Canyon", "Slate", "SlateCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Canyon", "Slate", "SlateCore", "UnrealEd", "LevelEditor", "EditorStyle", "UMG" });
+
+        PrivateIncludePathModuleNames.AddRange(new String[] {"Slate", "Canyon"});
+
 
 		PublicIncludePaths.AddRange(
             new string[]
