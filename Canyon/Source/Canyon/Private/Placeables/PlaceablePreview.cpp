@@ -79,9 +79,22 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 	
 	auto *pCdo{ Cast<APlaceableBase>(pPreviewedPlaceableClass->ClassDefaultObject) };
 	pPreview->m_pMeshCollisionComp = NewObject<UCanyonMeshCollisionComp>(pPreview, pCdo->GetCanyonMeshCollision()->GetClass(), NAME_None, RF_NoFlags);
+	pPreview->m_pMeshCollisionComp->SetStaticMesh(pCdo->GetCanyonMeshCollision()->GetStaticMesh());
 	pPreview->m_pMeshCollisionComp->SetupAttachment(pPreview->GetRootComponent());
+	pPreview->m_pMeshCollisionComp->SetRelativeLocation(pCdo->GetCanyonMeshCollision()->RelativeLocation);
+	pPreview->m_pMeshCollisionComp->SetRelativeRotation(pCdo->GetCanyonMeshCollision()->RelativeRotation);
+	pPreview->m_pMeshCollisionComp->SetRelativeScale3D(pCdo->GetCanyonMeshCollision()->RelativeScale3D);
+
 	pPreview->m_pMeshCollisionComp->RegisterComponent();
-	//pPreview->m_pMeshCollisionComp->
+
+	/*
+	FBodyInstance::InitBody
+	(
+		pPreview->m_pMeshCollisionComp->GetBodySetup(),
+		pPreview->m_pMeshCollisionComp->GetComponentTransform(),
+		pPreview->m_pMeshCollisionComp,
+		pPreview->GetWorld()->GetPhysicsScene()
+	);*/
 	
 	pPreview->SetInfluenceRadius(pCdo->GetInfluenceRadius());
 	pPreview->InitInfluenceDisplayWidget(pCdo->GetInfluenceWidgetClass());

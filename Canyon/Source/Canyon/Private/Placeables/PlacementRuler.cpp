@@ -4,7 +4,7 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Components/CanyonMeshCollisionComp.h"
 #include "Misc/CollisionChannels.h"
-//#include "Env/EnvironmentActor.h"
+#include "DrawDebugHelpers.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 
 bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceableBase *pPlaceable, FVector &OutNewPos)
@@ -61,20 +61,21 @@ bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceab
 	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
 
 	auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
-	//ComponentQueryParams.AddIgnoredActor(pPlaceable);
+	ComponentQueryParams.AddIgnoredActor(pPlaceable);
 	ComponentQueryParams.bIgnoreTouches = true;
 
-	TArray<FHitResult> aCompHits;
 	pHullComp->GetWorld()->ComponentSweepMulti
 	(
-		aCompHits,
+		aHits,
 		pHullComp,
 		pHullComp->GetComponentLocation(),
 		ForHit.ImpactPoint + pHullComp->RelativeLocation,
 		pHullComp->GetComponentQuat(),
 		ComponentQueryParams
 	);
-			
+	
+	
+
 	if(aHits.Num() > 0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("%i"), aHits.Num());
@@ -119,7 +120,14 @@ bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceab
 		});
 
 		//new placeable pos
-		OutNewPos = aHits[0].Location - pHullComp->RelativeLocation;
+		if (aHits[0].bStartPenetrating && aHits.Num() == 1)
+		{
+			OutNewPos = ForHit.ImpactPoint;
+		}
+		else
+		{
+			OutNewPos = aHits[0].Location - pHullComp->RelativeLocation;			
+		}
 
 
 		/*

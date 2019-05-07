@@ -72,6 +72,13 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 	}
 
 	DiscardCurrentPlaceablePreview();
+
+	FHitResult Hit;
+	if(TraceForTerrainUnderCursor(Hit))
+	{
+		m_pCursorRoot->SetWorldLocation(Hit.ImpactPoint);
+	}
+	
 	auto *pNewPlaceable{ APlaceablePreview::SpawnPlaceablePreview(GetWorld(), FTransform::Identity, NewPlaceableClass) };
 	if(!pNewPlaceable)
 	{
@@ -250,22 +257,13 @@ void ARTSPlayerEye::UpdateCurrentPlaceablePreview()
 	}
 	else
 	{
+		if(m_bWasPlaceablePlaceable)
+		{
+			m_pPlaceablePreviewCurrent->NotifyUnplaceable();
+			m_bWasPlaceablePlaceable = false;			
+		}
 		m_pCursorRoot->SetWorldLocation(m_CursorRootLastPlaceablePos);
 	}
-		
-	/*
-	else if(m_bWasPlaceablePlaceable)
-	{
-		m_pPlaceablePreviewCurrent->NotifyUnplaceable();
-		m_bWasPlaceablePlaceable = false;
-	}
-	if(bIsCurrentPlaceablePlaceable)
-	{
-	}
-	*/
-	
-	
-
 	
 
 }
@@ -345,13 +343,20 @@ bool ARTSPlayerEye::GetClosestPlaceablePositionForCurrentPlaceable(FVector &OutP
 
 	//If any hit
 	FHitResult Hit{};		
-	if (GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel3, true, Hit))
+	if (TraceForTerrainUnderCursor(Hit))
 	{		
 		//If building can be placed
 		return m_PlacementRuler.TryEnforceBuildingRules(Hit, m_pPlaceablePreviewCurrent, OutPosition);
 	}
 	return false;
 		
+
+}
+
+bool ARTSPlayerEye::TraceForTerrainUnderCursor(FHitResult &OutHit) const
+{
+	return GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel3, true, OutHit);
+
 
 }
 

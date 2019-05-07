@@ -117,6 +117,8 @@ protected:
 
 	bool GetClosestPlaceablePositionForCurrentPlaceable(FVector &OutPosition);
 
+	bool TraceForTerrainUnderCursor(FHitResult &OutHit) const;
+
 
 	virtual void SetupPlayerInputComponent(UInputComponent *pInputComponent) override;
 
