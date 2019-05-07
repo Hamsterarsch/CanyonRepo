@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CollisionChannels.h"
 #include "Misc/CanyonLogs.h"
+#include "Components/CanyonMeshCollisionComp.h"
 #include "ConstructorHelpers.h"
 
 
@@ -74,7 +75,14 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 
 	}
 
+	//apNodes = GetScsDataNodesForType<UCanyonMeshCollisionComp>(pPreviewedPlaceableClass);
+	
 	auto *pCdo{ Cast<APlaceableBase>(pPreviewedPlaceableClass->ClassDefaultObject) };
+	pPreview->m_pMeshCollisionComp = NewObject<UCanyonMeshCollisionComp>(pPreview, pCdo->GetCanyonMeshCollision()->GetClass(), NAME_None, RF_NoFlags);
+	pPreview->m_pMeshCollisionComp->SetupAttachment(pPreview->GetRootComponent());
+	pPreview->m_pMeshCollisionComp->RegisterComponent();
+	//pPreview->m_pMeshCollisionComp->
+	
 	pPreview->SetInfluenceRadius(pCdo->GetInfluenceRadius());
 	pPreview->InitInfluenceDisplayWidget(pCdo->GetInfluenceWidgetClass());
 	pPreview->SetInfluenceDisplayed(0);

@@ -234,11 +234,9 @@ void ARTSPlayerEye::UpdateCurrentPlaceablePreview()
 	{
 		return;
 	}
-
-	FHitResult Hit;
-	//GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECC_GameTraceChannel3, true, Hit);
-	
-	bool bIsCurrentPlaceablePlaceable{ IsCurrentPlaceablePlaceableAtCursor(&Hit) };
+		
+	FVector PlaceablePos;
+	bool bIsCurrentPlaceablePlaceable{ GetClosestPlaceablePositionForCurrentPlaceable(PlaceablePos) };
 	
 	if(bIsCurrentPlaceablePlaceable)
 	{
@@ -247,14 +245,14 @@ void ARTSPlayerEye::UpdateCurrentPlaceablePreview()
 			m_pPlaceablePreviewCurrent->NotifyPlaceable();
 			m_bWasPlaceablePlaceable = true;
 		}
-		m_CursorRootLastPlaceablePos = Hit.ImpactPoint;
-		m_pCursorRoot->SetWorldLocation(Hit.ImpactPoint);
+		m_CursorRootLastPlaceablePos = PlaceablePos;
+		m_pCursorRoot->SetWorldLocation(PlaceablePos);				
 	}
 	else
 	{
 		m_pCursorRoot->SetWorldLocation(m_CursorRootLastPlaceablePos);
 	}
-
+		
 	/*
 	else if(m_bWasPlaceablePlaceable)
 	{
@@ -338,21 +336,19 @@ void ARTSPlayerEye::BeginPlay()
 
 }
 
-bool ARTSPlayerEye::IsCurrentPlaceablePlaceableAtCursor(FHitResult *pOutHit)
+bool ARTSPlayerEye::GetClosestPlaceablePositionForCurrentPlaceable(FVector &OutPosition)
 {
 	if(!m_pPlaceablePreviewCurrent)
 	{
 		return false;
 	}
 
-	FHitResult Hit{};
-	FHitResult &CursorHit{ pOutHit != nullptr ? *pOutHit : Hit };
-		
 	//If any hit
-	if (GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel3, true, CursorHit))
+	FHitResult Hit{};		
+	if (GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel3, true, Hit))
 	{		
 		//If building can be placed
-		return m_PlacementRuler.TryEnforceBuildingRules(CursorHit, m_pPlaceablePreviewCurrent);
+		return m_PlacementRuler.TryEnforceBuildingRules(Hit, m_pPlaceablePreviewCurrent, OutPosition);
 	}
 	return false;
 		

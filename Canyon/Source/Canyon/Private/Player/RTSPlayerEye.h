@@ -115,7 +115,7 @@ protected:
 
 	virtual void BeginPlay() override;
 
-	bool IsCurrentPlaceablePlaceableAtCursor(FHitResult *pOutHit = nullptr);
+	bool GetClosestPlaceablePositionForCurrentPlaceable(FVector &OutPosition);
 
 
 	virtual void SetupPlayerInputComponent(UInputComponent *pInputComponent) override;

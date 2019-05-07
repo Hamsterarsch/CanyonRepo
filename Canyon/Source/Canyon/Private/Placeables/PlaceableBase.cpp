@@ -7,6 +7,7 @@
 #include "Misc/CanyonGM.h"
 #include "WidgetComponent.h"
 #include "WidgetBase/InfluenceDisplayWidgetBase.h"
+#include "Components/CanyonMeshCollisionComp.h"
 
 
 APlaceableBase::APlaceableBase()
@@ -16,6 +17,9 @@ APlaceableBase::APlaceableBase()
 	SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
 	m_pInfluenceWidgetComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("InfluenceWidget"));
 	m_pInfluenceWidgetComp->SetupAttachment(GetRootComponent());
+
+	m_pMeshCollisionComp = CreateDefaultSubobject<UCanyonMeshCollisionComp>(TEXT("ShapeCollider"));
+	m_pMeshCollisionComp->SetupAttachment(GetRootComponent());
 
 
 }

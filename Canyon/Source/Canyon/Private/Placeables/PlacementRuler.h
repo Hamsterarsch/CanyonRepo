@@ -5,11 +5,11 @@
 class CPlacementRuler
 {
 public:
-	bool TryEnforceBuildingRules(const FHitResult &ForHit, APlaceableBase *pPlaceable);
+	bool TryEnforceBuildingRules(const FHitResult &ForHit, APlaceableBase *pPlaceable, FVector &OutNewPos);
 
 	//input hit result and preview building
-	//output position where the building is placable 
-	//(and additional data regarding support structures underneath, etc)
+	//sets the building to the impact point of the hit or tries to slide towards it 
+	//also enforces surface types and other constraints
 	FVector ComputeTerrainDepenetration(const FHitResult &ForHit, const APlaceableBase *pPlaceable);
 
 	//reqs
