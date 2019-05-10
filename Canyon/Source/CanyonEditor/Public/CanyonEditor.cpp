@@ -3,17 +3,17 @@
 #include "CanyonEditorCommands.h"
 #include "LevelEditor.h"
 #include "AssetEditorToolkit.h"
-#include "Widgets/SGlobalDataEditor.h"
+#include "Widgets/SInfluenceDataEditor.h"
 #include "TabManager.h"
 #include "FileHelpers.h"
 #include "PropertyEditorModule.h"
-#include "DetailsCustom/GlobalDataEditorMetadataDetailsCustom.h"
+#include "DetailsCustom/InfluenceDataObjectDetailsCustom.h"
 
 IMPLEMENT_MODULE(FCanyonEditorModule, CanyonEditor);
 
 DEFINE_LOG_CATEGORY(LogCanyonEditor);
 
-const FName FCanyonEditorModule::s_TabNameGlobalData{ TEXT("CanyonEditorGlobalDataTab") };
+const FName FCanyonEditorModule::s_TabNameGlobalData{ TEXT("CanyonInfluenceEditorTab") };
 
 #define LOCTEXT_NAMESPACE "CanyonEditor"
 
@@ -32,7 +32,7 @@ void FCanyonEditorModule::StartupModule()
 
 	m_pEditorCommands->MapAction
 	(
-		FCanyonEditorCommands::Get().TestCommand,
+		FCanyonEditorCommands::Get().pCmdOpenInfluenceEditor,
 		FExecuteAction::CreateRaw(this, &FCanyonEditorModule::PopupGlobalDataTab)
 	);
 
@@ -41,8 +41,8 @@ void FCanyonEditorModule::StartupModule()
 		                        s_TabNameGlobalData,
 		                        FOnSpawnTab::CreateRaw(this, &FCanyonEditorModule::HandleSpawnGlobalDataTab)
 	                        )
-	                        .SetDisplayName(LOCTEXT("GlobalDataEditorTabTitle", "Global Data"))
-	                        .SetTooltipText(LOCTEXT("GlobalDataEditorTooltipText", "Open the global data tab."));
+	                        .SetDisplayName(LOCTEXT("InfluenceEditorTabTitle", "Influence Editor"))
+	                        .SetTooltipText(LOCTEXT("InfluenceEditorTooltipText", "Open the influence editor tab."));
 		
 	FGlobalTabmanager::RegisterDefaultTabWindowSize(s_TabNameGlobalData, { 1000, 750 });
 	
@@ -69,10 +69,10 @@ void FCanyonEditorModule::StartupModule()
 
 		PropertyModule.RegisterCustomClassLayout
 		(
-			TEXT("GlobalDataEditorMetadata"),
+			TEXT("InfluenceDataObject"),
 			FOnGetDetailCustomizationInstance::CreateStatic
 			(				
-				&FGlobalDataEditorMetadataDetailsCustom::MakeInstance
+				&FInfluenceDataObjectDetailsCustom::MakeInstance
 			)
 		);
 
@@ -91,7 +91,7 @@ void FCanyonEditorModule::ShutdownModule()
 	{
 		auto &PropertyModule{ FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor") };
 
-		PropertyModule.UnregisterCustomClassLayout(TEXT("GlobalDataEditorMetadata"));
+		PropertyModule.UnregisterCustomClassLayout(TEXT("InfluenceDataObject"));
 
 	}
 
@@ -103,13 +103,18 @@ void FCanyonEditorModule::ShutdownModule()
 
 TSharedRef<SDockTab> FCanyonEditorModule::HandleSpawnGlobalDataTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	const TSharedRef<SDockTab> pMajorTab = SNew(SDockTab).TabRole(ETabRole::MajorTab);
-	pMajorTab->SetContent(SNew(SGlobalDataEditor));
-	m_pGlobalDataEditor = pMajorTab;
+	const TSharedRef<SDockTab> TabRef{ SNew(SDockTab).TabRole(ETabRole::MajorTab) };
+	
+	auto InfluenceEditorRef{ SNew(SInfluenceDataEditor) };
+	TabRef->SetContent(InfluenceEditorRef);
+	
+	//Widget refs
+	m_pInfluenceEditorWidget = InfluenceEditorRef;
+	m_pInfluenceEditorTab = TabRef;
 
-	pMajorTab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &FCanyonEditorModule::HandleTabClose));
+	TabRef->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &FCanyonEditorModule::HandleTabClose));
 
-	return pMajorTab;
+	return TabRef;
 
 
 }
@@ -120,12 +125,18 @@ void FCanyonEditorModule::PopupGlobalDataTab()
 	
 	FGlobalTabmanager::Get()->InvokeTab(s_TabNameGlobalData);
 
+	if(auto DataEditor{ m_pInfluenceEditorWidget.Pin() })
+	{
+		auto *pWidget{ DataEditor.Get() };
+		pWidget->RefreshObjectData();
+	}
+
 
 }
 
 void FCanyonEditorModule::AddMenuBarButton(FMenuBarBuilder& Builder)
 {
-	Builder.AddMenuEntry(FCanyonEditorCommands::Get().TestCommand);
+	Builder.AddMenuEntry(FCanyonEditorCommands::Get().pCmdOpenInfluenceEditor);
 
 	
 }
@@ -133,24 +144,6 @@ void FCanyonEditorModule::AddMenuBarButton(FMenuBarBuilder& Builder)
 void FCanyonEditorModule::HandleTabClose(TSharedRef<SDockTab> pDockTab)
 {
 	UE_LOG(LogCanyonEditor, Warning, TEXT("Canyon Editor: Closing gloabal data tab."));
-
-	auto pChild{ pDockTab->GetContent() };
-	
-	if (pChild->GetType() == TEXT("SGlobalDataEditor"))
-	{
-		auto &GdEditor{ static_cast<SGlobalDataEditor &>(pChild.Get()) };
-
-		auto *pDco{ GdEditor.GetTargetDco() };
-		if(!pDco)
-		{
-			return;
-		}
-
-		pDco->Modify(true);
-
-		auto *pPackage{ pDco->GetOutermost() };
-		UEditorLoadingAndSavingUtils::SavePackages({ pPackage }, false);
-	}
 	
 
 }

@@ -5,6 +5,8 @@
 class CPlacementRuler
 {
 public:
+	CPlacementRuler();
+
 	bool TryEnforceBuildingRules(const FHitResult &ForHit, APlaceableBase *pPlaceable, FVector &OutNewPos);
 
 	//input hit result and preview building

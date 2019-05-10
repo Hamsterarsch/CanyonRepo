@@ -115,9 +115,9 @@ protected:
 
 	virtual void BeginPlay() override;
 
-	bool GetClosestPlaceablePositionForCurrentPlaceable(FVector &OutPosition);
+	bool GetClosestPlaceablePositionForCurrentPlaceable(FVector &OutPosition, FHitResult *pOutHit = nullptr);
 
-	bool TraceForTerrainUnderCursor(FHitResult &OutHit) const;
+	bool TraceForTerrainUnderCursor(FHitResult &OutHit);
 
 
 	virtual void SetupPlayerInputComponent(UInputComponent *pInputComponent) override;

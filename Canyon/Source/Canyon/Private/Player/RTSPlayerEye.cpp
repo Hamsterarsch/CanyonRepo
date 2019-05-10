@@ -241,10 +241,11 @@ void ARTSPlayerEye::UpdateCurrentPlaceablePreview()
 	{
 		return;
 	}
-		
+
+	FHitResult Hit{};
 	FVector PlaceablePos;
-	bool bIsCurrentPlaceablePlaceable{ GetClosestPlaceablePositionForCurrentPlaceable(PlaceablePos) };
-	
+	bool bIsCurrentPlaceablePlaceable{ GetClosestPlaceablePositionForCurrentPlaceable(PlaceablePos, &Hit) };
+
 	if(bIsCurrentPlaceablePlaceable)
 	{
 		if(!m_bWasPlaceablePlaceable)
@@ -334,7 +335,7 @@ void ARTSPlayerEye::BeginPlay()
 
 }
 
-bool ARTSPlayerEye::GetClosestPlaceablePositionForCurrentPlaceable(FVector &OutPosition)
+bool ARTSPlayerEye::GetClosestPlaceablePositionForCurrentPlaceable(FVector &OutPosition, FHitResult *pOutHit)
 {
 	if(!m_pPlaceablePreviewCurrent)
 	{
@@ -342,18 +343,20 @@ bool ARTSPlayerEye::GetClosestPlaceablePositionForCurrentPlaceable(FVector &OutP
 	}
 
 	//If any hit
-	FHitResult Hit{};		
-	if (TraceForTerrainUnderCursor(Hit))
+	FHitResult Hit{};
+	FHitResult &TargetHit{ pOutHit == nullptr ? Hit : *pOutHit };
+
+	if (TraceForTerrainUnderCursor(TargetHit))
 	{		
 		//If building can be placed
-		return m_PlacementRuler.TryEnforceBuildingRules(Hit, m_pPlaceablePreviewCurrent, OutPosition);
+		return m_PlacementRuler.TryEnforceBuildingRules(TargetHit, m_pPlaceablePreviewCurrent, OutPosition);
 	}
 	return false;
 		
 
 }
 
-bool ARTSPlayerEye::TraceForTerrainUnderCursor(FHitResult &OutHit) const
+bool ARTSPlayerEye::TraceForTerrainUnderCursor(FHitResult &OutHit)
 {
 	return GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel3, true, OutHit);
 

@@ -18,6 +18,6 @@ public:
 
 	virtual void RegisterCommands() override;
 
-	TSharedPtr<class FUICommandInfo> TestCommand;
+	TSharedPtr<class FUICommandInfo> pCmdOpenInfluenceEditor;
 
 };

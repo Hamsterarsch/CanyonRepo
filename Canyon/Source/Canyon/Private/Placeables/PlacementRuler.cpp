@@ -7,6 +7,10 @@
 #include "DrawDebugHelpers.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 
+CPlacementRuler::CPlacementRuler()
+{
+}
+
 bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceableBase *pPlaceable, FVector &OutNewPos)
 {
 	//preconditions
@@ -79,6 +83,7 @@ bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceab
 	if(aHits.Num() > 0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("%i"), aHits.Num());
+
 		//resolve slide
 
 		//check for conflicting normals in the sweep
@@ -120,16 +125,19 @@ bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceab
 		});
 
 		//new placeable pos
-		if (aHits[0].bStartPenetrating && aHits.Num() == 1)
+		auto DepenetrationDisp{ aHits[0].ImpactNormal };
+		if (aHits.Num() == 2)
 		{
-			OutNewPos = ForHit.ImpactPoint;
+			DepenetrationDisp += aHits[1].ImpactNormal;
 		}
-		else
+		OutNewPos = aHits[0].Location - pHullComp->RelativeLocation + DepenetrationDisp;
+		DrawDebugCrosshairs(pPlaceable->GetWorld(), OutNewPos, FRotator::ZeroRotator, 10, FColor::Red, false, 3, 1);
+
+		if(aHits.Num() > 2)
 		{
-			OutNewPos = aHits[0].Location - pHullComp->RelativeLocation;			
+			UE_LOG(LogTemp, Warning, TEXT("%i oo"), aHits.Num());
 		}
-
-
+		
 		/*
 		//no conflicting normals, determine slide direction
 		auto PlacementDisp{ ForHit.ImpactPoint - pPlaceable->GetActorLocation() };

@@ -4,7 +4,7 @@
 #include "IDetailCustomization.h"
 
 
-class FGlobalDataEditorMetadataDetailsCustom : public IDetailCustomization
+class FInfluenceDataObjectDetailsCustom : public IDetailCustomization
 {
 public:
 	static TSharedRef<IDetailCustomization> MakeInstance();

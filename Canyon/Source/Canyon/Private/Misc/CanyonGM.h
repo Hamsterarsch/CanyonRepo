@@ -17,32 +17,14 @@ class ACanyonGM : public AGameModeBase
 public:
 	int32 GetInfluenceForPlaceable(const FString &FirstInfluenceQualifier, const FString &SecondInfluenceQualifier) const;
 
-	ACanyonGM()
-	{
-		//Pitch mapping setup
-		TMap<FString, int32> Column{};
-		Column.Add("House", 3);
-		Column.Add("Factory", -5);
-		Column.Add("Market", 7);
-		m_InfluenceMapping.Add("House", std::move(Column));
 
-		Column = TMap<FString, int32>{};
-		Column.Add("House", 3);
-		Column.Add("Market", 5);
-		Column.Add("Factory", -9);
-		m_InfluenceMapping.Add("Factory", std::move(Column));
+protected:
+	virtual void BeginPlay() override;
 
-		Column = TMap<FString, int32>{};
-		Column.Add("House", 3);
-		Column.Add("Factory", 6);
-		Column.Add("Market", -10);
-		m_InfluenceMapping.Add("Market", std::move(Column));
-
-	}
 
 private:
-	TMap < FString, TMap<FString, int32> > m_InfluenceMapping;
-	TMap < FString, TSoftClassPtr<UUserWidget> > m_UiMapping;
-
+	UPROPERTY()
+		class UInfluenceDataObject *m_pInfluenceData;
+	
 	
 };

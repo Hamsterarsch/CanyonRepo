@@ -4,20 +4,20 @@
 #include "Widgets/SCompoundWidget.h"
 #include "NotifyHook.h"
 
-class SGlobalDataEditor : public SCompoundWidget, public FNotifyHook
+class SInfluenceDataEditor : public SCompoundWidget, public FNotifyHook
 {
 public:
-	SLATE_BEGIN_ARGS(SGlobalDataEditor)
+	SLATE_BEGIN_ARGS(SInfluenceDataEditor)
 	{		
 	}
 	SLATE_END_ARGS()
 
-	virtual ~SGlobalDataEditor() = default;
+	virtual ~SInfluenceDataEditor() = default;
 
 	void Construct(const struct FArguments &Args);
 	
-	void OnFinishedChangingProperties(const FPropertyChangedEvent &PropertyChangedEvent);
-
+	void RefreshObjectData();
+	
 	virtual void NotifyPreChange(UProperty* PropertyAboutToChange) override;
 
 	virtual void NotifyPreChange(FEditPropertyChain* PropertyAboutToChange) override;
@@ -25,16 +25,12 @@ public:
 	virtual void NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, UProperty* PropertyThatChanged) override;
 
 	virtual void NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, FEditPropertyChain* PropertyThatChanged) override;
-
-	UObject *GetTargetDco() const { return m_pTargetDataObject; }
-
+	
 
 private:
-	UObject *m_pTargetDataObject;
+	class UInfluenceDataObject *m_pEditorDataObject;
 
 	FEditPropertyChain *m_pCurrentPropertyChain;
 
-
-
-
+	   
 };
