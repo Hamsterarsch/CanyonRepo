@@ -30,6 +30,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		TSoftClassPtr<UUserWidget> m_UiWidgetClass;
+
+	UPROPERTY(EditAnywhere)
+		int32 m_BasePointRequirement;
 		
 
 };

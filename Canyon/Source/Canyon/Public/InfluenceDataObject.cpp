@@ -36,6 +36,8 @@ FArchive& operator<<(FArchive& Lhs, FInfluenceColData& Rhs)
 	{
 		Rhs.m_UiWidgetClass = TSoftClassPtr<UUserWidget>{ AsPath };	
 	}
+
+	Lhs << Rhs.m_BasePointRequirement;
 		
 	return Lhs;
 

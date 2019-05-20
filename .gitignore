@@ -70,3 +70,8 @@ DerivedDataCache
 *.swp
 *.swo
 .ctrlp_cache/
+
+#exclude wwise libs
+!**/Wwise/**/*.lib
+!**/Wwise/**/*.pdb
+**/Wwise/Binaries/**/*.pdb
