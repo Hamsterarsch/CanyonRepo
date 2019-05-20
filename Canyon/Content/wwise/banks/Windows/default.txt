@@ -1,0 +1,24 @@
+Event	ID	Name			Wwise Object Path	Notes
+	1205645828	musicPlay			\Default Work Unit\musicPlay	
+
+Switch Group	ID	Name			Wwise Object Path	Notes
+	412724365	BGM			\Default Work Unit\BGM	
+
+Switch	ID	Name	Switch Group			Notes
+	691006007	loop	BGM			
+	1125500713	intro	BGM			
+	4184794294	outro	BGM			
+
+Game Parameter	ID	Name			Wwise Object Path	Notes
+	2707852449	bgmPitch			\Default Work Unit\bgmPitch	
+
+Effect plug-ins	ID	Name	Type				Notes
+	868111412	Wwise_Pitch_Shifter_(Custom)	Wwise Pitch Shifter			
+
+In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
+	69091249	outro	C:\Repos\Canyon_WwiseProject\.cache\Windows\SFX\SFX\outro_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\outro\outro\outro		1163340
+	89344007	intro	C:\Repos\Canyon_WwiseProject\.cache\Windows\SFX\SFX\intro_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\intro\intro\intro		3140880
+	153822789	loop1	C:\Repos\Canyon_WwiseProject\.cache\Windows\SFX\SFX\loop1_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\loop\loop1\loop1		3136220
+	838187309	loop0	C:\Repos\Canyon_WwiseProject\.cache\Windows\SFX\SFX\loop0_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\loop\loop\loop0		3136220
+	910200512	loop2	C:\Repos\Canyon_WwiseProject\.cache\Windows\SFX\SFX\loop2_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\loop\loop2\loop2		3136220
+

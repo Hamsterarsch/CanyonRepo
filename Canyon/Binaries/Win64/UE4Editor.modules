@@ -3,6 +3,7 @@
 	"Modules": 
 	{
 		"Canyon": "UE4Editor-Canyon.dll",
-		"CanyonEditor": "UE4Editor-CanyonEditor.dll"
+		"CanyonEditor": "UE4Editor-CanyonEditor.dll",
+		"Wwiseext": "UE4Editor-Wwiseext.dll"
 	}
 }

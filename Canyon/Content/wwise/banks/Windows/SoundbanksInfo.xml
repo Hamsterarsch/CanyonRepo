@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SoundBanksInfo Platform="Windows" BasePlatform="Windows" SchemaVersion="11" SoundbankVersion="134">
+	<RootPaths>
+		<ProjectRoot>C:\Repos\Canyon_WwiseProject\</ProjectRoot>
+		<SourceFilesRoot>C:\Repos\Canyon_WwiseProject\.cache\Windows\</SourceFilesRoot>
+		<SoundBanksRoot>C:\Repos\CanyonRepo\Canyon\Content\wwise\banks\Windows\</SoundBanksRoot>
+		<ExternalSourcesInputFile></ExternalSourcesInputFile>
+		<ExternalSourcesOutputRoot>C:\Repos\Canyon_WwiseProject\GeneratedSoundBanks\Windows</ExternalSourcesOutputRoot>
+	</RootPaths>
+	<DialogueEvents/>
+	<StreamedFiles/>
+	<MediaFilesNotInAnyBank/>
+	<SoundBanks>
+		<SoundBank Id="782826392" Language="SFX">
+			<ObjectPath>\SoundBanks\Default Work Unit\default</ObjectPath>
+			<ShortName>default</ShortName>
+			<Path>default.bnk</Path>
+			<IncludedEvents>
+				<Event Id="1205645828" Name="musicPlay" ObjectPath="\Events\Default Work Unit\musicPlay"/>
+			</IncludedEvents>
+			<IncludedMemoryFiles>
+				<File Id="69091249" Language="SFX">
+					<ShortName>SFX\outro.wav</ShortName>
+					<Path>SFX\SFX\outro_D79FB2B7.wem</Path>
+				</File>
+				<File Id="89344007" Language="SFX">
+					<ShortName>SFX\intro.wav</ShortName>
+					<Path>SFX\SFX\intro_D79FB2B7.wem</Path>
+				</File>
+				<File Id="153822789" Language="SFX">
+					<ShortName>SFX\loop1.wav</ShortName>
+					<Path>SFX\SFX\loop1_D79FB2B7.wem</Path>
+				</File>
+				<File Id="838187309" Language="SFX">
+					<ShortName>SFX\loop0.wav</ShortName>
+					<Path>SFX\SFX\loop0_D79FB2B7.wem</Path>
+				</File>
+				<File Id="910200512" Language="SFX">
+					<ShortName>SFX\loop2.wav</ShortName>
+					<Path>SFX\SFX\loop2_D79FB2B7.wem</Path>
+				</File>
+			</IncludedMemoryFiles>
+		</SoundBank>
+		<SoundBank Id="984691642" Language="SFX">
+			<ObjectPath>\SoundBanks\Default Work Unit\ingame</ObjectPath>
+			<ShortName>ingame</ShortName>
+			<Path>ingame.bnk</Path>
+			<IncludedEvents>
+				<Event Id="1566564139" Name="swordhit" ObjectPath="\Events\Default Work Unit\swordhit"/>
+			</IncludedEvents>
+			<IncludedMemoryFiles>
+				<File Id="202495991" Language="SFX">
+					<ShortName>SFX\sword_000.wav</ShortName>
+					<Path>SFX\SFX\sword_000_10C4C929.wem</Path>
+				</File>
+				<File Id="210550766" Language="SFX">
+					<ShortName>SFX\sword_001.wav</ShortName>
+					<Path>SFX\SFX\sword_001_10C4C929.wem</Path>
+				</File>
+				<File Id="886573483" Language="SFX">
+					<ShortName>SFX\sword_002.wav</ShortName>
+					<Path>SFX\SFX\sword_002_10C4C929.wem</Path>
+				</File>
+			</IncludedMemoryFiles>
+		</SoundBank>
+		<SoundBank Id="1355168291" Language="SFX">
+			<ObjectPath>Init</ObjectPath>
+			<ShortName>Init</ShortName>
+			<Path>Init.bnk</Path>
+		</SoundBank>
+	</SoundBanks>
+</SoundBanksInfo>
