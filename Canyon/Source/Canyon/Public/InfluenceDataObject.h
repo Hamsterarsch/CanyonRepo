@@ -33,6 +33,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		int32 m_BasePointRequirement;
+
+	UPROPERTY(EditAnywhere)
+		int32 m_BasePointAmount;
 		
 
 };
@@ -66,7 +69,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 		TMap < FString, FInfluenceColData > m_InfluenceRowDataMap;
-	
+		
 
 private:
 	//Member serialization

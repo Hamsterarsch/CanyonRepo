@@ -38,6 +38,7 @@ FArchive& operator<<(FArchive& Lhs, FInfluenceColData& Rhs)
 	}
 
 	Lhs << Rhs.m_BasePointRequirement;
+	Lhs << Rhs.m_BasePointAmount;
 		
 	return Lhs;
 
@@ -46,7 +47,9 @@ FArchive& operator<<(FArchive& Lhs, FInfluenceColData& Rhs)
 
 FInfluenceColData::FInfluenceColData(const TArray<FString>& aKeyArray) :
 	m_InfluenceRadius{ 1 },
-	m_UiWidgetClass{ nullptr }
+	m_UiWidgetClass{ nullptr },
+	m_BasePointRequirement{ 1 },
+	m_BasePointAmount{ 0 }
 {
 	for(auto &&Key :  aKeyArray)
 	{
@@ -128,6 +131,9 @@ void UInfluenceDataObject::SaveToFile()
 {	
 	FCustomArchive Ar{};
 	Archive(Ar);
+
+	uint8 Version{ 3 };
+	Ar << Version;
 	   
 	FFileHelper::SaveArrayToFile(Ar, *(FPaths::ProjectContentDir() + TEXT("Resc/InfluenceData.dat")));
 
@@ -138,7 +144,12 @@ void UInfluenceDataObject::LoadFromFile()
 {
 	TArray<uint8> aBytes;
 	FFileHelper::LoadFileToArray(aBytes, *(FPaths::ProjectContentDir() + TEXT("Resc/InfluenceData.dat")));
-	
+
+	if(aBytes.Num() == 0)
+	{
+		return;
+	}
+
 	FMemoryReader Reader{aBytes};
 	Reader.Seek(0);
 
