@@ -132,7 +132,7 @@ void UInfluenceDataObject::SaveToFile()
 	FCustomArchive Ar{};
 	Archive(Ar);
 
-	uint8 Version{ 3 };
+	uint8 Version{ 1 };
 	Ar << Version;
 	   
 	FFileHelper::SaveArrayToFile(Ar, *(FPaths::ProjectContentDir() + TEXT("Resc/InfluenceData.dat")));

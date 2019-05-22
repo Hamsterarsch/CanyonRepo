@@ -8,7 +8,7 @@ public class Canyon : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Wwiseext" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Wwiseext", "AssetRegistry" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

@@ -1,19 +1,30 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "SoftObjectPtr.h"
+#include "Engine/UserDefinedStruct.h"
 #include "DeckDatabaseNative.generated.h"
 
-UCLASS()
+UCLASS(Blueprintable)
 class UDeckDatabaseNative : public UDataAsset
 {
 	GENERATED_BODY()
 
 public:
 	UFUNCTION(BlueprintImplementableEvent)
-		class UUserDefinedStruct *GetDeckData() const;
+		TSubclassOf<UUserWidget> GetDeckWidget() const;
 
 	UFUNCTION(BlueprintImplementableEvent)
-		int32 GetRequiredGeneration() const;
+		 FString GetDependencyCategoryAtIndex(int32 Index) const;
+
+	UFUNCTION(BlueprintImplementableEvent)
+		int32 GetMinAmountAtIndex(int32 Index) const;
+	
+	UFUNCTION(BlueprintImplementableEvent)
+		 int32 GetMaxAmountAtIndex(int32 Index) const;
+
+	UFUNCTION(BlueprintImplementableEvent)
+		int32 GetRequiredDeckGeneration() const;
 
 
 };

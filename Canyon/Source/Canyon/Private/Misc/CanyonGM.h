@@ -29,6 +29,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 		inline int32 GetPointsRequired() const { return m_PointsRequired; }
 
+	UFUNCTION()
+		void OnDeckSelected(int32 DeckIndex);
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -36,19 +39,39 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnPointsChanged();
 
+	UFUNCTION(BlueprintNativeEvent)
+		TArray<class UDeckDatabaseNative *> OnInvokeNewDecks(int32 CurrentDeckGeneration);
+
+	UFUNCTION()
+		TArray<class UDeckDatabaseNative *> OnInvokeNewDecks_Implementation(int32 CurrentDeckGeneration);
+
+	UFUNCTION(BlueprintCallable)
+		TArray<class UDeckDatabaseNative *> GetRandomDecks(int32 NumDecks, FString SubCategory = "") const;
+
 
 private:
 	void ReceiveOnPointsChanged();
 
-	void InvokeNewDecks();
+	void ReceiveOnInvokeNewDecks();
 
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UDeckWidgetBase> m_DeckWidgetClass;
 
 	UPROPERTY()
 		class UInfluenceDataObject *m_pInfluenceData;
 
+	UPROPERTY()
+		class UDeckWidgetBase *m_pDeckWidget;
+
+	UPROPERTY()
+		TArray<class UDeckDatabaseNative *> m_apCurrentDeckData;
+
 	int32 m_PointsCurrent;
 	int32 m_PointsRequired;
-	int32 m_DeckGeneration;
+	int32 m_DeckGenerationCurrent;
 	
 	
 };
+
+int32 GetRandomIndex(int32 ArrSize);

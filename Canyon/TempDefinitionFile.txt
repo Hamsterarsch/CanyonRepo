@@ -1,2 +1,0 @@
-default	"musicPlay"
-ingame	"swordhit"
