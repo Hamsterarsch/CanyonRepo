@@ -67,6 +67,8 @@ bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceab
 	auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 	ComponentQueryParams.AddIgnoredActor(pPlaceable);
 	ComponentQueryParams.bIgnoreTouches = true;
+	ComponentQueryParams.bTraceComplex = true;
+	
 
 	pHullComp->GetWorld()->ComponentSweepMulti
 	(
