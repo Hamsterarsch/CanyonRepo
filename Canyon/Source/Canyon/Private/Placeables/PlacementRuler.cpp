@@ -5,36 +5,75 @@
 #include "Components/CanyonMeshCollisionComp.h"
 #include "Misc/CollisionChannels.h"
 #include "DrawDebugHelpers.h"
+#include "Engine/LocalPlayer.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 
-CPlacementRuler::CPlacementRuler()
+CPlacementRuler::CPlacementRuler() :
+	m_bInResnapRecovery{ false }
 {
 }
 
-bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceableBase *pPlaceable, FVector &OutNewPos)
+//outputs a new position for the cursor root and whether or not the building could be placed there
+bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &out_NewPos)
 {
 	//preconditions
 	//ForHit resulted form a trace against a per se valid placement surface (not surface type valid)
-	
-	if(!pPlaceable)
-	{
-		return false;
-	}
+	//pPlaceable points to a valid object instance
 
+	//Get hit or
+	FHitResult TerrainHit;
+	TraceForTerrainUnderCursor(TerrainHit, pPlaceable->GetWorld());
+	
+	//todo: handle no hit situations	
+	if(!TerrainHit.IsValidBlockingHit())
+	{
+		//hit air, get last valid pos and intersection
+		/*
+		auto *pViewportClient{ pPlaceable->GetWorld()->GetFirstLocalPlayerFromController()->ViewportClient };
+		
+		
+		pViewportClient->Viewport,
+		pPlaceable->GetWorld()->Scene,
+		pViewportClient->EngineShowFlags
+
+		FVector CamPos;
+		FRotator CamRot;
+		pPlaceable->GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(CamPos, CamRot);
+		
+		//look at this impl
+		*/
+		auto *pPc{ pPlaceable->GetWorld()->GetFirstPlayerController() };
+		FVector2D MousePos;
+		pPc->GetMousePosition(MousePos.X, MousePos.Y);
+		FVector ScreenWorldPos, ScreenWorldDir;
+		pPc->DeprojectScreenPositionToWorld(MousePos.X, MousePos.Y, ScreenWorldPos, ScreenWorldDir);
+
+		const float TargetZHeight{ m_LastHitPosition.Z };
+		const auto RayExtrusionFactor{ (TargetZHeight - ScreenWorldPos.Z) / ScreenWorldDir.Z };
+
+		out_NewPos = ScreenWorldPos + ScreenWorldDir * RayExtrusionFactor;
+		return false;
+
+
+	}
+	//depen
+	TerrainHit.ImpactPoint.Z += .5;
+	
 	//Normal constraint
 	constexpr float NormalTolerance{ 10e-6 };
-	auto ImpactNormalZ{ ForHit.ImpactNormal.GetUnsafeNormal().Z };
+	auto ImpactNormalZ{ TerrainHit.ImpactNormal.GetUnsafeNormal().Z };
 	if
 	(
 		(ImpactNormalZ + NormalTolerance) <= pPlaceable->GetPlaceableNormalZMin() 
 		|| (ImpactNormalZ - NormalTolerance) >= pPlaceable->GetPlaceableNormalZMax() 
 	)
 	{
+		out_NewPos = TerrainHit.ImpactPoint;
 		return false;
 	}
 
 	//Surface type constraint
-	if (auto *pPhyMat{ ForHit.PhysMaterial.Get() })
+	if (auto *pPhyMat{ TerrainHit.PhysMaterial.Get() })
 	{
 		auto SurfaceType{ UPhysicalMaterial::DetermineSurfaceType(pPhyMat) };
 		if
@@ -43,6 +82,7 @@ bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceab
 			&& SurfaceType != EPhysicalSurface::SurfaceType_Default
 		)
 		{
+			out_NewPos = TerrainHit.ImpactPoint;
 			return false;
 		}
 	}
@@ -57,34 +97,91 @@ bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceab
 	}
 	*/
 
+	//Mouse distance override
+	FVector2D CursorRootScreenPos;
+	FVector2D MousePos;
+	pPlaceable->GetWorld()->GetFirstPlayerController()->ProjectWorldLocationToScreen(pPlaceable->GetActorLocation(), CursorRootScreenPos);
+	pPlaceable->GetWorld()->GetFirstPlayerController()->GetMousePosition(MousePos.X, MousePos.Y);
+
+	//snap after some distance between mouse and building
+	auto Dist{ FVector2D::Distance(CursorRootScreenPos, MousePos) };
+	if(Dist > 130)
+	{
+		m_bInResnapRecovery = true;
+		out_NewPos = TerrainHit.ImpactPoint;
+		return false;
+	}
+
+	//handle building penetrations after snapping
+	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
+	if(m_bInResnapRecovery)
+	{
+		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
+		ComponentQueryParams.AddIgnoredActor(pPlaceable);
+		ComponentQueryParams.bTraceComplex = true;
+		
+		TArray<FOverlapResult> aOverlaps;
+		pHullComp->GetWorld()->ComponentOverlapMulti
+		(
+			aOverlaps,
+			pHullComp,
+			pHullComp->GetComponentLocation(),
+			pHullComp->GetComponentQuat(),
+			ComponentQueryParams
+		);
+
+		UE_LOG(LogTemp, Log, TEXT("=>  %i"), aOverlaps.Num());
+		if(aOverlaps.Num() != 0)
+		{
+			out_NewPos = TerrainHit.ImpactPoint;
+			return false;
+
+
+		}
+		m_bInResnapRecovery = false;		
+	}
+
+
 	FVector DispToApply{ EForceInit::ForceInitToZero };
 	TArray<FHitResult> aHits;
 
 
 	//query sweep hits for the hull comp
-	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
+	{
+		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
+		ComponentQueryParams.AddIgnoredActor(pPlaceable);
+		ComponentQueryParams.bIgnoreTouches = true;
+		ComponentQueryParams.bTraceComplex = true;
 
-	auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
-	ComponentQueryParams.AddIgnoredActor(pPlaceable);
-	ComponentQueryParams.bIgnoreTouches = true;
-	ComponentQueryParams.bTraceComplex = true;
-	
-
-	pHullComp->GetWorld()->ComponentSweepMulti
-	(
-		aHits,
-		pHullComp,
-		pHullComp->GetComponentLocation(),
-		ForHit.ImpactPoint + pHullComp->RelativeLocation,
-		pHullComp->GetComponentQuat(),
-		ComponentQueryParams
-	);
-	
-	
+		pHullComp->GetWorld()->ComponentSweepMulti
+		(
+			aHits,
+			pHullComp,
+			pHullComp->GetComponentLocation(),
+			TerrainHit.ImpactPoint + pHullComp->RelativeLocation,
+			pHullComp->GetComponentQuat(),
+			ComponentQueryParams
+		);
+	}
 
 	if(aHits.Num() > 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%i"), aHits.Num());
+		int HitsPenetratedOnStart{ 0 };
+		for(auto &&Hit : aHits)
+		{
+			if(Hit.bStartPenetrating)
+			{
+				++HitsPenetratedOnStart;
+			}
+		}
+		
+		UE_LOG(LogTemp, Warning, TEXT("Num Hits: %i,\t Num Pen: %i"), aHits.Num(), HitsPenetratedOnStart);
+
+		if(HitsPenetratedOnStart > 0)
+		{
+			out_NewPos = TerrainHit.ImpactPoint;
+			return false;
+		}
 
 		//resolve slide
 
@@ -131,41 +228,25 @@ bool CPlacementRuler::TryEnforceBuildingRules(const FHitResult &ForHit, APlaceab
 		if (aHits.Num() == 2)
 		{
 			DepenetrationDisp += aHits[1].ImpactNormal;
+			DepenetrationDisp /= 2;
 		}
-		OutNewPos = aHits[0].Location - pHullComp->RelativeLocation + DepenetrationDisp;
-		DrawDebugCrosshairs(pPlaceable->GetWorld(), OutNewPos, FRotator::ZeroRotator, 10, FColor::Red, false, 3, 1);
 
 		if(aHits.Num() > 2)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("%i oo"), aHits.Num());
+			UE_LOG(LogTemp, Warning, TEXT("Hit slides: %i"), aHits.Num());
 		}
+
+		out_NewPos = aHits[0].Location - pHullComp->RelativeLocation + DepenetrationDisp;
+		out_NewPos.Z = TerrainHit.ImpactPoint.Z;
+		return true;
 		
-		/*
-		//no conflicting normals, determine slide direction
-		auto PlacementDisp{ ForHit.ImpactPoint - pPlaceable->GetActorLocation() };
-		auto SlideDirection{ PlacementDisp.GetSafeNormal2D() };
-
-		float SlideCoeffProduct{ 1 };
-		for(auto &&Hit : aHits)
-		{
-			//zero means no slide
-			auto SlideCoeff{ 1 + FMath::Clamp(DotProduct(SlideDirection, Hit.ImpactNormal), -1, 0) };
-			SlideCoeffProduct *= SlideCoeff;
-
-			auto PlaceableLoc{ Hit.Location - Cast<USceneComponent>(MeshComps[0])->RelativeLocation };
-
-		}
-
-		return false;
-		*/
 	}
 	else
 	{
 		//no sweep results => set to location
-		OutNewPos = ForHit.ImpactPoint;	
+		out_NewPos = TerrainHit.ImpactPoint;
+		return true;
 	}
-	   
-	return true;
 
 
 }
@@ -176,5 +257,18 @@ FVector CPlacementRuler::ComputeTerrainDepenetration(const FHitResult &ForHit, c
 	//any intersections with terrain objects ?
 		//yes -> 
 	return FVector::ZeroVector;
+
+}
+
+void CPlacementRuler::HandlePenetratingHits(APlaceableBase *pPlaceable) const
+{
+	
+
+}
+
+bool TraceForTerrainUnderCursor(FHitResult& OutHit, const UWorld* pWorld)
+{
+	return pWorld->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel3, true, OutHit);
+	   
 
 }

@@ -29,10 +29,10 @@ ARTSPlayerEye::ARTSPlayerEye() :
 	m_MouseTurnSpeed{ 1 },
 	m_CameraMaxPitch{ 90 },
 	m_CameraMinPitch{ 0 },
-	m_bWasPlaceablePlaceable{ false },
+	m_BuildingRotationSteps{ 8 },
+	m_bIsPlaceablePlaceable{ false },
 	m_ZoomTargetDist{ 300 },
 	m_ZoomTargetPitch{ -30 },
-	m_CursorRootLastPlaceablePos{ 0, 0, 0},
 	m_CameraState{ this },
 	m_PlacementState{ this }
 {
@@ -57,7 +57,8 @@ ARTSPlayerEye::ARTSPlayerEye() :
 	m_aZoomNodes.Add(FZoomNode{ 300, 30 });
 
 	m_pCursorRoot = CreateDefaultSubobject<USceneComponent>(TEXT("CursorRoot"));
-	m_pCursorRoot->SetupAttachment(GetRootComponent());
+	m_pCursorRoot->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	//m_pCursorRoot->SetupAttachment(GetRootComponent());
 	
 
 }
@@ -74,7 +75,7 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 	DiscardCurrentPlaceablePreview();
 
 	FHitResult Hit;
-	if(TraceForTerrainUnderCursor(Hit))
+	if(TraceForTerrainUnderCursor(Hit, GetWorld()))
 	{
 		m_pCursorRoot->SetWorldLocation(Hit.ImpactPoint);
 	}
@@ -91,6 +92,9 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 	m_pPlaceablePreviewCurrent->AttachToComponent(m_pCursorRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	m_pPlaceablePreviewCurrent->SetActorRelativeLocation({ 0,0,0 });
 	
+	m_pPlaceablePreviewCurrent->NotifyUnplaceable();
+	m_bIsPlaceablePlaceable = false;
+
 	m_PlacementState.HandleInput(EAbstractInputEvent::PlaceBuilding_Start);
 	
 
@@ -224,8 +228,6 @@ void ARTSPlayerEye::ZoomIn()
 
 
 }
-
-
 #pragma endregion
 
 void ARTSPlayerEye::SetPreviewCursorPosWs(const FVector &NewPos)
@@ -242,28 +244,25 @@ void ARTSPlayerEye::UpdateCurrentPlaceablePreview()
 		return;
 	}
 
-	FHitResult Hit{};
-	FVector PlaceablePos;
-	bool bIsCurrentPlaceablePlaceable{ GetClosestPlaceablePositionForCurrentPlaceable(PlaceablePos, &Hit) };
+	FVector NewRootPos;	
+	bool bIsCurrentPlaceablePlaceable{ m_PlacementRuler.HandleBuildingRules(m_pPlaceablePreviewCurrent, NewRootPos) };
+	m_pCursorRoot->SetWorldLocation(NewRootPos);				
 
 	if(bIsCurrentPlaceablePlaceable)
 	{
-		if(!m_bWasPlaceablePlaceable)
+		if(!m_bIsPlaceablePlaceable)
 		{
 			m_pPlaceablePreviewCurrent->NotifyPlaceable();
-			m_bWasPlaceablePlaceable = true;
+			m_bIsPlaceablePlaceable = true;
 		}
-		m_CursorRootLastPlaceablePos = PlaceablePos;
-		m_pCursorRoot->SetWorldLocation(PlaceablePos);				
 	}
 	else
 	{
-		if(m_bWasPlaceablePlaceable)
+		if(m_bIsPlaceablePlaceable)
 		{
 			m_pPlaceablePreviewCurrent->NotifyUnplaceable();
-			m_bWasPlaceablePlaceable = false;			
-		}
-		m_pCursorRoot->SetWorldLocation(m_CursorRootLastPlaceablePos);
+			m_bIsPlaceablePlaceable = false;			
+		}		
 	}
 	
 
@@ -276,7 +275,7 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 		return false;
 	}
 
-	if(m_bWasPlaceablePlaceable)
+	if(m_bIsPlaceablePlaceable)
 	{
 		auto *pClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
 		m_pPlaceablePreviewCurrent->Destroy();
@@ -299,7 +298,7 @@ void ARTSPlayerEye::DiscardCurrentPlaceablePreview()
 		UE_LOG(LogCanyonPlacement, Log, TEXT("Discarding current placeable."));
 		m_pPlaceablePreviewCurrent->Destroy();
 	}
-	m_bWasPlaceablePlaceable = false;
+	m_bIsPlaceablePlaceable = false;
 
 
 }
@@ -335,33 +334,6 @@ void ARTSPlayerEye::BeginPlay()
 
 }
 
-bool ARTSPlayerEye::GetClosestPlaceablePositionForCurrentPlaceable(FVector &OutPosition, FHitResult *pOutHit)
-{
-	if(!m_pPlaceablePreviewCurrent)
-	{
-		return false;
-	}
-
-	//If any hit
-	FHitResult Hit{};
-	FHitResult &TargetHit{ pOutHit == nullptr ? Hit : *pOutHit };
-
-	if (TraceForTerrainUnderCursor(TargetHit))
-	{		
-		//If building can be placed
-		return m_PlacementRuler.TryEnforceBuildingRules(TargetHit, m_pPlaceablePreviewCurrent, OutPosition);
-	}
-	return false;
-		
-
-}
-
-bool ARTSPlayerEye::TraceForTerrainUnderCursor(FHitResult &OutHit)
-{
-	return GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel3, true, OutHit);
-
-
-}
 
 #pragma region Input
 void ARTSPlayerEye::SetupPlayerInputComponent(UInputComponent *pInputComponent)
@@ -387,6 +359,10 @@ void ARTSPlayerEye::SetupPlayerInputComponent(UInputComponent *pInputComponent)
 	
 	pInputComponent->BindAction(TEXT("ZoomOut"), IE_Pressed, this, &ARTSPlayerEye::ZoomOut);
 	pInputComponent->BindAction(TEXT("ZoomIn"), IE_Pressed, this, &ARTSPlayerEye::ZoomIn);
+
+	pInputComponent->BindAction(TEXT("IncreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::IncreaseBuildingRot);
+	pInputComponent->BindAction(TEXT("DecreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::DecreaseBuildingRot);
+
 
 }
 
@@ -434,5 +410,28 @@ void ARTSPlayerEye::LeaveSeamlessRotation()
 
 }
 
+void ARTSPlayerEye::IncreaseBuildingRot()
+{
+	if(m_pPlaceablePreviewCurrent)
+	{
+		const auto RotStep{ 360.f / m_BuildingRotationSteps };
+	   
+		m_pCursorRoot->AddWorldRotation( {0, RotStep, 0} );
+	}
+		
+
+}
+
+void ARTSPlayerEye::DecreaseBuildingRot()
+{
+	if(m_pPlaceablePreviewCurrent)
+	{
+		const auto RotStep{ 360.f / m_BuildingRotationSteps };
+
+		m_pCursorRoot->AddWorldRotation( {0, -RotStep, 0} );
+	}
+
+
+}
 #pragma endregion
 

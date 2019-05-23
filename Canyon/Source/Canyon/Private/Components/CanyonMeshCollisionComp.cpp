@@ -5,8 +5,9 @@
 UCanyonMeshCollisionComp::UCanyonMeshCollisionComp()
 {
 	ToggleVisibility();
-	SetCollisionObjectType(GetCCPlaceables());
-	SetCollisionResponseToChannel(GetCCTerrain(), ECollisionResponse::ECR_Ignore);
+	SetCollisionProfileName(TEXT("Placeables"));
+	//SetCollisionObjectType(GetCCPlaceables());
+	//SetCollisionResponseToChannel(GetCCTerrain(), ECollisionResponse::ECR_Block);
 }
 
 void UCanyonMeshCollisionComp::BeginPlay()
