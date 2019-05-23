@@ -45,9 +45,6 @@ void ACanyonGM::AddPointsRequired(const int32 Points)
 
 }
 
-
-//Protected-------------------
-
 void ACanyonGM::OnDeckSelected(int32 DeckIndex)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Deck Name: %s"), *m_apCurrentDeckData[DeckIndex]->GetName());
@@ -55,6 +52,23 @@ void ACanyonGM::OnDeckSelected(int32 DeckIndex)
 
 
 }
+
+float ACanyonGM::GetPlaceableDependencyRadius(const FString& CategoryName) const
+{
+	return (*m_pInfluenceData)[CategoryName].m_InfluenceRadius;
+
+
+}
+
+TSoftClassPtr<UUserWidget> ACanyonGM::GetPlaceableWidget(const FString& CategoryName) const
+{
+	return (*m_pInfluenceData)[CategoryName].m_UiWidgetClass;
+
+
+}
+
+
+//Protected-------------------
 
 void ACanyonGM::BeginPlay()
 {

@@ -32,6 +32,10 @@ public:
 	UFUNCTION()
 		void OnDeckSelected(int32 DeckIndex);
 
+	float GetPlaceableDependencyRadius(const FString &CategoryName) const;
+
+	TSoftClassPtr<UUserWidget> GetPlaceableWidget(const FString &CategoryName) const;
+
 
 protected:
 	virtual void BeginPlay() override;

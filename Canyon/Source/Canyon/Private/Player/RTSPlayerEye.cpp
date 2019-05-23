@@ -57,8 +57,8 @@ ARTSPlayerEye::ARTSPlayerEye() :
 	m_aZoomNodes.Add(FZoomNode{ 300, 30 });
 
 	m_pCursorRoot = CreateDefaultSubobject<USceneComponent>(TEXT("CursorRoot"));
-	m_pCursorRoot->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-	//m_pCursorRoot->SetupAttachment(GetRootComponent());
+	//m_pCursorRoot->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	m_pCursorRoot->SetupAttachment(GetRootComponent());
 	
 
 }

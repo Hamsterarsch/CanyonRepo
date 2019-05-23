@@ -13,6 +13,7 @@
 #include "Misc/CanyonLogs.h"
 #include "Components/CanyonMeshCollisionComp.h"
 #include "ConstructorHelpers.h"
+#include "Misc/CanyonGM.h"
 
 
 APlaceablePreview::APlaceablePreview() :
@@ -87,16 +88,10 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 
 	pPreview->m_pMeshCollisionComp->RegisterComponent();
 
-	/*
-	FBodyInstance::InitBody
-	(
-		pPreview->m_pMeshCollisionComp->GetBodySetup(),
-		pPreview->m_pMeshCollisionComp->GetComponentTransform(),
-		pPreview->m_pMeshCollisionComp,
-		pPreview->GetWorld()->GetPhysicsScene()
-	);*/
+	auto CategoryName{ pCdo->GetInfluenceEnumClass()->GetDisplayNameTextByIndex(pCdo->GetInfluenceEnumValue()).ToString() };
+	auto DependencyRadius{ Cast<ACanyonGM>(pWorld->GetAuthGameMode())->GetPlaceableDependencyRadius(CategoryName) };
+	pPreview->SetInfluenceRadius(DependencyRadius);
 	
-	pPreview->SetInfluenceRadius(pCdo->GetInfluenceRadius());
 	pPreview->InitInfluenceDisplayWidget(pCdo->GetInfluenceWidgetClass());
 	pPreview->SetInfluenceDisplayed(0);
 

@@ -151,8 +151,8 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
 		ComponentQueryParams.bIgnoreTouches = true;
-		ComponentQueryParams.bTraceComplex = true;
-
+		//ComponentQueryParams.bTraceComplex = true;
+		
 		pHullComp->GetWorld()->ComponentSweepMulti
 		(
 			aHits,
