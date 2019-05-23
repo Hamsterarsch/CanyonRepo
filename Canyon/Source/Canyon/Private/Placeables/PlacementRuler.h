@@ -7,7 +7,7 @@ class CPlacementRuler
 public:
 	CPlacementRuler();
 
-	bool TryEnforceBuildingRules(const FHitResult &ForHit, APlaceableBase *pPlaceable, FVector &OutNewPos);
+	bool HandleBuildingRules(APlaceableBase *pPlaceable, FVector &out_NewPos);
 
 	//input hit result and preview building
 	//sets the building to the impact point of the hit or tries to slide towards it 
@@ -17,6 +17,14 @@ public:
 	//reqs
 	//max accepted normal angle for placement
 
+private:
+	void HandlePenetratingHits(APlaceableBase *pPlaceable) const;
+
+	bool m_bInResnapRecovery;
+	FVector m_LastHitPosition;
+
 
 };
+
+bool TraceForTerrainUnderCursor(FHitResult &OutHit, const UWorld *pWorld);
 
