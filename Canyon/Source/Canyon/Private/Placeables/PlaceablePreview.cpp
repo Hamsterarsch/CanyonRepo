@@ -132,50 +132,6 @@ void APlaceablePreview::NotifyUnplaceable()
 
 //Private----------------------------
 
-void APlaceablePreview::BeginOverlapDependencyRadius
-(
-	UPrimitiveComponent *pOverlappedComponent,
-	AActor *pOtherActor,
-	UPrimitiveComponent *pOtherComp,
-	int32 OtherBodyIndex, 
-	bool bFromSweep,
-	const FHitResult& SweepResult
-)
-{
-	//only handle subclasses of a placeable
-	auto *pOverlappedPlaceable{ Cast<APlaceableBase>(pOtherActor) };
-	if(!pOverlappedPlaceable || pOverlappedPlaceable == this)
-	{
-		return;
-	}
-
-	m_InfluenceCurrentGain += pOverlappedPlaceable->BeginInfluenceVisFor(m_PreviewedClass);
-	SetInfluenceDisplayed(m_InfluenceCurrentGain);
-
-
-}
-
-void APlaceablePreview::EndOverlapDependencyRadius
-(
-	UPrimitiveComponent *pOverlappedComponent, 
-	AActor *pOtherActor,
-	UPrimitiveComponent *pOtherComp,
-	int32 OtherBodyIndex
-)
-{
-	//only handle subclasses of a placeable
-	auto *pOverlappedPlaceable{ Cast<APlaceableBase>(pOtherActor) };
-	if (!pOverlappedPlaceable || pOverlappedPlaceable == this)
-	{
-		return;
-	}
-
-	m_InfluenceCurrentGain -= pOverlappedPlaceable->EndInfluenceVis();
-	SetInfluenceDisplayed(m_InfluenceCurrentGain);
-
-
-}
-
 void APlaceablePreview::ActorBeginOverlap(AActor *pOverlappedActor, AActor *pOtherActor)
 {
 	auto *pOtherPlaceable{ Cast<APlaceableBase>(pOtherActor) };

@@ -33,26 +33,6 @@ public:
 
 private:
 	UFUNCTION()
-		void BeginOverlapDependencyRadius
-		(
-			UPrimitiveComponent *pOverlappedComponent,
-			AActor *pOtherActor,
-			UPrimitiveComponent *pOtherComp,
-			int32 OtherBodyIndex,
-			bool bFromSweep,
-			const FHitResult &SweepResult
-		);
-
-	UFUNCTION()
-		void EndOverlapDependencyRadius
-		(
-			UPrimitiveComponent *pOverlappedComponent,
-			AActor *pOtherActor,
-			UPrimitiveComponent *pOtherComp,
-			int32 OtherBodyIndex
-		);
-
-	UFUNCTION()
 		void ActorBeginOverlap(AActor *pOverlappedActor, AActor *pOtherActor);
 
 	UFUNCTION()
