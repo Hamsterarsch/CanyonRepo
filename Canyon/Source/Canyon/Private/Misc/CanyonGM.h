@@ -21,9 +21,9 @@ public:
 
 	int32 GetInfluenceForPlaceable(const FString &FirstInfluenceQualifier, const FString &SecondInfluenceQualifier) const;
 
-	void AddPointsCurrent(int32 Points);
+	int32 GetInfluenceForBaseCategory(const FString &CategoryName) const;
 
-	void AddPointsRequired(int32 Points);
+	void AddPointsCurrent(int32 Points);
 
 	UFUNCTION(BlueprintCallable)
 		inline int32 GetPointsCurrent() const { return m_PointsCurrent; }
@@ -62,6 +62,14 @@ protected:
 		TArray<class UDeckDatabaseNative *> GetRandomDecks(int32 NumDecks, FString SubCategory = "") const;
 
 
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UDeckWidgetBase> m_DeckWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UPlaceableWidgetBase> m_PlaceableWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UPointIndicatorWidgetBase> m_PointIndicatorWidgetClass;
 
 
 private:
@@ -69,12 +77,8 @@ private:
 
 	void ReceiveOnInvokeNewDecks();
 
+	void AddPointsRequired(int32 Points);
 
-	UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<class UDeckWidgetBase> m_DeckWidgetClass;
-
-	UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<class UPlaceableWidgetBase> m_PlaceableWidgetClass;
 
 	UPROPERTY()
 		class UInfluenceDataObject *m_pInfluenceData;
@@ -84,6 +88,9 @@ private:
 
 	UPROPERTY()
 		class UPlaceableWidgetBase *m_pPlaceableWidget;
+
+	UPROPERTY()
+		class UPointIndicatorWidgetBase *m_pPointWidget;
 
 	UPROPERTY()
 		TArray<class UDeckDatabaseNative *> m_apCurrentDeckData;

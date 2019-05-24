@@ -88,12 +88,14 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 
 	pPreview->m_pMeshCollisionComp->RegisterComponent();
 
+	auto *pGm{ Cast<ACanyonGM>(pWorld->GetAuthGameMode()) };
 	auto CategoryName{ pCdo->GetInfluenceEnumClass()->GetDisplayNameTextByIndex(pCdo->GetInfluenceEnumValue()).ToString() };
-	auto DependencyRadius{ Cast<ACanyonGM>(pWorld->GetAuthGameMode())->GetPlaceableDependencyRadius(CategoryName) };
+	auto DependencyRadius{ pGm->GetPlaceableDependencyRadius(CategoryName) };
 	pPreview->SetInfluenceRadius(DependencyRadius);
-	
+
+	pPreview->m_InfluenceCurrentGain = pGm->GetInfluenceForBaseCategory(CategoryName);
 	pPreview->InitInfluenceDisplayWidget(pCdo->GetInfluenceWidgetClass());
-	pPreview->SetInfluenceDisplayed(0);
+	pPreview->SetInfluenceDisplayed(pPreview->m_InfluenceCurrentGain);
 
 	UGameplayStatics::FinishSpawningActor(pPreview, Transform);
 	return pPreview;

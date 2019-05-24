@@ -16,6 +16,7 @@
 #include "Misc/CanyonHelpers.h"
 #include "Components/StaticMeshCanyonComp.h"
 #include "Placeables/PlaceablePreview.h"
+#include "Misc/CanyonGM.h"
 
 
 const FName ARTSPlayerEye::s_AxisMouseX{ TEXT("MouseX") };
@@ -278,6 +279,10 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 	if(m_bIsPlaceablePlaceable)
 	{
 		auto *pClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
+
+		auto *pGm{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
+		pGm->AddPointsCurrent(m_pPlaceablePreviewCurrent->GetCurrentInfluence());
+
 		m_pPlaceablePreviewCurrent->Destroy();
 		m_pPlaceablePreviewCurrent = nullptr;
 

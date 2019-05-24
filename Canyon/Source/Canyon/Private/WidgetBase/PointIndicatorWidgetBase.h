@@ -13,5 +13,13 @@ UCLASS()
 class UPointIndicatorWidgetBase : public UUserWidget
 {
 	GENERATED_BODY()
+
+public:
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnPointsCurrentChanged(int32 NewCurrentPoints);
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnPointsRequiredChanged(int32 NewPointsRequired);
+
 	
 };

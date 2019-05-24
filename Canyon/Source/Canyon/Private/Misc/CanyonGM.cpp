@@ -9,6 +9,7 @@
 #include "Misc/CanyonHelpers.h"
 #include "WidgetBase/DeckWidgetBase.h"
 #include "WidgetBase/PlaceableWidgetBase.h"
+#include "WidgetBase/PointIndicatorWidgetBase.h"
 #include <set>
 
 //Public-------------
@@ -31,9 +32,18 @@ int32 ACanyonGM::GetInfluenceForPlaceable
 
 }
 
+int32 ACanyonGM::GetInfluenceForBaseCategory(const FString& CategoryName) const
+{
+	return (*m_pInfluenceData)[CategoryName].m_BasePointAmount;
+
+
+}
+
 void ACanyonGM::AddPointsCurrent(const int32 Points)
 {
 	m_PointsCurrent += Points;
+	m_pPointWidget->OnPointsCurrentChanged(m_PointsCurrent);
+
 	ReceiveOnPointsChanged();
 
 
@@ -42,6 +52,8 @@ void ACanyonGM::AddPointsCurrent(const int32 Points)
 void ACanyonGM::AddPointsRequired(const int32 Points)
 {
 	m_PointsRequired += Points;
+	m_pPointWidget->OnPointsRequiredChanged(m_PointsRequired);
+
 	ReceiveOnPointsChanged();
 
 
@@ -73,10 +85,14 @@ void ACanyonGM::OnDeckSelected(const int32 DeckIndex)
 		auto AmountDist{ MaxAmount - MinAmount };
 		auto BuildingAmount{ MinAmount + FMath::RoundToInt(static_cast<float>(FMath::Rand()) / RAND_MAX * AmountDist) };
 
+		//Spawn widget
 		TSubclassOf<UUserWidget> AsSubclass{ SafeLoadClassPtr(GetPlaceableWidget(Category)) };
-
 		m_pPlaceableWidget->AddPlaceableWidget(AsSubclass, BuildingAmount, Category);
-		
+
+		//Update needed points
+		AddPointsRequired(BuildingAmount * (*m_pInfluenceData)[Category].m_BasePointRequirement);
+
+
 	}
 
 	m_pDeckWidget->HideWidget();
@@ -113,6 +129,9 @@ void ACanyonGM::BeginPlay()
 
 	m_pPlaceableWidget = CreateWidget<UPlaceableWidgetBase>(GetWorld(), m_PlaceableWidgetClass.Get());
 	m_pPlaceableWidget->AddToViewport();
+
+	m_pPointWidget = CreateWidget<UPointIndicatorWidgetBase>(GetWorld(), m_PointIndicatorWidgetClass.Get());
+	m_pPointWidget->AddToViewport();
 
 	//ReceiveOnInvokeNewDecks();
 	m_OnRequiredPointsReached.Broadcast();

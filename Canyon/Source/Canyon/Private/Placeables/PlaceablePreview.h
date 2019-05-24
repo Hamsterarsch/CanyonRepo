@@ -26,6 +26,8 @@ public:
 
 	UClass *GetPreviewedClass() const;
 
+	inline int32 GetCurrentInfluence() const { return m_InfluenceCurrentGain; }
+
 	void NotifyPlaceable();
 
 	void NotifyUnplaceable();
