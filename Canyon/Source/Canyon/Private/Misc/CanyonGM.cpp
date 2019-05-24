@@ -218,7 +218,7 @@ TArray<UDeckDatabaseNative *> ACanyonGM::GetRandomDecks(const int32 NumDecks, FS
 		SubCategory.InsertAt(0, '/');
 	}
 	
-	Filter.PackagePaths.Add(*(TEXT("/Game/Placeables/Decks") + SubCategory));
+	Filter.PackagePaths.Add( *(TEXT("/Game/Placeables/Decks") + SubCategory));
 	Filter.bRecursivePaths = true;
 	
 	TArray<FAssetData> aFoundAssets;

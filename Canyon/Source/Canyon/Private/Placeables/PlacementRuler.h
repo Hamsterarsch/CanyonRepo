@@ -22,6 +22,7 @@ private:
 
 	bool m_bInResnapRecovery;
 	FVector m_LastHitPosition;
+	FVector m_LastPlaceablePosition;
 
 
 };

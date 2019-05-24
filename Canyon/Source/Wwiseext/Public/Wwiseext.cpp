@@ -3,5 +3,5 @@
 #include "Wwiseext.h"
 #include "Modules/ModuleManager.h"
 
-IMPLEMENT_MODULE(FDefaultModuleImpl, Wwiseext )
+IMPLEMENT_GAME_MODULE(FDefaultModuleImpl, Wwiseext)
 

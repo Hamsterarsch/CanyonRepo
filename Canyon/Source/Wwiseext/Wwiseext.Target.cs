@@ -6,10 +6,10 @@ using System.Collections.Generic;
 public class WwiseextTarget : TargetRules
 {
 	public WwiseextTarget(TargetInfo Target) : base(Target)
-	{
-		Type = TargetType.Editor;
+    {	
+        //Type = TargetType.Game;
 		
-		ExtraModuleNames.AddRange( new string[] { } );
+		ExtraModuleNames.Add("Wwiseext");
 		
 		
 	}

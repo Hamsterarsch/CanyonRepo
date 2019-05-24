@@ -9,7 +9,8 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 
 CPlacementRuler::CPlacementRuler() :
-	m_bInResnapRecovery{ false }
+	m_bInResnapRecovery{ false },
+	m_LastHitPosition{ EForceInit::ForceInitToZero }
 {
 }
 
@@ -52,12 +53,14 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 		const auto RayExtrusionFactor{ (TargetZHeight - ScreenWorldPos.Z) / ScreenWorldDir.Z };
 
 		out_NewPos = ScreenWorldPos + ScreenWorldDir * RayExtrusionFactor;
+		m_LastPlaceablePosition = out_NewPos;
 		return false;
 
 
 	}
 	//depen
 	TerrainHit.ImpactPoint.Z += .5;
+	m_LastHitPosition = TerrainHit.ImpactPoint;
 	
 	//Normal constraint
 	constexpr float NormalTolerance{ 10e-6 };
@@ -69,6 +72,7 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 	)
 	{
 		out_NewPos = TerrainHit.ImpactPoint;
+		m_LastPlaceablePosition = out_NewPos;
 		return false;
 	}
 
@@ -83,6 +87,7 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 		)
 		{
 			out_NewPos = TerrainHit.ImpactPoint;
+			m_LastPlaceablePosition = out_NewPos;
 			return false;
 		}
 	}
@@ -114,7 +119,11 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 
 	//handle building penetrations after snapping
 	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
-	if(m_bInResnapRecovery)
+
+	auto MovementDelta{FVector::Dist(m_LastPlaceablePosition, TerrainHit.ImpactPoint) };
+	
+	UE_LOG(LogTemp, Log, TEXT("%f"), MovementDelta);
+	if(m_bInResnapRecovery || FMath::IsNearlyZero(MovementDelta, 0.0001f ))
 	{
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
@@ -129,11 +138,12 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 			pHullComp->GetComponentQuat(),
 			ComponentQueryParams
 		);
-
+		
 		UE_LOG(LogTemp, Log, TEXT("=>  %i"), aOverlaps.Num());
 		if(aOverlaps.Num() != 0)
 		{
 			out_NewPos = TerrainHit.ImpactPoint;
+			m_LastPlaceablePosition = out_NewPos;
 			return false;
 
 
@@ -180,6 +190,7 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 		if(HitsPenetratedOnStart > 0)
 		{
 			out_NewPos = TerrainHit.ImpactPoint;
+			m_LastPlaceablePosition = out_NewPos;
 			return false;
 		}
 
@@ -238,6 +249,7 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 
 		out_NewPos = aHits[0].Location - pHullComp->RelativeLocation + DepenetrationDisp;
 		out_NewPos.Z = TerrainHit.ImpactPoint.Z;
+		m_LastPlaceablePosition = out_NewPos;
 		return true;
 		
 	}
@@ -245,6 +257,7 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 	{
 		//no sweep results => set to location
 		out_NewPos = TerrainHit.ImpactPoint;
+		m_LastPlaceablePosition = out_NewPos;
 		return true;
 	}
 

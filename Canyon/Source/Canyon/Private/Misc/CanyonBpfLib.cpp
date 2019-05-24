@@ -5,6 +5,7 @@
 #include "Misc/CanyonHelpers.h"
 #include "Placeables/PlaceableBase.h"
 #include "AssetRegistryModule.h"
+#include "Paths.h"
 
 TSubclassOf<APlaceableBase> UCanyonBpfLib::GetCategoryPlaceableClass(FString Category)
 {
@@ -24,6 +25,7 @@ TSubclassOf<APlaceableBase> UCanyonBpfLib::GetCategoryPlaceableClass(FString Cat
 	Filter.PackagePaths.Add(*(TEXT("/Game/Placeables") + Category));
 	Filter.bRecursivePaths = true;
 
+	Registry.Get().ScanFilesSynchronous({ TEXT("/Game/Placeables") });
 	TArray<FAssetData> aFoundAssets;
 	Registry.Get().GetAssets(Filter, aFoundAssets);
 
@@ -32,10 +34,30 @@ TSubclassOf<APlaceableBase> UCanyonBpfLib::GetCategoryPlaceableClass(FString Cat
 		return nullptr;
 	}
 	
-	auto *pAsset = aFoundAssets[GetRandomIndex(aFoundAssets.Num())].GetAsset();
+	auto &AssetData{ aFoundAssets[GetRandomIndex(aFoundAssets.Num())] };
+
+
+	//todo: clean this up, it should suffic to add _C to the found assets path and loading that (this equals the generated class)
+#if WITH_EDITOR
+	auto *pAsset{ AssetData.GetAsset() };
 	auto *pAsBp{ Cast<UBlueprint>(pAsset) };
 	   	 	
 	return pAsBp->GeneratedClass->IsChildOf<APlaceableBase>() ? pAsBp->GeneratedClass.Get() : nullptr;
+#else
+	auto PathToGenerated{ AssetData.TagsAndValues.FindTag(TEXT("GeneratedClass")) };
+	auto ClassObjectPath{ FPackageName::ExportTextPathToObjectPath(PathToGenerated.GetValue()) };
+
+	auto GeneratedClass{ LoadObject<UBlueprintGeneratedClass>(nullptr, *ClassObjectPath) };
+	UE_LOG(LogTemp, Warning, TEXT("Found generated class %s at %s"), *GeneratedClass->GetName(), *ClassObjectPath);
+
+	auto b = GeneratedClass->IsChildOf<APlaceableBase>();
+	if(!b)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("not a subclass of placeable"));
+	}
+
+	return b ? GeneratedClass : nullptr;
+#endif
 
 
 }
