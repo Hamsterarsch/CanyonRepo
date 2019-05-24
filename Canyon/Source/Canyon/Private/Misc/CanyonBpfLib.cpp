@@ -12,17 +12,18 @@ TSubclassOf<APlaceableBase> UCanyonBpfLib::GetCategoryPlaceableClass(FString Cat
 	auto &Registry{ FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")) };
 
 	FARFilter Filter{};
-	Filter.ClassNames.Add(*APlaceableBase::StaticClass()->GetName());
-	Filter.bRecursiveClasses = true;
+	//todo: doesnt work for assets based on bps deriving from this base
+	//Filter.ClassNames.Add(*APlaceableBase::StaticClass()->GetName());
+	//Filter.bRecursiveClasses = true;
 
 	if(!Category.IsEmpty())
 	{
 		Category.InsertAt(0, '/');
 	}
 
-	Filter.PackagePaths.Add(*(TEXT("/Game/Placeables/") + Category));
+	Filter.PackagePaths.Add(*(TEXT("/Game/Placeables") + Category));
 	Filter.bRecursivePaths = true;
-	
+
 	TArray<FAssetData> aFoundAssets;
 	Registry.Get().GetAssets(Filter, aFoundAssets);
 
@@ -30,8 +31,11 @@ TSubclassOf<APlaceableBase> UCanyonBpfLib::GetCategoryPlaceableClass(FString Cat
 	{
 		return nullptr;
 	}
-
-	return aFoundAssets[GetRandomIndex(aFoundAssets.Num())].GetAsset()->GetClass();
+	
+	auto *pAsset = aFoundAssets[GetRandomIndex(aFoundAssets.Num())].GetAsset();
+	auto *pAsBp{ Cast<UBlueprint>(pAsset) };
+	   	 	
+	return pAsBp->GeneratedClass->IsChildOf<APlaceableBase>() ? pAsBp->GeneratedClass.Get() : nullptr;
 
 
 }
