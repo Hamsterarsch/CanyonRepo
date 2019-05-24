@@ -12,6 +12,9 @@ class UDeckDatabaseNative : public UDataAsset
 
 public:
 	UFUNCTION(BlueprintImplementableEvent)
+		int32 GetNumData() const;
+
+	UFUNCTION(BlueprintImplementableEvent)
 		TSubclassOf<UUserWidget> GetDeckWidget() const;
 
 	UFUNCTION(BlueprintImplementableEvent)

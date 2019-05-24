@@ -6,7 +6,9 @@
 #include "InfluenceDataObject.h"
 #include "AssetRegistryModule.h"
 #include "Placeables/DeckDatabaseNative.h"
+#include "Misc/CanyonHelpers.h"
 #include "WidgetBase/DeckWidgetBase.h"
+#include "WidgetBase/PlaceableWidgetBase.h"
 #include <set>
 
 //Public-------------
@@ -45,9 +47,38 @@ void ACanyonGM::AddPointsRequired(const int32 Points)
 
 }
 
-void ACanyonGM::OnDeckSelected(int32 DeckIndex)
+void ACanyonGM::SelectNewDeck()
+{
+	if(m_PointsCurrent <= m_PointsRequired)
+	{
+		ReceiveOnInvokeNewDecks();	
+	}
+
+
+}
+
+void ACanyonGM::OnDeckSelected(const int32 DeckIndex)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Deck Name: %s"), *m_apCurrentDeckData[DeckIndex]->GetName());
+
+	auto *pSelectedDeck{ m_apCurrentDeckData[DeckIndex] };
+	auto NumDeckData{ pSelectedDeck->GetNumData() };
+
+	for(int32 DataIndex{ 0 }; DataIndex < NumDeckData; ++DataIndex)
+	{		
+		auto Category{ pSelectedDeck->GetDependencyCategoryAtIndex(DataIndex) };
+		
+		auto MinAmount{ pSelectedDeck->GetMinAmountAtIndex(DataIndex) };
+		auto MaxAmount{ pSelectedDeck->GetMaxAmountAtIndex(DataIndex) };
+		auto AmountDist{ MaxAmount - MinAmount };
+		auto BuildingAmount{ MinAmount + FMath::RoundToInt(static_cast<float>(FMath::Rand()) / RAND_MAX * AmountDist) };
+
+		TSubclassOf<UUserWidget> AsSubclass{ SafeLoadClassPtr(GetPlaceableWidget(Category)) };
+
+		m_pPlaceableWidget->AddPlaceableWidget(AsSubclass, BuildingAmount, Category);
+		
+	}
+
 	m_pDeckWidget->HideWidget();
 
 
@@ -80,8 +111,11 @@ void ACanyonGM::BeginPlay()
 	m_pDeckWidget->HideWidget();
 	m_pDeckWidget->AddToViewport();
 
-	//ReceiveOnInvokeNewDecks();
+	m_pPlaceableWidget = CreateWidget<UPlaceableWidgetBase>(GetWorld(), m_PlaceableWidgetClass.Get());
+	m_pPlaceableWidget->AddToViewport();
 
+	//ReceiveOnInvokeNewDecks();
+	m_OnRequiredPointsReached.Broadcast();
 
 }
 
@@ -99,7 +133,7 @@ void ACanyonGM::ReceiveOnPointsChanged()
 {
 	if(m_PointsCurrent >= m_PointsRequired)
 	{
-		ReceiveOnInvokeNewDecks();
+		m_OnRequiredPointsReached.Broadcast();
 	}
 
 
@@ -182,16 +216,6 @@ TArray<UDeckDatabaseNative *> ACanyonGM::GetRandomDecks(const int32 NumDecks, FS
 	}
 
 	return aOutDecks;
-
-
-}
-
-
-//Global----------------------
-
-int32 GetRandomIndex(int32 ArrSize)
-{
-	return FMath::FloorToInt((static_cast<float>(FMath::Rand()) / RAND_MAX) * (ArrSize - 1));
 
 
 }

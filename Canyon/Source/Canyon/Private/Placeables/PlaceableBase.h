@@ -26,8 +26,6 @@ public:
 
 	inline class UCanyonMeshCollisionComp *GetCanyonMeshCollision() { return m_pMeshCollisionComp; }
 
-	inline float GetInfluenceRadius() const { return m_InfluenceRadius; }
-
 	UClass *GetInfluenceWidgetClass() const;
 
 	int32 BeginInfluenceVisFor(const TSubclassOf<APlaceableBase> &TargetClass);
@@ -60,9 +58,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 		TEnumAsByte<EPhysicalSurface> m_TargetSurface;
-
-	UPROPERTY(EditDefaultsOnly)
-		float m_InfluenceRadius;
 
 	UPROPERTY()
 		class UWidgetComponent *m_pInfluenceWidgetComp;

@@ -6,6 +6,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "CanyonGM.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSimpleDynamicMulticastDelegate);
+
 /**
  * 
  */
@@ -29,12 +31,19 @@ public:
 	UFUNCTION(BlueprintCallable)
 		inline int32 GetPointsRequired() const { return m_PointsRequired; }
 
+	UFUNCTION(BlueprintCallable)
+		void SelectNewDeck();
+
 	UFUNCTION()
 		void OnDeckSelected(int32 DeckIndex);
-
+	   	
 	float GetPlaceableDependencyRadius(const FString &CategoryName) const;
 
 	TSoftClassPtr<UUserWidget> GetPlaceableWidget(const FString &CategoryName) const;
+
+
+	UPROPERTY(BlueprintAssignable)
+		 FSimpleDynamicMulticastDelegate m_OnRequiredPointsReached;
 
 
 protected:
@@ -53,6 +62,8 @@ protected:
 		TArray<class UDeckDatabaseNative *> GetRandomDecks(int32 NumDecks, FString SubCategory = "") const;
 
 
+
+
 private:
 	void ReceiveOnPointsChanged();
 
@@ -62,11 +73,17 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 		TSubclassOf<class UDeckWidgetBase> m_DeckWidgetClass;
 
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UPlaceableWidgetBase> m_PlaceableWidgetClass;
+
 	UPROPERTY()
 		class UInfluenceDataObject *m_pInfluenceData;
 
 	UPROPERTY()
 		class UDeckWidgetBase *m_pDeckWidget;
+
+	UPROPERTY()
+		class UPlaceableWidgetBase *m_pPlaceableWidget;
 
 	UPROPERTY()
 		TArray<class UDeckDatabaseNative *> m_apCurrentDeckData;
@@ -78,4 +95,3 @@ private:
 	
 };
 
-int32 GetRandomIndex(int32 ArrSize);
