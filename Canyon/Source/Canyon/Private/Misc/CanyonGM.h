@@ -107,6 +107,7 @@ private:
 	int32 m_PointsRequired;
 	int32 m_DeckGenerationCurrent;
 	int32 m_BuildingsRemaining;
+	bool m_bIsDeckSelectPending;
 		
 	
 };

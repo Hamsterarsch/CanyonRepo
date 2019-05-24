@@ -19,7 +19,8 @@ ACanyonGM::ACanyonGM() :
 	m_PointsCurrent{ 0 },
 	m_PointsRequired{ 0 },
 	m_DeckGenerationCurrent{ 0 },
-	m_BuildingsRemaining{ 0 }
+	m_BuildingsRemaining{ 0 },
+	m_bIsDeckSelectPending{ true }
 {
 }
 
@@ -78,7 +79,7 @@ void ACanyonGM::SelectNewDeck()
 		ReceiveOnInvokeNewDecks();	
 	}
 
-	if(m_BuildingsRemaining <= 0)
+	if(m_BuildingsRemaining <= 0 && !m_bIsDeckSelectPending)
 	{
 		OnLoose();
 		//loose condition
@@ -117,6 +118,7 @@ void ACanyonGM::OnDeckSelected(const int32 DeckIndex)
 	}
 
 	m_pDeckWidget->HideWidget();
+	m_bIsDeckSelectPending = false;
 
 
 }
@@ -187,7 +189,9 @@ void ACanyonGM::ReceiveOnPointsChanged()
 void ACanyonGM::ReceiveOnInvokeNewDecks()
 {
 	m_pDeckWidget->ShowWidget();
-	 m_apCurrentDeckData = OnInvokeNewDecks(m_DeckGenerationCurrent);
+	m_apCurrentDeckData = OnInvokeNewDecks(m_DeckGenerationCurrent);
+
+	m_bIsDeckSelectPending = true;
 
 	for(auto *pDeck : m_apCurrentDeckData)
 	{
