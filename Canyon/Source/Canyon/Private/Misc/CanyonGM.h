@@ -71,6 +71,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 		TSubclassOf<class UPointIndicatorWidgetBase> m_PointIndicatorWidgetClass;
 
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UPrettyWidget> m_LooseWidgetClass;
+
 
 private:
 	void ReceiveOnPointsChanged();
@@ -78,6 +81,8 @@ private:
 	void ReceiveOnInvokeNewDecks();
 
 	void AddPointsRequired(int32 Points);
+
+	void OnLoose();
 
 
 	UPROPERTY()
@@ -93,12 +98,16 @@ private:
 		class UPointIndicatorWidgetBase *m_pPointWidget;
 
 	UPROPERTY()
+		class UPrettyWidget *m_pLooseWidget;
+
+	UPROPERTY()
 		TArray<class UDeckDatabaseNative *> m_apCurrentDeckData;
 
 	int32 m_PointsCurrent;
 	int32 m_PointsRequired;
 	int32 m_DeckGenerationCurrent;
-	
+	int32 m_BuildingsRemaining;
+		
 	
 };
 

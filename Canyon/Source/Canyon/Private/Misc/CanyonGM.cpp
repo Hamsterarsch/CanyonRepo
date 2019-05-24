@@ -10,6 +10,7 @@
 #include "WidgetBase/DeckWidgetBase.h"
 #include "WidgetBase/PlaceableWidgetBase.h"
 #include "WidgetBase/PointIndicatorWidgetBase.h"
+#include "WidgetBase/PrettyWidget.h"
 #include <set>
 
 //Public-------------
@@ -17,7 +18,8 @@
 ACanyonGM::ACanyonGM() :
 	m_PointsCurrent{ 0 },
 	m_PointsRequired{ 0 },
-	m_DeckGenerationCurrent{ 0 }
+	m_DeckGenerationCurrent{ 0 },
+	m_BuildingsRemaining{ 0 }
 {
 }
 
@@ -40,9 +42,12 @@ int32 ACanyonGM::GetInfluenceForBaseCategory(const FString& CategoryName) const
 }
 
 void ACanyonGM::AddPointsCurrent(const int32 Points)
-{
+{	
 	m_PointsCurrent += Points;
 	m_pPointWidget->OnPointsCurrentChanged(m_PointsCurrent);
+
+	//equivalent with 'a building was placed'
+	--m_BuildingsRemaining;
 
 	ReceiveOnPointsChanged();
 
@@ -59,11 +64,24 @@ void ACanyonGM::AddPointsRequired(const int32 Points)
 
 }
 
+void ACanyonGM::OnLoose()
+{
+	m_pLooseWidget->ShowWidget();
+
+
+}
+
 void ACanyonGM::SelectNewDeck()
 {
 	if(m_PointsCurrent <= m_PointsRequired)
 	{
 		ReceiveOnInvokeNewDecks();	
+	}
+
+	if(m_BuildingsRemaining <= 0)
+	{
+		OnLoose();
+		//loose condition
 	}
 
 
@@ -84,6 +102,9 @@ void ACanyonGM::OnDeckSelected(const int32 DeckIndex)
 		auto MaxAmount{ pSelectedDeck->GetMaxAmountAtIndex(DataIndex) };
 		auto AmountDist{ MaxAmount - MinAmount };
 		auto BuildingAmount{ MinAmount + FMath::RoundToInt(static_cast<float>(FMath::Rand()) / RAND_MAX * AmountDist) };
+
+		//Add amount
+		m_BuildingsRemaining += BuildingAmount;
 
 		//Spawn widget
 		TSubclassOf<UUserWidget> AsSubclass{ SafeLoadClassPtr(GetPlaceableWidget(Category)) };
@@ -133,8 +154,13 @@ void ACanyonGM::BeginPlay()
 	m_pPointWidget = CreateWidget<UPointIndicatorWidgetBase>(GetWorld(), m_PointIndicatorWidgetClass.Get());
 	m_pPointWidget->AddToViewport();
 
+	m_pLooseWidget = CreateWidget<UPrettyWidget>(GetWorld(), m_LooseWidgetClass.Get());
+	m_pLooseWidget->HideWidget();
+	m_pLooseWidget->AddToViewport();
+
 	//ReceiveOnInvokeNewDecks();
 	m_OnRequiredPointsReached.Broadcast();
+
 
 }
 
