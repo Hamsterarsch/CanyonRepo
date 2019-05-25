@@ -1,0 +1,12 @@
+if ${ TRAVIS_TAG } = built:
+
+language: cpp
+os: windows
+services:
+    - docker
+    
+jobs:
+    include:
+        - stage: build
+          script: ./build
+    

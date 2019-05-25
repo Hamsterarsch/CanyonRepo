@@ -1,0 +1,2 @@
+docker login registry.gitlab.com -u ${ REGISTRY_LOGIN } -p ${ REGISTRY_PASS }
+docker run -v ${ TRAVIS_BUILD_DIR }:"C:/ueproj/" registry.gitlab.com/hamsterarsch/ue4buildimage "C:/ueproj/ci_PackageShip.bat"
