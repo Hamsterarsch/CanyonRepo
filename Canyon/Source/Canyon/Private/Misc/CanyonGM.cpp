@@ -74,7 +74,7 @@ void ACanyonGM::OnLoose()
 
 void ACanyonGM::SelectNewDeck()
 {
-	if(m_PointsCurrent <= m_PointsRequired)
+	if(m_PointsCurrent >= m_PointsRequired)
 	{
 		ReceiveOnInvokeNewDecks();	
 	}
@@ -90,6 +90,7 @@ void ACanyonGM::SelectNewDeck()
 
 void ACanyonGM::OnDeckSelected(const int32 DeckIndex)
 {
+	m_bIsDeckSelectPending = false;
 	UE_LOG(LogTemp, Warning, TEXT("Deck Name: %s"), *m_apCurrentDeckData[DeckIndex]->GetName());
 
 	auto *pSelectedDeck{ m_apCurrentDeckData[DeckIndex] };

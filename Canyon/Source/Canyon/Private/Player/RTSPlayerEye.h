@@ -97,7 +97,7 @@ public:
 
 	bool TryCommitPlaceablePreview();
 
-	void DiscardCurrentPlaceablePreview();
+	void DiscardCurrentPlaceablePreview(bool bIsIntigatedByPlayer = false);
 
 
 	const static FName s_AxisMouseX;

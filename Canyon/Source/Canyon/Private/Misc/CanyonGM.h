@@ -41,6 +41,8 @@ public:
 
 	TSoftClassPtr<UUserWidget> GetPlaceableWidget(const FString &CategoryName) const;
 
+	//hack
+	void OnPlacementAborted() { ++m_BuildingsRemaining; }
 
 	UPROPERTY(BlueprintAssignable)
 		 FSimpleDynamicMulticastDelegate m_OnRequiredPointsReached;

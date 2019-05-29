@@ -293,11 +293,16 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 	}
 	return false;
 
-
+	
 }
 
-void ARTSPlayerEye::DiscardCurrentPlaceablePreview()
+void ARTSPlayerEye::DiscardCurrentPlaceablePreview(const bool bIsInstigatedByPlayer)
 {
+	if(bIsInstigatedByPlayer)
+	{
+		Cast<ACanyonGM>(GetWorld()->GetAuthGameMode())->OnPlacementAborted();
+	}
+
 	if(m_pPlaceablePreviewCurrent)
 	{
 		UE_LOG(LogCanyonPlacement, Log, TEXT("Discarding current placeable."));
