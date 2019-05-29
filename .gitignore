@@ -71,7 +71,8 @@ DerivedDataCache/
 *.swo
 .ctrlp_cache/
 
-#exclude wwise libs
-!**/Wwise/**/*.lib
-!**/Wwise/**/*.pdb
-**/Wwise/Binaries/**/*.pdb
+#include plugin libs
+!**/Plugins/**/*.lib
+#exclude plugin debug symbols
+**/Plugins/**/*.pdb
+**/Plugins/Binaries/**/*.pdb
