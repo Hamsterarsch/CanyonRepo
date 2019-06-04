@@ -29,7 +29,10 @@ private:
 	static const FName s_TabNameGlobalData;
 
 	TSharedPtr<class FUICommandList> m_pEditorCommands;
+		
+	TWeakPtr<SDockTab> m_pInfluenceEditorTab;
 
-	TWeakPtr<SDockTab> m_pGlobalDataEditor;
-	
+	TWeakPtr<class SInfluenceDataEditor> m_pInfluenceEditorWidget;
+
+
 };

@@ -8,10 +8,13 @@ public class Canyon : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Wwiseext", "AssetRegistry", "StomtPlugin" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
+		PrivateDependencyModuleNames.AddRange(new string[] { "GameAnalytics" });
+		PrivateIncludePathModuleNames.AddRange(new string[] { "GameAnalytics"});
+		
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 		

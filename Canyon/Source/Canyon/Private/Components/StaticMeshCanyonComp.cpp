@@ -6,4 +6,7 @@
 
 UStaticMeshCanyonComp::UStaticMeshCanyonComp()
 {	
+	SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+
 }

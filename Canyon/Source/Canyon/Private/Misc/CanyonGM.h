@@ -6,43 +6,111 @@
 #include "GameFramework/GameModeBase.h"
 #include "CanyonGM.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSimpleDynamicMulticastDelegate);
+
 /**
  * 
  */
-UCLASS()
+UCLASS(CustomConstructor)
 class ACanyonGM : public AGameModeBase
 {
 	GENERATED_BODY()
 
 public:
+	ACanyonGM();
+
 	int32 GetInfluenceForPlaceable(const FString &FirstInfluenceQualifier, const FString &SecondInfluenceQualifier) const;
 
-	ACanyonGM()
-	{
-		//Pitch mapping setup
-		TMap<FString, int32> Column{};
-		Column.Add("House", 3);
-		Column.Add("Factory", -5);
-		Column.Add("Market", 7);
-		m_InfluenceMapping.Add("House", std::move(Column));
+	int32 GetInfluenceForBaseCategory(const FString &CategoryName) const;
 
-		Column = TMap<FString, int32>{};
-		Column.Add("House", 3);
-		Column.Add("Market", 5);
-		Column.Add("Factory", -9);
-		m_InfluenceMapping.Add("Factory", std::move(Column));
+	void AddPointsCurrent(int32 Points);
 
-		Column = TMap<FString, int32>{};
-		Column.Add("House", 3);
-		Column.Add("Factory", 6);
-		Column.Add("Market", -10);
-		m_InfluenceMapping.Add("Market", std::move(Column));
+	UFUNCTION(BlueprintCallable)
+		inline int32 GetPointsCurrent() const { return m_PointsCurrent; }
 
-	}
+	UFUNCTION(BlueprintCallable)
+		inline int32 GetPointsRequired() const { return m_PointsRequired; }
+
+	UFUNCTION(BlueprintCallable)
+		void SelectNewDeck();
+
+	UFUNCTION()
+		void OnDeckSelected(int32 DeckIndex);
+	   	
+	float GetPlaceableDependencyRadius(const FString &CategoryName) const;
+
+	TSoftClassPtr<UUserWidget> GetPlaceableWidget(const FString &CategoryName) const;
+
+	//hack
+	void OnPlacementAborted() { ++m_BuildingsRemaining; }
+
+	UPROPERTY(BlueprintAssignable)
+		 FSimpleDynamicMulticastDelegate m_OnRequiredPointsReached;
+
+
+protected:
+	virtual void BeginPlay() override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnPointsChanged();
+
+	UFUNCTION(BlueprintNativeEvent)
+		TArray<class UDeckDatabaseNative *> OnInvokeNewDecks(int32 CurrentDeckGeneration);
+
+	UFUNCTION()
+		TArray<class UDeckDatabaseNative *> OnInvokeNewDecks_Implementation(int32 CurrentDeckGeneration);
+
+	UFUNCTION(BlueprintCallable)
+		TArray<class UDeckDatabaseNative *> GetRandomDecks(int32 NumDecks, FString SubCategory = "") const;
+
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UDeckWidgetBase> m_DeckWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UPlaceableWidgetBase> m_PlaceableWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UPointIndicatorWidgetBase> m_PointIndicatorWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UPrettyWidget> m_LooseWidgetClass;
+
 
 private:
-	TMap < FString, TMap<FString, int32> > m_InfluenceMapping;
-	TMap < FString, TSoftClassPtr<UUserWidget> > m_UiMapping;
+	void ReceiveOnPointsChanged();
 
+	void ReceiveOnInvokeNewDecks();
+
+	void AddPointsRequired(int32 Points);
+
+	void OnLoose();
+
+
+	UPROPERTY()
+		class UInfluenceDataObject *m_pInfluenceData;
+
+	UPROPERTY()
+		class UDeckWidgetBase *m_pDeckWidget;
+
+	UPROPERTY()
+		class UPlaceableWidgetBase *m_pPlaceableWidget;
+
+	UPROPERTY()
+		class UPointIndicatorWidgetBase *m_pPointWidget;
+
+	UPROPERTY()
+		class UPrettyWidget *m_pLooseWidget;
+
+	UPROPERTY()
+		TArray<class UDeckDatabaseNative *> m_apCurrentDeckData;
+
+	int32 m_PointsCurrent;
+	int32 m_PointsRequired;
+	int32 m_DeckGenerationCurrent;
+	int32 m_BuildingsRemaining;
+	bool m_bIsDeckSelectPending;
+		
 	
 };
+

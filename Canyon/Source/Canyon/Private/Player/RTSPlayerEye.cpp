@@ -16,6 +16,7 @@
 #include "Misc/CanyonHelpers.h"
 #include "Components/StaticMeshCanyonComp.h"
 #include "Placeables/PlaceablePreview.h"
+#include "Misc/CanyonGM.h"
 
 
 const FName ARTSPlayerEye::s_AxisMouseX{ TEXT("MouseX") };
@@ -29,10 +30,10 @@ ARTSPlayerEye::ARTSPlayerEye() :
 	m_MouseTurnSpeed{ 1 },
 	m_CameraMaxPitch{ 90 },
 	m_CameraMinPitch{ 0 },
-	m_bWasPlaceablePlaceable{ false },
+	m_BuildingRotationSteps{ 8 },
+	m_bIsPlaceablePlaceable{ false },
 	m_ZoomTargetDist{ 300 },
 	m_ZoomTargetPitch{ -30 },
-	m_CursorRootLastPlaceablePos{ 0, 0, 0},
 	m_CameraState{ this },
 	m_PlacementState{ this }
 {
@@ -57,6 +58,7 @@ ARTSPlayerEye::ARTSPlayerEye() :
 	m_aZoomNodes.Add(FZoomNode{ 300, 30 });
 
 	m_pCursorRoot = CreateDefaultSubobject<USceneComponent>(TEXT("CursorRoot"));
+	//m_pCursorRoot->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 	m_pCursorRoot->SetupAttachment(GetRootComponent());
 	
 
@@ -72,6 +74,13 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 	}
 
 	DiscardCurrentPlaceablePreview();
+
+	FHitResult Hit;
+	if(TraceForTerrainUnderCursor(Hit, GetWorld()))
+	{
+		m_pCursorRoot->SetWorldLocation(Hit.ImpactPoint);
+	}
+	
 	auto *pNewPlaceable{ APlaceablePreview::SpawnPlaceablePreview(GetWorld(), FTransform::Identity, NewPlaceableClass) };
 	if(!pNewPlaceable)
 	{
@@ -84,6 +93,9 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 	m_pPlaceablePreviewCurrent->AttachToComponent(m_pCursorRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	m_pPlaceablePreviewCurrent->SetActorRelativeLocation({ 0,0,0 });
 	
+	m_pPlaceablePreviewCurrent->NotifyUnplaceable();
+	m_bIsPlaceablePlaceable = false;
+
 	m_PlacementState.HandleInput(EAbstractInputEvent::PlaceBuilding_Start);
 	
 
@@ -217,8 +229,6 @@ void ARTSPlayerEye::ZoomIn()
 
 
 }
-
-
 #pragma endregion
 
 void ARTSPlayerEye::SetPreviewCursorPosWs(const FVector &NewPos)
@@ -235,39 +245,26 @@ void ARTSPlayerEye::UpdateCurrentPlaceablePreview()
 		return;
 	}
 
-	FHitResult Hit;
-	//GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECC_GameTraceChannel3, true, Hit);
-	
-	bool bIsCurrentPlaceablePlaceable{ IsCurrentPlaceablePlaceableAtCursor(&Hit) };
-	
+	FVector NewRootPos;	
+	bool bIsCurrentPlaceablePlaceable{ m_PlacementRuler.HandleBuildingRules(m_pPlaceablePreviewCurrent, NewRootPos) };
+	m_pCursorRoot->SetWorldLocation(NewRootPos);				
+
 	if(bIsCurrentPlaceablePlaceable)
 	{
-		if(!m_bWasPlaceablePlaceable)
+		if(!m_bIsPlaceablePlaceable)
 		{
 			m_pPlaceablePreviewCurrent->NotifyPlaceable();
-			m_bWasPlaceablePlaceable = true;
+			m_bIsPlaceablePlaceable = true;
 		}
-		m_CursorRootLastPlaceablePos = Hit.ImpactPoint;
-		m_pCursorRoot->SetWorldLocation(Hit.ImpactPoint);
 	}
 	else
 	{
-		m_pCursorRoot->SetWorldLocation(m_CursorRootLastPlaceablePos);
+		if(m_bIsPlaceablePlaceable)
+		{
+			m_pPlaceablePreviewCurrent->NotifyUnplaceable();
+			m_bIsPlaceablePlaceable = false;			
+		}		
 	}
-
-	/*
-	else if(m_bWasPlaceablePlaceable)
-	{
-		m_pPlaceablePreviewCurrent->NotifyUnplaceable();
-		m_bWasPlaceablePlaceable = false;
-	}
-	if(bIsCurrentPlaceablePlaceable)
-	{
-	}
-	*/
-	
-	
-
 	
 
 }
@@ -279,9 +276,13 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 		return false;
 	}
 
-	if(m_bWasPlaceablePlaceable)
+	if(m_bIsPlaceablePlaceable)
 	{
 		auto *pClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
+
+		auto *pGm{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
+		pGm->AddPointsCurrent(m_pPlaceablePreviewCurrent->GetCurrentInfluence());
+
 		m_pPlaceablePreviewCurrent->Destroy();
 		m_pPlaceablePreviewCurrent = nullptr;
 
@@ -292,17 +293,22 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 	}
 	return false;
 
-
+	
 }
 
-void ARTSPlayerEye::DiscardCurrentPlaceablePreview()
+void ARTSPlayerEye::DiscardCurrentPlaceablePreview(const bool bIsInstigatedByPlayer)
 {
+	if(bIsInstigatedByPlayer)
+	{
+		Cast<ACanyonGM>(GetWorld()->GetAuthGameMode())->OnPlacementAborted();
+	}
+
 	if(m_pPlaceablePreviewCurrent)
 	{
 		UE_LOG(LogCanyonPlacement, Log, TEXT("Discarding current placeable."));
 		m_pPlaceablePreviewCurrent->Destroy();
 	}
-	m_bWasPlaceablePlaceable = false;
+	m_bIsPlaceablePlaceable = false;
 
 
 }
@@ -338,26 +344,6 @@ void ARTSPlayerEye::BeginPlay()
 
 }
 
-bool ARTSPlayerEye::IsCurrentPlaceablePlaceableAtCursor(FHitResult *pOutHit)
-{
-	if(!m_pPlaceablePreviewCurrent)
-	{
-		return false;
-	}
-
-	FHitResult Hit{};
-	FHitResult &CursorHit{ pOutHit != nullptr ? *pOutHit : Hit };
-		
-	//If any hit
-	if (GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel3, true, CursorHit))
-	{		
-		//If building can be placed
-		return m_PlacementRuler.TryEnforceBuildingRules(CursorHit, m_pPlaceablePreviewCurrent);
-	}
-	return false;
-		
-
-}
 
 #pragma region Input
 void ARTSPlayerEye::SetupPlayerInputComponent(UInputComponent *pInputComponent)
@@ -383,6 +369,10 @@ void ARTSPlayerEye::SetupPlayerInputComponent(UInputComponent *pInputComponent)
 	
 	pInputComponent->BindAction(TEXT("ZoomOut"), IE_Pressed, this, &ARTSPlayerEye::ZoomOut);
 	pInputComponent->BindAction(TEXT("ZoomIn"), IE_Pressed, this, &ARTSPlayerEye::ZoomIn);
+
+	pInputComponent->BindAction(TEXT("IncreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::IncreaseBuildingRot);
+	pInputComponent->BindAction(TEXT("DecreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::DecreaseBuildingRot);
+
 
 }
 
@@ -430,5 +420,28 @@ void ARTSPlayerEye::LeaveSeamlessRotation()
 
 }
 
+void ARTSPlayerEye::IncreaseBuildingRot()
+{
+	if(m_pPlaceablePreviewCurrent)
+	{
+		const auto RotStep{ 360.f / m_BuildingRotationSteps };
+	   
+		m_pCursorRoot->AddWorldRotation( {0, RotStep, 0} );
+	}
+		
+
+}
+
+void ARTSPlayerEye::DecreaseBuildingRot()
+{
+	if(m_pPlaceablePreviewCurrent)
+	{
+		const auto RotStep{ 360.f / m_BuildingRotationSteps };
+
+		m_pCursorRoot->AddWorldRotation( {0, -RotStep, 0} );
+	}
+
+
+}
 #pragma endregion
 

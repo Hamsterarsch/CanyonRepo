@@ -4,7 +4,8 @@
 
 void FCanyonEditorCommands::RegisterCommands()
 {
-	UI_COMMAND(TestCommand, "TestCommand", "This is test command", EUserInterfaceActionType::CollapsedButton, FInputChord{});
+	UI_COMMAND(pCmdOpenInfluenceEditor, "Influence Editor", "Canyon influence editor.", EUserInterfaceActionType::CollapsedButton, FInputChord{});
+
 
 }
 

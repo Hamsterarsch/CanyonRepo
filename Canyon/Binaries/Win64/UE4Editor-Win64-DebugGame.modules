@@ -3,6 +3,7 @@
 	"Modules": 
 	{
 		"Canyon": "UE4Editor-Canyon-Win64-DebugGame.dll",
-		"CanyonEditor": "UE4Editor-CanyonEditor-Win64-DebugGame.dll"
+		"CanyonEditor": "UE4Editor-CanyonEditor-Win64-DebugGame.dll",
+		"Wwiseext": "UE4Editor-Wwiseext-Win64-DebugGame.dll"
 	}
 }

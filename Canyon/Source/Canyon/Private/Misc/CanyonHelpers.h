@@ -59,3 +59,41 @@ inline void GetScsDataNodesForType(...)
 	static_assert(true, "Component class is not derived from uobject.");
 }
 #pragma endregion
+
+inline int32 GetRandomIndex(int32 ArrSize)
+{
+	return FMath::FloorToInt((static_cast<float>(FMath::Rand()) / RAND_MAX) * (ArrSize - 1));
+
+
+}
+
+template<class T>
+UClass *SafeLoadClassPtr(const TSoftClassPtr<T> &ClassPtr)
+{
+	UClass *pClass = nullptr;
+	if ((pClass = ClassPtr.Get()) == nullptr)
+	{
+		pClass = ClassPtr.LoadSynchronous();
+
+	}
+
+	return ensureMsgf(pClass, TEXT("Could not load class ptr from soft obj ptr")) ? pClass : nullptr;
+
+
+}
+
+template<class T>
+UObject *SafeLoadObjectPtr(const TSoftObjectPtr<T> &ObjectPtr)
+{
+	UObject *pObject = nullptr;
+	if ((pObject = ObjectPtr.Get()) == nullptr)
+	{
+		pObject = ObjectPtr.LoadSynchronous();
+
+	}
+
+	return ensureMsgf(pObject, TEXT("Could not load class ptr from soft obj ptr")) ? pObject : nullptr;
+
+
+}
+

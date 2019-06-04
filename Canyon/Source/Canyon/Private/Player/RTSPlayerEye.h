@@ -71,6 +71,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void CreateNewPlacablePreview(TSubclassOf<class APlaceableBase> NewPlaceableClass);
 
+	//Movement
 	void AddForwardMovement(float AxisValue);
 
 	void AddRightMovement(float AxisValue);
@@ -88,7 +89,7 @@ public:
 	void ZoomOut();
 
 	void ZoomIn();
-
+	//End Movement
 
 	void SetPreviewCursorPosWs(const FVector &NewPos);
 
@@ -96,7 +97,7 @@ public:
 
 	bool TryCommitPlaceablePreview();
 
-	void DiscardCurrentPlaceablePreview();
+	void DiscardCurrentPlaceablePreview(bool bIsIntigatedByPlayer = false);
 
 
 	const static FName s_AxisMouseX;
@@ -115,9 +116,7 @@ protected:
 
 	virtual void BeginPlay() override;
 
-	bool IsCurrentPlaceablePlaceableAtCursor(FHitResult *pOutHit = nullptr);
-
-
+	//Input
 	virtual void SetupPlayerInputComponent(UInputComponent *pInputComponent) override;
 
 	void ActionSelectStart();
@@ -132,6 +131,10 @@ protected:
 
 	void LeaveSeamlessRotation();
 
+	void IncreaseBuildingRot();
+
+	void DecreaseBuildingRot();
+	//End Input
 	
 	UPROPERTY(VisibleAnywhere)
 		class USpringArmComponent *m_pCameraSpringArm;
@@ -156,7 +159,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, DisplayName = "Min Camera Pitch", Category="Controls")
 		float m_CameraMinPitch;
-	
+
+	UPROPERTY(EditDefaultsOnly, DisplayName = "Building Rotation Steps", Category="Controls")
+		int32 m_BuildingRotationSteps;
+
 	UPROPERTY(EditDefaultsOnly, Category="Controls")
 		TArray<FZoomNode> m_aZoomNodes;
 
@@ -169,13 +175,12 @@ protected:
 	UPROPERTY()
 		class APlaceablePreview *m_pPlaceablePreviewCurrent;
 
-	bool m_bWasPlaceablePlaceable;
+	bool m_bIsPlaceablePlaceable;
 	FVector2D m_MouseShufflePreMousePos;
 	float m_ZoomTargetDist;
 	float m_ZoomTargetPitch;
 	int32 m_ZoomIndex;
 	FVector m_SeamlessRotationPrePos;
-	FVector m_CursorRootLastPlaceablePos;
 
 	CCameraStateMachine m_CameraState;
 	CPlacementStateMachine m_PlacementState;

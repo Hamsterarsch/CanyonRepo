@@ -11,7 +11,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/CollisionChannels.h"
 #include "Misc/CanyonLogs.h"
+#include "Components/CanyonMeshCollisionComp.h"
 #include "ConstructorHelpers.h"
+#include "Misc/CanyonGM.h"
 
 
 APlaceablePreview::APlaceablePreview() :
@@ -74,10 +76,26 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 
 	}
 
+	//apNodes = GetScsDataNodesForType<UCanyonMeshCollisionComp>(pPreviewedPlaceableClass);
+	
 	auto *pCdo{ Cast<APlaceableBase>(pPreviewedPlaceableClass->ClassDefaultObject) };
-	pPreview->SetInfluenceRadius(pCdo->GetInfluenceRadius());
+	pPreview->m_pMeshCollisionComp = NewObject<UCanyonMeshCollisionComp>(pPreview, pCdo->GetCanyonMeshCollision()->GetClass(), NAME_None, RF_NoFlags);
+	pPreview->m_pMeshCollisionComp->SetStaticMesh(pCdo->GetCanyonMeshCollision()->GetStaticMesh());
+	pPreview->m_pMeshCollisionComp->SetupAttachment(pPreview->GetRootComponent());
+	pPreview->m_pMeshCollisionComp->SetRelativeLocation(pCdo->GetCanyonMeshCollision()->RelativeLocation);
+	pPreview->m_pMeshCollisionComp->SetRelativeRotation(pCdo->GetCanyonMeshCollision()->RelativeRotation);
+	pPreview->m_pMeshCollisionComp->SetRelativeScale3D(pCdo->GetCanyonMeshCollision()->RelativeScale3D);
+
+	pPreview->m_pMeshCollisionComp->RegisterComponent();
+
+	auto *pGm{ Cast<ACanyonGM>(pWorld->GetAuthGameMode()) };
+	auto CategoryName{ pCdo->GetInfluenceEnumClass()->GetDisplayNameTextByIndex(pCdo->GetInfluenceEnumValue()).ToString() };
+	auto DependencyRadius{ pGm->GetPlaceableDependencyRadius(CategoryName) };
+	pPreview->SetInfluenceRadius(DependencyRadius);
+
+	pPreview->m_InfluenceCurrentGain = pGm->GetInfluenceForBaseCategory(CategoryName);
 	pPreview->InitInfluenceDisplayWidget(pCdo->GetInfluenceWidgetClass());
-	pPreview->SetInfluenceDisplayed(0);
+	pPreview->SetInfluenceDisplayed(pPreview->m_InfluenceCurrentGain);
 
 	UGameplayStatics::FinishSpawningActor(pPreview, Transform);
 	return pPreview;
@@ -110,50 +128,6 @@ void APlaceablePreview::NotifyUnplaceable()
 
 
 //Private----------------------------
-
-void APlaceablePreview::BeginOverlapDependencyRadius
-(
-	UPrimitiveComponent *pOverlappedComponent,
-	AActor *pOtherActor,
-	UPrimitiveComponent *pOtherComp,
-	int32 OtherBodyIndex, 
-	bool bFromSweep,
-	const FHitResult& SweepResult
-)
-{
-	//only handle subclasses of a placeable
-	auto *pOverlappedPlaceable{ Cast<APlaceableBase>(pOtherActor) };
-	if(!pOverlappedPlaceable || pOverlappedPlaceable == this)
-	{
-		return;
-	}
-
-	m_InfluenceCurrentGain += pOverlappedPlaceable->BeginInfluenceVisFor(m_PreviewedClass);
-	SetInfluenceDisplayed(m_InfluenceCurrentGain);
-
-
-}
-
-void APlaceablePreview::EndOverlapDependencyRadius
-(
-	UPrimitiveComponent *pOverlappedComponent, 
-	AActor *pOtherActor,
-	UPrimitiveComponent *pOtherComp,
-	int32 OtherBodyIndex
-)
-{
-	//only handle subclasses of a placeable
-	auto *pOverlappedPlaceable{ Cast<APlaceableBase>(pOtherActor) };
-	if (!pOverlappedPlaceable || pOverlappedPlaceable == this)
-	{
-		return;
-	}
-
-	m_InfluenceCurrentGain -= pOverlappedPlaceable->EndInfluenceVis();
-	SetInfluenceDisplayed(m_InfluenceCurrentGain);
-
-
-}
 
 void APlaceablePreview::ActorBeginOverlap(AActor *pOverlappedActor, AActor *pOtherActor)
 {

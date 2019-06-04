@@ -26,32 +26,14 @@ public:
 
 	UClass *GetPreviewedClass() const;
 
+	inline int32 GetCurrentInfluence() const { return m_InfluenceCurrentGain; }
+
 	void NotifyPlaceable();
 
 	void NotifyUnplaceable();
 
 
 private:
-	UFUNCTION()
-		void BeginOverlapDependencyRadius
-		(
-			UPrimitiveComponent *pOverlappedComponent,
-			AActor *pOtherActor,
-			UPrimitiveComponent *pOtherComp,
-			int32 OtherBodyIndex,
-			bool bFromSweep,
-			const FHitResult &SweepResult
-		);
-
-	UFUNCTION()
-		void EndOverlapDependencyRadius
-		(
-			UPrimitiveComponent *pOverlappedComponent,
-			AActor *pOtherActor,
-			UPrimitiveComponent *pOtherComp,
-			int32 OtherBodyIndex
-		);
-
 	UFUNCTION()
 		void ActorBeginOverlap(AActor *pOverlappedActor, AActor *pOtherActor);
 

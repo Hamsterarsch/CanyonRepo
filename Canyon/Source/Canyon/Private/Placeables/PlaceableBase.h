@@ -24,7 +24,7 @@ public:
 
 	TArray<class UActorComponent *> GetPlaceableMeshComps();
 
-	inline float GetInfluenceRadius() const { return m_InfluenceRadius; }
+	inline class UCanyonMeshCollisionComp *GetCanyonMeshCollision() { return m_pMeshCollisionComp; }
 
 	UClass *GetInfluenceWidgetClass() const;
 
@@ -59,12 +59,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 		TEnumAsByte<EPhysicalSurface> m_TargetSurface;
 
-	UPROPERTY(EditDefaultsOnly)
-		float m_InfluenceRadius;
-
 	UPROPERTY()
 		class UWidgetComponent *m_pInfluenceWidgetComp;
-		
+
+	UPROPERTY(VisibleDefaultsOnly)
+		class UCanyonMeshCollisionComp *m_pMeshCollisionComp;
+
 
 private:
 	static FString GetInfluenceQualifier(const TSubclassOf<APlaceableBase>& ForClass);
