@@ -79,12 +79,6 @@ void ACanyonGM::SelectNewDeck()
 		ReceiveOnInvokeNewDecks();	
 	}
 
-	if(m_BuildingsRemaining <= 0 && !m_bIsDeckSelectPending)
-	{
-		OnLoose();
-		//loose condition
-	}
-
 
 }
 
@@ -182,6 +176,12 @@ void ACanyonGM::ReceiveOnPointsChanged()
 	if(m_PointsCurrent >= m_PointsRequired)
 	{
 		m_OnRequiredPointsReached.Broadcast();
+	}
+
+	if(m_BuildingsRemaining <= 0 && !m_bIsDeckSelectPending && m_PointsCurrent < m_PointsRequired)
+	{
+		OnLoose();
+		//loose condition
 	}
 
 
