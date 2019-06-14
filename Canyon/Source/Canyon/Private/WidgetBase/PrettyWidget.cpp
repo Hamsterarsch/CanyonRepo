@@ -3,4 +3,25 @@
 
 #include "PrettyWidget.h"
 
-// Add default functionality here for any IPrettyWidget functions that are not pure virtual.
+FReply UPrettyWidget::NativeOnMouseButtonDown(const FGeometry &InGeometry, const FPointerEvent &InMouseEvent)
+{
+	m_eOnMouseButtonDown.Broadcast(this);
+	
+	return FReply::Handled();
+
+
+}
+
+void UPrettyWidget::EventOnMouseButtonDownAdd(t_OnMouseDownDelegate &Callback)
+{
+	m_eOnMouseButtonDown.Add(Callback);
+
+
+}
+
+void UPrettyWidget::EventOnMouseButtonDownRemove(t_OnMouseDownDelegate &Callback)
+{
+	m_eOnMouseButtonDown.Remove(Callback);
+
+
+}

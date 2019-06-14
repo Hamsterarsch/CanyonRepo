@@ -16,6 +16,9 @@
 #include "Misc/CanyonHelpers.h"
 #include "Components/StaticMeshCanyonComp.h"
 #include "Placeables/PlaceablePreview.h"
+#include "UI/DeckState.h"
+#include "UI/DeckStateRenderer.h"
+#include "WidgetBase/MainHudWidgetBase.h"
 #include "Misc/CanyonGM.h"
 
 
@@ -282,13 +285,19 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 
 		auto *pGm{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
 		pGm->AddPointsCurrent(m_pPlaceablePreviewCurrent->GetCurrentInfluence());
+				
 
 		m_pPlaceablePreviewCurrent->Destroy();
 		m_pPlaceablePreviewCurrent = nullptr;
 
-		auto Transform{ m_pCursorRoot->GetComponentTransform() };
-		GetWorld()->SpawnActor(pClass, &Transform);
-				
+		const auto Transform{ m_pCursorRoot->GetComponentTransform() };
+		auto *pSpawned{ GetWorld()->SpawnActor<APlaceableBase>(pClass, Transform) };
+
+		//Update deck state
+		const auto PlaceableCategory{ pSpawned->GetPlaceableCategory() };
+		m_pDeckState->ClearCachedPlaceableForCategory(PlaceableCategory);
+		m_pDeckState->ChargeCountDecrementFor(PlaceableCategory);
+
 		return true;
 	}
 	return false;
@@ -298,17 +307,33 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 
 void ARTSPlayerEye::DiscardCurrentPlaceablePreview(const bool bIsInstigatedByPlayer)
 {
-	if(bIsInstigatedByPlayer)
-	{
-		Cast<ACanyonGM>(GetWorld()->GetAuthGameMode())->OnPlacementAborted();
-	}
-
 	if(m_pPlaceablePreviewCurrent)
 	{
 		UE_LOG(LogCanyonPlacement, Log, TEXT("Discarding current placeable."));
 		m_pPlaceablePreviewCurrent->Destroy();
 	}
 	m_bIsPlaceablePlaceable = false;
+
+
+}
+
+int32 ARTSPlayerEye::GetCurrentChargesForPlaceables() const
+{
+	 return m_pDeckState->GetChargesCurrent();
+
+
+}
+
+void ARTSPlayerEye::NotifyOnDisplayNewDecks()
+{
+	m_pDeckState->NotifyOnDisplayNewDecks();
+
+
+}
+
+bool ARTSPlayerEye::GetAreDecksSelectable() const
+{
+	return m_pDeckState->GetAreDecksSelectable();
 
 
 }
@@ -341,7 +366,17 @@ void ARTSPlayerEye::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//
+	auto *pGM{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
 
+	auto *pWidget{ CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get()) };
+	pWidget->AddToViewport();
+
+	m_pDeckState = UDeckState::Construct(pGM);
+	m_pDeckStateRenderer = UDeckStateRenderer::Construct(pGM, m_pDeckState, pWidget);
+
+	NotifyOnDisplayNewDecks();
+	
 }
 
 

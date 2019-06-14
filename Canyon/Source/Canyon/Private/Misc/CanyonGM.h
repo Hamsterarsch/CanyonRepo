@@ -25,27 +25,20 @@ public:
 
 	void AddPointsCurrent(int32 Points);
 
+	void AddPointsRequiredFor(const FString &Category, uint32 Amount);
+
+
 	UFUNCTION(BlueprintCallable)
 		inline int32 GetPointsCurrent() const { return m_PointsCurrent; }
 
 	UFUNCTION(BlueprintCallable)
 		inline int32 GetPointsRequired() const { return m_PointsRequired; }
 
-	UFUNCTION(BlueprintCallable)
-		void SelectNewDeck();
-
-	UFUNCTION()
-		void OnDeckSelected(int32 DeckIndex);
-	   	
 	float GetPlaceableDependencyRadius(const FString &CategoryName) const;
 
-	TSoftClassPtr<UUserWidget> GetPlaceableWidget(const FString &CategoryName) const;
+	TSubclassOf<class UPlaceableIconWidgetBase> GetPlaceableWidget(const FString &CategoryName) const;
 
-	//hack
-	void OnPlacementAborted() { ++m_BuildingsRemaining; }
-
-	UPROPERTY(BlueprintAssignable)
-		 FSimpleDynamicMulticastDelegate m_OnRequiredPointsReached;
+	FSimpleDynamicMulticastDelegate m_OnRequiredPointsReached;
 
 
 protected:
@@ -53,22 +46,6 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnPointsChanged();
-
-	UFUNCTION(BlueprintNativeEvent)
-		TArray<class UDeckDatabaseNative *> OnInvokeNewDecks(int32 CurrentDeckGeneration);
-
-	UFUNCTION()
-		TArray<class UDeckDatabaseNative *> OnInvokeNewDecks_Implementation(int32 CurrentDeckGeneration);
-
-	UFUNCTION(BlueprintCallable)
-		TArray<class UDeckDatabaseNative *> GetRandomDecks(int32 NumDecks, FString SubCategory = "") const;
-
-
-	UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<class UDeckWidgetBase> m_DeckWidgetClass;
-
-	UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<class UPlaceableWidgetBase> m_PlaceableWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly)
 		TSubclassOf<class UPointIndicatorWidgetBase> m_PointIndicatorWidgetClass;
@@ -80,8 +57,6 @@ protected:
 private:
 	void ReceiveOnPointsChanged();
 
-	void ReceiveOnInvokeNewDecks();
-
 	void AddPointsRequired(int32 Points);
 
 	void OnLoose();
@@ -91,25 +66,14 @@ private:
 		class UInfluenceDataObject *m_pInfluenceData;
 
 	UPROPERTY()
-		class UDeckWidgetBase *m_pDeckWidget;
-
-	UPROPERTY()
-		class UPlaceableWidgetBase *m_pPlaceableWidget;
-
-	UPROPERTY()
 		class UPointIndicatorWidgetBase *m_pPointWidget;
 
 	UPROPERTY()
 		class UPrettyWidget *m_pLooseWidget;
 
-	UPROPERTY()
-		TArray<class UDeckDatabaseNative *> m_apCurrentDeckData;
-
 	int32 m_PointsCurrent;
 	int32 m_PointsRequired;
-	int32 m_DeckGenerationCurrent;
-	int32 m_BuildingsRemaining;
-	bool m_bIsDeckSelectPending;
+	int32 m_SessionSeed;
 		
 	
 };

@@ -109,6 +109,13 @@ int32 APlaceableBase::EndInfluenceVis()
 
 }
 
+FString APlaceableBase::GetPlaceableCategory() const
+{
+	return GetInfluenceEnumClass()->GetDisplayNameTextByIndex(GetInfluenceEnumValue()).ToString();
+
+
+}
+
 void APlaceableBase::SetInfluenceDisplayed(const int32 Influence)
 {
 	auto *pWidget{ Cast<UInfluenceDisplayWidgetBase>(m_pInfluenceWidgetComp->GetUserWidgetObject()) };

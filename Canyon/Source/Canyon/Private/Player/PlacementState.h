@@ -30,12 +30,18 @@ public:
 
 	void HandleInput(EAbstractInputEvent Input);
 
-	class ARTSPlayerEye *GetEye() { return m_pOwningEye; }
+	inline class ARTSPlayerEye *GetEye() { return m_pOwningEye; }
+	
+	inline bool GetIsInPlacement() const { return m_bIsInPlacement; }
+
+	void SetIsInPlacement(bool bIsInPlacement);
 
 
 protected:
 	std::unique_ptr<IPlacementState>	m_pCurrentState;
 	class ARTSPlayerEye *m_pOwningEye;
+	bool m_bIsInPlacement;
+	
 
 
 };
@@ -61,27 +67,13 @@ public:
 	
 	virtual void Update(CPlacementStateMachine *pParent) override;
 
-	virtual void ReceiveOnExit(CPlacementStateMachine *pParent) override {};
+	virtual void ReceiveOnExit(CPlacementStateMachine *pParent) override;
 
-	virtual void ReceiveOnEnter(CPlacementStateMachine *pParent) override {};
+	virtual void ReceiveOnEnter(CPlacementStateMachine *pParent) override;
 
 
 protected:
 	float m_AbortStartTime;
 	float m_AbortSuccessTime{ .165 };
-
-};
-
-class CPlacementState_PlacementInfra : public IPlacementState
-{
-public:
-	virtual std::unique_ptr<IPlacementState> HandleInput(CPlacementStateMachine *pParent, EAbstractInputEvent Input) override { return nullptr; }
-	
-	virtual void Update(CPlacementStateMachine *pParent) override {};
-
-	virtual void ReceiveOnExit(CPlacementStateMachine *pParent) override {};
-
-	virtual void ReceiveOnEnter(CPlacementStateMachine *pParent) override {};
-
 
 };

@@ -5,6 +5,8 @@
 #include "Misc/CanyonHelpers.h"
 #include "Placeables/PlaceableBase.h"
 #include "AssetRegistryModule.h"
+#include "Placeables/DeckDatabaseNative.h"
+#include <set>
 #include "Paths.h"
 
 TSubclassOf<APlaceableBase> UCanyonBpfLib::GetCategoryPlaceableClass(FString Category)
@@ -58,6 +60,71 @@ TSubclassOf<APlaceableBase> UCanyonBpfLib::GetCategoryPlaceableClass(FString Cat
 
 	return b ? GeneratedClass : nullptr;
 #endif
+
+
+}
+
+TArray<UDeckDatabaseNative *> UCanyonBpfLib::GetRandomDecks(const int32 NumDecks, FString SubCategory)
+{
+	//get data assets
+	auto &Registry{ FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")) };
+	
+	FARFilter Filter{};
+	Filter.ClassNames.Add(*UDeckDatabaseNative::StaticClass()->GetName());
+	Filter.bRecursiveClasses = true;
+
+	if(!SubCategory.IsEmpty())
+	{
+		SubCategory.InsertAt(0, '/');
+	}
+	
+	Filter.PackagePaths.Add( *(TEXT("/Game/Placeables/Decks") + SubCategory));
+	Filter.bRecursivePaths = true;
+	
+	TArray<FAssetData> aFoundAssets;
+	Registry.Get().GetAssets(Filter, aFoundAssets);
+
+	if(aFoundAssets.Num() < NumDecks)
+	{
+		return {};
+	}
+
+
+	//populate set	
+	std::set<int32> UnusedIndicesSet{};
+	for(int32 Index{ 0 }; Index < aFoundAssets.Num(); ++Index)
+	{
+		UnusedIndicesSet.emplace(Index);
+
+	}
+
+
+	//get random decks
+	TArray<UDeckDatabaseNative *> aOutDecks{};
+	for(int32 DeckIndex{ 0 }; DeckIndex < NumDecks; ++DeckIndex)
+	{
+		auto SetOffset{ GetRandomIndex(UnusedIndicesSet.size()) };
+		auto SetItr{ UnusedIndicesSet.begin() };
+
+		//retarded itr increment
+		for(int32 Index{ 0 }; Index < SetOffset; ++Index)
+		{
+			++SetItr;
+
+		}
+
+		aOutDecks.Add
+		(
+			Cast<UDeckDatabaseNative>
+			(
+				aFoundAssets[ *SetItr ].GetAsset()
+			)
+		);
+		UnusedIndicesSet.erase(SetItr);		
+
+	}
+
+	return aOutDecks;
 
 
 }

@@ -32,11 +32,13 @@ public:
 
 	int32 EndInfluenceVis();
 
-	UFUNCTION(BlueprintImplementableEvent)
-		int32 GetInfluenceEnumValue();
+	FString GetPlaceableCategory() const;
 
 	UFUNCTION(BlueprintImplementableEvent)
-		UUserDefinedEnum *GetInfluenceEnumClass();
+		int32 GetInfluenceEnumValue() const;
+
+	UFUNCTION(BlueprintImplementableEvent)
+		UUserDefinedEnum *GetInfluenceEnumClass() const;
 
 
 protected:
