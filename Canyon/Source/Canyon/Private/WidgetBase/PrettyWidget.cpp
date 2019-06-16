@@ -3,6 +3,20 @@
 
 #include "PrettyWidget.h"
 
+void UPrettyWidget::ShowWidget_Implementation()
+{
+	SetVisibility(ESlateVisibility::Visible);
+
+
+}
+
+void UPrettyWidget::HideWidget_Implementation()
+{
+	SetVisibility(ESlateVisibility::Hidden);
+
+
+}
+
 FReply UPrettyWidget::NativeOnMouseButtonDown(const FGeometry &InGeometry, const FPointerEvent &InMouseEvent)
 {
 	m_eOnMouseButtonDown.Broadcast(this);

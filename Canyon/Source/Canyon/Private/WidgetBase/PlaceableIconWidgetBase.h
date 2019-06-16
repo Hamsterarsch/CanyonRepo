@@ -15,6 +15,8 @@ class UPlaceableIconWidgetBase : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	UPlaceableIconWidgetBase(const FObjectInitializer& ObjectInitializer);
+
 	void SetChargeAmount(uint32 Charges);
 
 	virtual bool Initialize() override;

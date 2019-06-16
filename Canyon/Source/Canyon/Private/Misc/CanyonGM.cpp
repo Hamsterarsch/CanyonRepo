@@ -21,9 +21,7 @@
 
 //Public-------------
 
-ACanyonGM::ACanyonGM() :
-	m_PointsCurrent{ 0 },
-	m_PointsRequired{ 0 }
+ACanyonGM::ACanyonGM() 
 {
 }
 

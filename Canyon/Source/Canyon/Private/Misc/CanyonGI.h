@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "CanyonGlobalData.h"
 #include "CanyonGI.generated.h"
 
 /**
@@ -18,7 +17,6 @@ class UCanyonGI : public UGameInstance
 public:
 
 protected:
-
 
 	
 };

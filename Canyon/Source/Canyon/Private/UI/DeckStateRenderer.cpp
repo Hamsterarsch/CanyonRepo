@@ -22,7 +22,7 @@ void UDeckStateRenderer::NotifyOnIconWidgetChanged(const TSubclassOf<UPlaceableI
 		ppWidget = &m_IconWidgetMap.Add(WidgetClass, CreateWidget<UPlaceableIconWidgetBase>(m_pGM->GetWorld(), pClass));
 
 		UPlaceableIconWidgetBase::t_ClickDelegate Delegate{};
-		Delegate.BindUFunction(*ppWidget, GET_FUNCTION_NAME_CHECKED(UDeckStateRenderer, NotifyOnIconClicked));
+		Delegate.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UDeckStateRenderer, NotifyOnIconClicked));
 		(*ppWidget)->AddEventToOnClicked(Delegate);
 
 		m_pTargetWidget->OnNewPlaceableIconAvailable(*ppWidget);		

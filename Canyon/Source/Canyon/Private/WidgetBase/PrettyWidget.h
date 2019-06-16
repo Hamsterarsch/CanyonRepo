@@ -14,11 +14,16 @@ class UPrettyWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:	
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintNativeEvent)
 		void ShowWidget();
-
-	UFUNCTION(BlueprintImplementableEvent)
+	
+	UFUNCTION(BlueprintNativeEvent)
 		void HideWidget();
+
+
+	void ShowWidget_Implementation();
+
+	void HideWidget_Implementation();
 
 
 protected:

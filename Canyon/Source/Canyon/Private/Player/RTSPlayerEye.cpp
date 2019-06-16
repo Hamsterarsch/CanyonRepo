@@ -277,28 +277,36 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 	if(!m_pPlaceablePreviewCurrent)
 	{
 		return false;
+
+
 	}
 
 	if(m_bIsPlaceablePlaceable)
 	{
-		auto *pClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
-
-		auto *pGm{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
-		pGm->AddPointsCurrent(m_pPlaceablePreviewCurrent->GetCurrentInfluence());
-				
+		//fetch preview data and destroy
+		auto *pBuildingClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
+		const auto PreviewedInfluence{ m_pPlaceablePreviewCurrent->GetCurrentInfluence() };
 
 		m_pPlaceablePreviewCurrent->Destroy();
 		m_pPlaceablePreviewCurrent = nullptr;
 
-		const auto Transform{ m_pCursorRoot->GetComponentTransform() };
-		auto *pSpawned{ GetWorld()->SpawnActor<APlaceableBase>(pClass, Transform) };
+		//spawn building
 
-		//Update deck state
+		const auto Transform{ m_pCursorRoot->GetComponentTransform() };
+		auto *pSpawned{ GetWorld()->SpawnActor<APlaceableBase>(pBuildingClass, Transform) };
+		
+		//Update deck state (has to be done before gm notify)
 		const auto PlaceableCategory{ pSpawned->GetPlaceableCategory() };
 		m_pDeckState->ClearCachedPlaceableForCategory(PlaceableCategory);
 		m_pDeckState->ChargeCountDecrementFor(PlaceableCategory);
 
+		//Update gm
+		auto *pGm{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
+		pGm->AddPointsCurrent(PreviewedInfluence);
+								
 		return true;
+
+
 	}
 	return false;
 
