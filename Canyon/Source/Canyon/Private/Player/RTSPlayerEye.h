@@ -99,6 +99,14 @@ public:
 
 	void DiscardCurrentPlaceablePreview(bool bIsIntigatedByPlayer = false);
 
+	inline bool GetIsInPlacement() const { return m_PlacementState.GetIsInPlacement(); }
+
+	int32 GetCurrentChargesForPlaceables() const;
+
+	void NotifyOnDisplayNewDecks();
+
+	bool GetAreDecksSelectable() const;
+
 
 	const static FName s_AxisMouseX;
 
@@ -166,6 +174,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Controls")
 		TArray<FZoomNode> m_aZoomNodes;
 
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UMainHudWidgetBase> m_MainHudClass;
+
 	UPROPERTY()
 		class UGameViewportClient *m_pViewportClient;
 
@@ -174,6 +185,13 @@ protected:
 
 	UPROPERTY()
 		class APlaceablePreview *m_pPlaceablePreviewCurrent;
+
+	UPROPERTY()
+		class UDeckState *m_pDeckState;
+
+	UPROPERTY()
+		class UDeckStateRenderer *m_pDeckStateRenderer;
+
 
 	bool m_bIsPlaceablePlaceable;
 	FVector2D m_MouseShufflePreMousePos;

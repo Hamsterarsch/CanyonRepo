@@ -52,6 +52,22 @@
 			"Type": "DynamicLibrary"
 		},
 		{
+			"Path": "$(ProjectDir)/Plugins/GameAnalytics/Binaries/Win64/UE4Editor-GameAnalytics.dll",
+			"Type": "DynamicLibrary"
+		},
+		{
+			"Path": "$(ProjectDir)/Plugins/GameAnalytics/Binaries/Win64/UE4Editor-GameAnalytics.pdb",
+			"Type": "SymbolFile"
+		},
+		{
+			"Path": "$(ProjectDir)/Plugins/GameAnalytics/Binaries/Win64/UE4Editor-GameAnalyticsEditor.dll",
+			"Type": "DynamicLibrary"
+		},
+		{
+			"Path": "$(ProjectDir)/Plugins/GameAnalytics/Binaries/Win64/UE4Editor-GameAnalyticsEditor.pdb",
+			"Type": "SymbolFile"
+		},
+		{
 			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin-UE-4.22/Binaries/Win64/UE4Editor-StomtPlugin.dll",
 			"Type": "DynamicLibrary"
 		},
@@ -1932,6 +1948,10 @@
 			"Type": "RequiredResource"
 		},
 		{
+			"Path": "$(ProjectDir)/Plugins/GameAnalytics/Binaries/Win64/UE4Editor.modules",
+			"Type": "RequiredResource"
+		},
+		{
 			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin-UE-4.22/Binaries/Win64/UE4Editor.modules",
 			"Type": "RequiredResource"
 		},
@@ -2255,6 +2275,10 @@
 		},
 		{
 			"Path": "$(EngineDir)/Plugins/FX/Niagara/Niagara.uplugin",
+			"Type": "UFS"
+		},
+		{
+			"Path": "$(ProjectDir)/Plugins/GameAnalytics/GameAnalytics.uplugin",
 			"Type": "UFS"
 		},
 		{

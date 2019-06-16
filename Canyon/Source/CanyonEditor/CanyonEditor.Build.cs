@@ -15,7 +15,7 @@ public class CanyonEditor : ModuleRules
 		
 		PrivateDependencyModuleNames.AddRange(new string[] { "Canyon", "Slate", "SlateCore", "UnrealEd", "LevelEditor", "EditorStyle", "UMG" });
 
-        PrivateIncludePathModuleNames.AddRange(new String[] {"Slate", "Canyon"});
+        PrivateIncludePathModuleNames.AddRange(new string[] {"Slate", "Canyon"});
 
 
 		PublicIncludePaths.AddRange(
