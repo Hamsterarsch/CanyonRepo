@@ -33,6 +33,7 @@ ARTSPlayerEye::ARTSPlayerEye() :
 	m_MouseTurnSpeed{ 1 },
 	m_CameraMaxPitch{ 90 },
 	m_CameraMinPitch{ 0 },
+	m_PlacementAbortSuccessTime{ .18 },
 	m_BuildingRotationSteps{ 8 },
 	m_bIsPlaceablePlaceable{ false },
 	m_ZoomTargetDist{ 300 },

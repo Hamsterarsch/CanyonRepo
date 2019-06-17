@@ -81,7 +81,7 @@ std::unique_ptr<IPlacementState> CPlacementState_PlacementBuilding::HandleInput(
 		break;
 	case EAbstractInputEvent::ActionContext_End:
 		auto m_PassedTime{ pParent->GetEye()->GetWorld()->GetTimeSeconds() - m_AbortStartTime };
-		if (m_PassedTime < m_AbortSuccessTime)
+		if (m_PassedTime < pParent->GetEye()->GetPlacementAbortSuccessTime())
 		{
 			pParent->GetEye()->DiscardCurrentPlaceablePreview(true);
 			return std::make_unique<CPlacementState_Idle>();

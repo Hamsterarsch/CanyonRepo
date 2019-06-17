@@ -107,6 +107,8 @@ public:
 
 	bool GetAreDecksSelectable() const;
 
+	inline float GetPlacementAbortSuccessTime() const { return m_PlacementAbortSuccessTime; }
+
 
 	const static FName s_AxisMouseX;
 
@@ -167,6 +169,11 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, DisplayName = "Min Camera Pitch", Category="Controls")
 		float m_CameraMinPitch;
+
+	UPROPERTY(EditDefaultsOnly)
+		//the maximum hold time (in seconds) of the placement abort button
+		//that incurs an abort of the placement
+		float m_PlacementAbortSuccessTime;
 
 	UPROPERTY(EditDefaultsOnly, DisplayName = "Building Rotation Steps", Category="Controls")
 		int32 m_BuildingRotationSteps;

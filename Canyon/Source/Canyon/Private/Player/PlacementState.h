@@ -74,6 +74,6 @@ public:
 
 protected:
 	float m_AbortStartTime;
-	float m_AbortSuccessTime{ .165 };
+
 
 };
