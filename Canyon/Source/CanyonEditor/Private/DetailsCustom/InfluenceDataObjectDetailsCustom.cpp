@@ -45,7 +45,7 @@ void FInfluenceDataObjectDetailsCustom::CustomizeDetails(IDetailLayoutBuilder &D
 	//Widget generation
 	auto GridWidget{ SNew(SGridPanel) };
 	static const FMargin SlotPadding{ 4.5 };
-
+	
 	//save button
 	GridWidget->AddSlot(0,0)
 	.Padding(SlotPadding)
@@ -103,6 +103,9 @@ void FInfluenceDataObjectDetailsCustom::CustomizeDetails(IDetailLayoutBuilder &D
 	}
 
 	//influence matrix content fields
+	const FLinearColor	PositiveBgColor{ 94.f/255, 209.f/255, 96.f/255 },
+						NegativeBgColor{ 191.f/255, 59.f/255, 59.f/255 };
+
 	for(int32 RowIndex{ 1 }; RowIndex < aKeyNames.Num() + 1; ++RowIndex)
 	{
 		for(int32 ColIndex{ 1 }; ColIndex < aKeyNames.Num() + 1; ++ColIndex)
@@ -119,22 +122,10 @@ void FInfluenceDataObjectDetailsCustom::CustomizeDetails(IDetailLayoutBuilder &D
 				]
 			};
 
-			auto &Slot{ GridWidget->AddSlot(ColIndex, RowIndex) };
-			Slot
-			.Padding(SlotPadding)
-			[
+			auto ContentTextBox
+			{
 				SNew(SEditableTextBox)
 				.Justification(ETextJustify::Center)
-				.Text
-				(
-					FText::FromString
-					(
-						FString::FromInt
-						(
-							CurrentInfluenceValue
-						)
-					)
-				)
 				//On input text
 				.OnTextCommitted_Lambda
 				(
@@ -156,6 +147,47 @@ void FInfluenceDataObjectDetailsCustom::CustomizeDetails(IDetailLayoutBuilder &D
 
 					}
 				)
+			};
+			
+			if(CurrentInfluenceValue > 0)
+			{
+				ContentTextBox->SetTextBoxBackgroundColor(PositiveBgColor);
+				ContentTextBox->SetText
+				(	
+					FText::FromString
+					(
+						FString::FromInt
+						(
+							CurrentInfluenceValue
+						)
+					) 
+				);
+			}
+			else if(CurrentInfluenceValue < 0)
+			{
+				ContentTextBox->SetTextBoxBackgroundColor(NegativeBgColor);
+				ContentTextBox->SetText
+				(	
+					FText::FromString
+					(
+						FString::FromInt
+						(
+							CurrentInfluenceValue
+						)
+					) 
+				);
+			}
+			else
+			{
+				ContentTextBox->SetTextBoxBackgroundColor(FLinearColor::White);
+				ContentTextBox->SetText( FText::FromString("") );
+			}
+
+			auto &Slot{ GridWidget->AddSlot(ColIndex, RowIndex) };
+			Slot
+			.Padding(SlotPadding)
+			[
+				ContentTextBox
 			];
 			
 			GridWidget->SetColumnFill(ColIndex, 1.f);
