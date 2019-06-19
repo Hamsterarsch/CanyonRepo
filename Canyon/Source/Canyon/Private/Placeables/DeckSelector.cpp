@@ -1,0 +1,384 @@
+#include "Placeables/DeckSelector.h"
+#include "AssetRegistryModule.h"
+#include "Placeables/DeckDatabaseNative.h"
+#include "CanyonHelpers.h"
+#include "Placeables/InfluenceFloatMapDAL.h"
+#include "Runtime/Engine/Classes/Curves/CurveFloat.h"
+#include <list>
+
+void UDeckSelector::Init()
+{
+	//fetch and categorize all available decks
+	for(auto &&DataTuple : FetchAllDecks())
+	{	
+		if(DataTuple.Value->GetRequiredDeckGeneration() <= m_DeckGeneration)
+		{
+			m_aDecksValid.Emplace(std::move(DataTuple.Key), DataTuple.Value->m_RelativeProbability, DataTuple.Value->GetRequiredDeckGeneration());
+		}
+		else
+		{
+			m_aDecksInvalid.Emplace(std::move(DataTuple.Key), DataTuple.Value->m_RelativeProbability, DataTuple.Value->GetRequiredDeckGeneration());
+		}
+			   
+	}
+
+	RegenerateValidDeckData();
+		
+
+}
+
+UDeckSelector* UDeckSelector::Construct(UClass* pClass)
+{
+	UDeckSelector *pObj;
+	if(!pClass)
+	{
+		pObj = NewObject<UDeckSelector>();
+	}
+	else
+	{
+		pObj = NewObject<UDeckSelector>(Cast<UObject>(GetTransientPackage()), pClass);		
+	}
+
+	pObj->Init();
+	return pObj;
+
+
+}
+
+UDeckSelector::UDeckSelector() :
+	m_DeckGeneration{ 0 }
+{
+}
+
+TArray<FDeckData> UDeckSelector::GetDeckData(int32 ForAmount)
+{
+	if(m_aDecksValid.Num() <= 0)
+	{
+		return {};
+
+
+	}
+
+	TArray<FDeckData> aOutData{};
+
+	//track decks to remove from valid
+	std::list<int32> UsedIndicesList{};
+	
+	if(m_aDecksValid.Num() > ForAmount)
+	{
+		//get specified amount of deck data
+		for(int32 Index{0}; Index < ForAmount; ++Index)
+		{
+			m_ValidDeckIndexSampleSourceSet.Compact();
+			auto PickedIndex{GetRandomIndexSeeded(m_ValidDeckIndexSampleSourceSet.Num()) };
+			auto AsSetIndex{  FSetElementId::FromInteger(PickedIndex) };
+
+			auto DeckIndex{ m_ValidDeckIndexSampleSourceSet[AsSetIndex] };
+			m_ValidDeckIndexSampleSourceSet.Remove(DeckIndex);
+			
+			aOutData.Add(GetDeckDataFromValidDeckAt(DeckIndex));
+
+			//remove the decks from valid later in order to not invalidate the probability set every pick
+			UsedIndicesList.push_front(DeckIndex);
+
+		}
+	}
+	else
+	{
+		//get deck data from remaining
+		for(int32 ValidDeckIndex{ 0 }; ValidDeckIndex < m_aDecksValid.Num(); ++ValidDeckIndex)
+		{
+			aOutData.Add( GetDeckDataFromValidDeckAt(ValidDeckIndex) );
+			
+			UsedIndicesList.push_front(ValidDeckIndex);
+
+		}
+	}
+
+	//remove old decks
+	//has to be in order from highest to lowest index to not invalidate the remaining indices
+	UsedIndicesList.sort([](int32 &Lhs, int32 &Rhs)
+	{
+		return Lhs > Rhs;
+	});
+
+	for(auto &&IndexToRemove : UsedIndicesList)
+	{
+		m_aDecksValid.RemoveAt(IndexToRemove);
+
+	}
+
+	RegenerateValidDeckData();
+		
+	return aOutData;
+
+
+}
+
+FDeckData UDeckSelector::GetEndlessDeckData()
+{	
+	auto FillerBuildingAmount{ FMath::RoundToInt(m_pFillerBuildingAmountSource->GetFloatValue(m_DeckGeneration)) };
+
+	FDeckData OutData{};
+	if(FillerBuildingAmount <= 0)
+	{
+		return OutData;
+	}
+
+	AddFillerChargesToDeckData(FillerBuildingAmount, OutData);
+	return OutData;
+
+
+}
+
+void UDeckSelector::AddFillerChargesToDeckData(const int32 FillerChargeCount, FDeckData &DeckData, UDeckDatabaseNative *pDeckTemplate)
+{	
+	//trivial case
+	if(FillerChargeCount <= 0)
+	{
+		return;
+
+
+	}
+	
+	if(pDeckTemplate)
+	{
+		AddFillerChargesForDeck(FillerChargeCount, DeckData, pDeckTemplate);
+	}
+	else
+	{
+		AddFillerChargesForEndless(FillerChargeCount, DeckData);
+	}
+
+
+}
+
+void UDeckSelector::AddFillerChargesForEndless(const int32 FillerChargeCount, FDeckData& DeckData)
+{
+	//construct cache if needed
+	if
+	(		
+		m_aEndlessFillerCats.Num() == 0
+		&& m_aEndlessFillerProbs.Num() == 0	
+	)
+	{
+		auto FillerProbMap{ m_pFillerChargesProbForEndless->GetMap() };
+		if(FillerProbMap.Num() > 0)
+		{
+			FillerProbMap.GenerateKeyArray(m_aEndlessFillerCats);
+			FillerProbMap.GenerateValueArray(m_aEndlessFillerProbs);
+
+			//build the prob set
+			m_EndlessFillerProbSampleSet.Reset();
+
+			//approximate memory
+			m_EndlessFillerProbSampleSet.Reserve(m_aEndlessFillerCats.Num() * m_aEndlessFillerProbs.Num());
+
+			//parallel iteration
+			for(int32 CatIndex{ 0 }; CatIndex < m_aEndlessFillerCats.Num(); ++CatIndex)
+			{
+				//Add the index to the cat x times to the set to scale the probability
+				for(int32 TimesAdded{ 0 }; TimesAdded < m_aEndlessFillerProbs[CatIndex]; ++TimesAdded)
+				{
+					m_EndlessFillerProbSampleSet.Add(CatIndex);
+
+				}
+
+			}
+		}
+		else
+		{
+			return;
+		}
+	}
+		
+	AddFillerCharges(FillerChargeCount, DeckData, m_aEndlessFillerCats, m_aEndlessFillerProbs, m_EndlessFillerProbSampleSet);
+
+
+}
+
+void UDeckSelector::AddFillerChargesForDeck(const int32 FillerChargeCount, FDeckData &DeckData, UDeckDatabaseNative *pDeckTemplate)
+{
+	//trivial case
+	auto FillerProbMap{ pDeckTemplate->GetRelativeFillerProbabilites() };
+	   
+	if(FillerProbMap.Num() <= 0 || FillerChargeCount <= 0)
+	{
+		return;
+
+
+	}
+	
+	//reparse map data
+	TArray<FString> aProbMapCategories;
+	FillerProbMap.GenerateKeyArray(aProbMapCategories);
+	
+	TArray<int32> aFillerProbMapValues;
+	FillerProbMap.GenerateValueArray(aFillerProbMapValues);
+
+	//generate sample source
+	TSet<int32, DefaultKeyFuncs<int32, true>> FillerSampleSourceSet{};
+
+	//approximate memory needed
+	FillerSampleSourceSet.Reserve(aProbMapCategories.Num() * aFillerProbMapValues.Num());
+
+	for(int32 CatIndex{ 0 }; CatIndex < aProbMapCategories.Num(); ++CatIndex)
+	{
+		for(int32 TimesAdded{ 0 }; TimesAdded < aFillerProbMapValues[CatIndex]; ++TimesAdded)
+		{
+			FillerSampleSourceSet.Add(CatIndex);
+			
+		}
+
+	}
+
+	AddFillerCharges(FillerChargeCount, DeckData, aProbMapCategories, aFillerProbMapValues, FillerSampleSourceSet);
+
+
+}
+
+void UDeckSelector::AddFillerCharges
+(
+	int32 FillerChargeCount, 
+	FDeckData &DeckData, 
+	const TArray<FString> &aFillerCat, 
+	const TArray<int32> &aFillerProbs, 
+	TSet<int32, DefaultKeyFuncs<int32, true>> &FillerProbSampleSet
+)
+{
+	//compact set to enable indexed access
+	FillerProbSampleSet.Compact();
+
+	//pick x filler buildings
+	for(int32 NumPickedFillers{ 0 }; NumPickedFillers < FillerChargeCount; ++NumPickedFillers)
+	{		
+		const auto PickedIndex{ GetRandomIndexSeeded(aFillerProbs.Num()) };		
+		auto AsSetIndex{ FSetElementId::FromInteger(PickedIndex)};
+
+		auto FillerCategory{ aFillerCat[ FillerProbSampleSet[AsSetIndex] ] };
+
+		//constraint charge amount per map
+		int32 NumCharges{ 1 };
+		auto MaxChargeTypeOnMap{ static_cast<int32>(m_pPlaceableMaxPerMap->GetValueForCategory(FillerCategory)) };
+		if(MaxChargeTypeOnMap >= 1)
+		{
+			auto *pIssueMapItem{ m_IssuedChargesMap.Find(FillerCategory) };
+			auto ChargesAlreadyIssued{ pIssueMapItem ? *pIssueMapItem : 0 };
+
+			NumCharges = FMath::Clamp(NumCharges, 0, MaxChargeTypeOnMap - ChargesAlreadyIssued);
+		}
+		checkf(NumCharges >= 0, TEXT("Deck Selector charges smaller than zero"));
+
+		auto &Value{ DeckData.m_ChargeMapping.FindOrAdd(FillerCategory) };
+		Value += NumCharges;
+
+		AddToIssuedChargesForCategory(FillerCategory, NumCharges);
+
+	}
+
+
+}
+
+void UDeckSelector::RegenerateValidDeckData()
+{	
+	m_ValidDeckIndexSampleSourceSet.Reset();
+
+	for(int32 ValidDeckIndex{ 0 }; ValidDeckIndex < m_aDecksValid.Num(); ++ValidDeckIndex)
+	{
+		for(int32 TimesAdded{ 0 }; TimesAdded < m_aDecksValid[ValidDeckIndex].RelativeProb; ++TimesAdded)
+		{
+			m_ValidDeckIndexSampleSourceSet.Add(ValidDeckIndex);
+
+		}
+
+	}
+
+
+}
+
+FDeckData UDeckSelector::GetDeckDataFromValidDeckAt(const int32 Index) 
+{
+	auto *pDeckDataAsset{ Cast<UDeckDatabaseNative>(m_aDecksValid[Index].Path.TryLoad()) };
+
+	//fixed buildings
+	FDeckData DeckData{};
+	DeckData.m_DeckWidgetClass = pDeckDataAsset->GetDeckWidget();
+
+	{
+		const auto NumData{ pDeckDataAsset->GetNumData() };
+		for(int32 DataIndex{0}; DataIndex < NumData; ++DataIndex)
+		{
+			auto Category{ pDeckDataAsset->GetDependencyCategoryAtIndex(DataIndex) };
+			auto NumCharges{ pDeckDataAsset->GetMinAmountAtIndex(DataIndex) };
+
+			//constraint charge amount per map
+			auto MaxChargeTypeOnMap{ static_cast<int32>(m_pPlaceableMaxPerMap->GetValueForCategory(Category)) };
+			if(MaxChargeTypeOnMap >= 1)
+			{
+				auto *pIssueMapItem{ m_IssuedChargesMap.Find(Category) };
+				auto ChargesAlreadyIssued{ pIssueMapItem ? *pIssueMapItem : 0 };
+
+				NumCharges = FMath::Clamp(NumCharges, 0, MaxChargeTypeOnMap - ChargesAlreadyIssued);
+			}
+			checkf(NumCharges >= 0, TEXT("Deck Selector charges smaller than zero"));
+
+			AddToIssuedChargesForCategory(Category, NumCharges);
+
+			DeckData.m_ChargeMapping.Add(Category, NumCharges);
+		}
+	}
+
+	//filler handling
+	auto FillerBuildingAmount{ FMath::RoundToInt(m_pFillerBuildingAmountSource->GetFloatValue(m_DeckGeneration)) };
+
+	AddFillerChargesToDeckData(FillerBuildingAmount, DeckData, pDeckDataAsset);
+
+
+	return DeckData;
+
+
+}
+
+void UDeckSelector::AddToIssuedChargesForCategory(const FString& Category, int32 ChargeCount)
+{
+	auto &Value{ m_IssuedChargesMap.FindOrAdd(Category) };
+	Value += ChargeCount;
+
+
+}
+
+TArray<TTuple<FSoftObjectPath, class UDeckDatabaseNative *>> UDeckSelector::FetchAllDecks() const
+{
+	auto &Registry{ FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")) };
+
+	//filter
+	FARFilter Filter{};
+	Filter.ClassNames.Add(*UDeckDatabaseNative::StaticClass()->GetName());
+	Filter.bRecursiveClasses = true;
+	   	
+	Filter.PackagePaths.Add(TEXT("/Game/Placeables/Decks"));
+	Filter.bRecursivePaths = true;
+
+	//fetch
+	TArray<FAssetData> aFoundAssets;
+	Registry.Get().GetAssets(Filter, aFoundAssets);
+
+	if(aFoundAssets.Num() <= 0)
+	{
+		return {};
+
+
+	}
+
+	//type conversion
+	TArray<TTuple<FSoftObjectPath, UDeckDatabaseNative *>> aOutDecks{};
+	for(auto &&AssetData : aFoundAssets)
+	{		
+		aOutDecks.Emplace(AssetData.ToSoftObjectPath(), Cast<UDeckDatabaseNative>(AssetData.FastGetAsset(true)) );		
+
+	}
+
+	return aOutDecks;
+
+
+}

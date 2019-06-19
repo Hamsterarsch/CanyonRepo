@@ -19,6 +19,9 @@ public:
 		 FString GetDependencyCategoryAtIndex(int32 Index) const;
 
 	UFUNCTION(BlueprintImplementableEvent)
+		TMap<FString, int32> GetRelativeFillerProbabilites() const;
+
+	UFUNCTION(BlueprintImplementableEvent)
 		int32 GetMinAmountAtIndex(int32 Index) const;
 	
 	UFUNCTION(BlueprintImplementableEvent)
@@ -27,5 +30,8 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		int32 GetRequiredDeckGeneration() const;
 
+	UPROPERTY()
+		int32 m_RelativeProbability{ 1 };
+	
 
 };

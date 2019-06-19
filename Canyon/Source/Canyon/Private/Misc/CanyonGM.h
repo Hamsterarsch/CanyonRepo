@@ -21,11 +21,15 @@ public:
 
 	int32 GetInfluenceForPlaceable(const FString &FirstInfluenceQualifier, const FString &SecondInfluenceQualifier) const;
 
-	int32 GetInfluenceForBaseCategory(const FString &CategoryName) const;
+	int32 GetInfluenceBasisForCategory(const FString &CategoryName) const;
 
 	void AddPointsCurrent(int32 Points);
 
-	void AddPointsRequiredFor(const FString &Category, uint32 Amount);
+	void IncreaseDeckGeneration();
+
+	TArray<struct FDeckData> GetDeckData(int32 Amount = 2);
+
+	FDeckData GetEndlessDeckData();
 
 
 	UFUNCTION(BlueprintCallable)
@@ -53,14 +57,26 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 		TSubclassOf<class UPrettyWidget> m_LooseWidgetClass;
 
+	UPROPERTY(EditDefaultsOnly)
+		UCurveFloat *m_pRequiredPointsSource;
+
+	UPROPERTY(EditDefaultsOnly)
+		class UInfluenceFloatMapDAL *m_pDeckFillerProbOverride;
+	
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UDeckSelector> m_DeckSelectorClass;
+
 
 private:
 	void ReceiveOnPointsChanged();
 
-	void AddPointsRequired(int32 Points);
+	void SetPointsRequired(int32 Points);
 
 	void OnLoose();
 
+
+	UPROPERTY()
+		class UDeckSelector *m_pDeckSelector;
 
 	UPROPERTY()
 		class UInfluenceDataObject *m_pInfluenceData;

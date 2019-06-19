@@ -20,6 +20,8 @@ public:
 
 	static TArray<class UDeckDatabaseNative *> GetRandomDecks(const int32 NumDecks, FString SubCategory = "");
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		static uint8 EnumStringToEnumByte(const class UUserDefinedEnum *pEnum, const FString &EnumIdentifier);
 
 	
 };

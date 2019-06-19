@@ -2,7 +2,7 @@
 
 
 #include "CanyonBpfLib.h"
-#include "Misc/CanyonHelpers.h"
+#include "CanyonHelpers.h"
 #include "Placeables/PlaceableBase.h"
 #include "AssetRegistryModule.h"
 #include "Placeables/DeckDatabaseNative.h"
@@ -125,6 +125,20 @@ TArray<UDeckDatabaseNative *> UCanyonBpfLib::GetRandomDecks(const int32 NumDecks
 	}
 
 	return aOutDecks;
+
+
+}
+
+uint8 UCanyonBpfLib::EnumStringToEnumByte(const UUserDefinedEnum* pEnum, const FString& EnumIdentifier)
+{
+	if(!pEnum)
+	{
+		return 255;
+
+		
+	}
+
+	return pEnum->GetIndexByNameString(EnumIdentifier);
 
 
 }

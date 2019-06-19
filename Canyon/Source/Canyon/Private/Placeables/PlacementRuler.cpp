@@ -62,7 +62,7 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 	TerrainHit.ImpactPoint.Z += .5;
 	m_LastHitPosition = TerrainHit.ImpactPoint;
 	
-	//Normal constraint
+//Normal constraint
 	constexpr float NormalTolerance{ 10e-6 };
 	auto ImpactNormalZ{ TerrainHit.ImpactNormal.GetUnsafeNormal().Z };
 	if
@@ -76,7 +76,7 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 		return false;
 	}
 
-	//Surface type constraint
+//Surface type constraint
 	if (auto *pPhyMat{ TerrainHit.PhysMaterial.Get() })
 	{
 		auto SurfaceType{ UPhysicalMaterial::DetermineSurfaceType(pPhyMat) };
@@ -102,7 +102,7 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 	}
 	*/
 
-	//Mouse distance override
+//Mouse distance override
 	FVector2D CursorRootScreenPos;
 	FVector2D MousePos;
 	pPlaceable->GetWorld()->GetFirstPlayerController()->ProjectWorldLocationToScreen(pPlaceable->GetActorLocation(), CursorRootScreenPos);
@@ -117,7 +117,7 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 		return false;
 	}
 
-	//handle building penetrations after snapping
+//handle building penetrations after snapping
 	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
 
 	auto MovementDelta{FVector::Dist(m_LastPlaceablePosition, TerrainHit.ImpactPoint) };
@@ -155,8 +155,7 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 	FVector DispToApply{ EForceInit::ForceInitToZero };
 	TArray<FHitResult> aHits;
 
-
-	//query sweep hits for the hull comp
+//query sweep hits for the hull comp
 	{
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
@@ -176,6 +175,25 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 
 	if(aHits.Num() > 0)
 	{
+		//if target location is unobstructed ignore slide result
+		{
+			TArray<FOverlapResult> aCursorOverlaps;
+
+			auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
+			ComponentQueryParams.AddIgnoredActor(pPlaceable);
+
+			auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
+			ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
+
+			if(!pHullComp->GetWorld()->ComponentOverlapMulti(aCursorOverlaps, pHullComp, TerrainHit.ImpactPoint + pHullComp->RelativeLocation, pHullComp->GetComponentQuat(), ComponentQueryParams, ObjectQueryParams))
+			{
+				out_NewPos = TerrainHit.ImpactPoint;
+				m_LastPlaceablePosition = out_NewPos;
+				return true;
+			}
+			UE_LOG(LogTemp, Warning, TEXT("On mouse overlaps %i"), aCursorOverlaps.Num());
+		}
+
 		int HitsPenetratedOnStart{ 0 };
 		for(auto &&Hit : aHits)
 		{
@@ -251,7 +269,8 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 		out_NewPos.Z = TerrainHit.ImpactPoint.Z;
 		m_LastPlaceablePosition = out_NewPos;
 		return true;
-		
+
+
 	}
 	else
 	{
@@ -259,6 +278,8 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 		out_NewPos = TerrainHit.ImpactPoint;
 		m_LastPlaceablePosition = out_NewPos;
 		return true;
+
+
 	}
 
 

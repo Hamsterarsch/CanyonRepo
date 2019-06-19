@@ -37,12 +37,23 @@ void UDeckState::ClearCachedPlaceableForCategory(const FString& Category)
 
 void UDeckState::NotifyOnDisplayNewDecks()
 {
-	m_apPendingSelectableDecks = UCanyonBpfLib::GetRandomDecks(2);
+	const auto NewDeckAmount{ m_DesiredDeckAmount - m_aPendingSelectableDecks.Num() };
+
+	m_aPendingSelectableDecks.Append(m_pGM->GetDeckData(NewDeckAmount));
+
+	//no valid deck exist
+	if(m_aPendingSelectableDecks.Num() == 0)
+	{
+		AddDeck(m_pGM->GetEndlessDeckData());
+		return;
+
+
+	}
 	
 	TArray<TSubclassOf<UPrettyWidget>> aDeckWidgetClasses{};
-	for(auto *pDeckData : m_apPendingSelectableDecks)
+	for(auto &&DeckData : m_aPendingSelectableDecks)
 	{
-		aDeckWidgetClasses.Add(pDeckData->GetDeckWidget());
+		aDeckWidgetClasses.Add(DeckData.m_DeckWidgetClass);
 
 	}
 
@@ -53,8 +64,8 @@ void UDeckState::NotifyOnDisplayNewDecks()
 
 void UDeckState::NotifyOnDeckWidgetClicked(int32 Index)
 {
-	AddDeck(m_apPendingSelectableDecks[Index]);
-	m_apPendingSelectableDecks.Reset();
+	AddDeck(m_aPendingSelectableDecks[Index]);
+	m_aPendingSelectableDecks.RemoveAt(Index);
 
 
 }
@@ -90,42 +101,46 @@ void UDeckState::ReceiveOnWidgetClicked(const UWidget* pClickedWidget)
 
 }
 
-void UDeckState::AddDeck(const UDeckDatabaseNative* pDeck)
+void UDeckState::AddDeck(const FDeckData &Deck)
 {	
-	auto NumDeckData{ pDeck->GetNumData() };
 	
-	for(int32 DataIndex{ 0 }; DataIndex < NumDeckData; ++DataIndex)
+	for(auto &&Entry : Deck.m_ChargeMapping)
 	{		
+		/*
 		auto Category{ pDeck->GetDependencyCategoryAtIndex(DataIndex) };
-		
+
+		//todo: deprecation pending
 		auto MinAmount{ pDeck->GetMinAmountAtIndex(DataIndex) };
 		auto MaxAmount{ pDeck->GetMaxAmountAtIndex(DataIndex) };
 		auto AmountDist{ MaxAmount - MinAmount };
 		auto BuildingAmount{ MinAmount + FMath::RoundToInt(FMath::SRand() * AmountDist) };
-				
+		//
+		*/
+
 		//get widget class
-		auto WidgetClass{ m_pGM->GetPlaceableWidget(Category) };
+		auto WidgetClass{ m_pGM->GetPlaceableWidget(Entry.Key) };
 
 		//Find or create data node
 		FCategoryData *pCatData{ m_DataMapping.Find(WidgetClass) };
 		
 		if(!pCatData)
 		{
-			pCatData = &m_DataMapping.Add(WidgetClass, FCategoryData{ Category });	
+			pCatData = &m_DataMapping.Add(WidgetClass, FCategoryData{ Entry.Key });	
 		}
 
 		//Update deck data:
 			//Add amount
-		m_ChargesAmount += BuildingAmount;
-		pCatData->m_ChargeCount += BuildingAmount;
+		m_ChargesAmount += Entry.Value;
+		pCatData->m_ChargeCount += Entry.Value;
 		
-		//Update needed points in gm
-		m_pGM->AddPointsRequiredFor(Category, static_cast<uint32>(BuildingAmount));
 
 		//Notify listeners
 		m_eOnDeckStateChanged.Broadcast(WidgetClass, *pCatData);
 		
 	}
+
+	//Update needed points in gm
+	m_pGM->IncreaseDeckGeneration();
 	
 	
 }

@@ -13,14 +13,13 @@
 #include "RTSPlayerController.h"
 #include "Engine/World.h"
 #include "Misc/CollisionChannels.h"
-#include "Misc/CanyonHelpers.h"
+#include "CanyonHelpers.h"
 #include "Components/StaticMeshCanyonComp.h"
 #include "Placeables/PlaceablePreview.h"
 #include "UI/DeckState.h"
 #include "UI/DeckStateRenderer.h"
 #include "WidgetBase/MainHudWidgetBase.h"
 #include "Misc/CanyonGM.h"
-
 
 const FName ARTSPlayerEye::s_AxisMouseX{ TEXT("MouseX") };
 const FName ARTSPlayerEye::s_AxisMouseY{ TEXT("MouseY") };
@@ -40,7 +39,7 @@ ARTSPlayerEye::ARTSPlayerEye() :
 	m_ZoomTargetPitch{ -30 },
 	m_CameraState{ this },
 	m_PlacementState{ this }
-{
+{	
 	SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
 	GetMovementComponent()->SetUpdatedComponent(GetRootComponent());
 

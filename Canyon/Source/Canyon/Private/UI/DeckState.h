@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "WidgetBase/PlaceableIconWidgetBase.h"
 #include "UI/CategoryData.h"
+#include "Placeables/DeckSelector.h"
 #include "DeckState.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDeckStateChangedDelegate, TSubclassOf<UPlaceableIconWidgetBase>, WidgetClassOfChanged, const FCategoryData &, NewData);
@@ -25,7 +26,7 @@ public:
 
 	inline int32 GetChargesCurrent() const { return m_ChargesAmount; }
 
-	inline bool GetAreDecksSelectable() const { return m_apPendingSelectableDecks.Num(); }
+	inline bool GetAreDecksSelectable() const { return m_aPendingSelectableDecks.Num(); }
 
 	void NotifyOnDisplayNewDecks();
 
@@ -38,21 +39,18 @@ public:
 
 	static UDeckState *Construct(class ACanyonGM *pGM);			
 
-	inline void DebugAddBuilding()
-	{
-		
-	}
-	
 
 private:
-	void AddDeck(const class UDeckDatabaseNative *pDeck);
+	void AddDeck(const FDeckData &Deck);
 
 
 	UPROPERTY()
 		class ACanyonGM *m_pGM;
 	
 	UPROPERTY()
-		TArray<UDeckDatabaseNative *> m_apPendingSelectableDecks;
+		TArray<FDeckData> m_aPendingSelectableDecks;
+
+	const int32 m_DesiredDeckAmount{ 2 };
 
 	FOnDeckStateChangedDelegate m_eOnDeckStateChanged;
 
