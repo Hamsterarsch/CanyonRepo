@@ -42,17 +42,16 @@ struct FZoomNode
 	GENERATED_BODY()
 
 public:	
-	FZoomNode(float Distance = 300, float Pitch = -30) 
+	FZoomNode(float Distance = 300) :
+	m_Distance(Distance)
 	{
-		m_Distance = Distance;
-		m_PitchMax =  Pitch;
-	};
+	}
 		
 	UPROPERTY(EditAnywhere, DisplayName="Distance")
 		float m_Distance;
 
-	UPROPERTY(EditAnywhere, DisplayName="Max Pitch")
-		float m_PitchMax;
+	UPROPERTY(EditAnywhere, DisplayName="Movement Speed Multiplier Delta")
+		float m_MovementSpeedMultDelta;
 
 
 };
@@ -206,6 +205,7 @@ protected:
 	float m_ZoomTargetPitch;
 	int32 m_ZoomIndex;
 	FVector m_SeamlessRotationPrePos;
+	float m_MovementSpeedMultCurrent;
 
 	CCameraStateMachine m_CameraState;
 	CPlacementStateMachine m_PlacementState;

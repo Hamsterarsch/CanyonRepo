@@ -37,6 +37,7 @@ ARTSPlayerEye::ARTSPlayerEye() :
 	m_bIsPlaceablePlaceable{ false },
 	m_ZoomTargetDist{ 300 },
 	m_ZoomTargetPitch{ -30 },
+	m_MovementSpeedMultCurrent{ 1 },
 	m_CameraState{ this },
 	m_PlacementState{ this }
 {	
@@ -58,7 +59,7 @@ ARTSPlayerEye::ARTSPlayerEye() :
 	m_pCamera->SetupAttachment(m_pCameraSpringArm);
 	m_pCamera->bEditableWhenInherited = true;
 
-	m_aZoomNodes.Add(FZoomNode{ 300, 30 });
+	m_aZoomNodes.Add(FZoomNode{ 300 });
 
 	m_pCursorRoot = CreateDefaultSubobject<USceneComponent>(TEXT("CursorRoot"));
 	//m_pCursorRoot->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
@@ -114,7 +115,7 @@ void ARTSPlayerEye::AddForwardMovement(const float AxisValue)
 	}
 	auto Forward = m_pCameraSpringArm->GetForwardVector();
 	//todo: delta time
-	AddActorWorldOffset(Forward.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed);
+	AddActorWorldOffset(Forward.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed * m_MovementSpeedMultCurrent);
 
 
 
@@ -130,7 +131,7 @@ void ARTSPlayerEye::AddRightMovement(const float AxisValue)
 	}
 	auto Right = m_pCameraSpringArm->GetRightVector();
 	//todo: delta time
-	AddActorWorldOffset(Right.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed);
+	AddActorWorldOffset(Right.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed * m_MovementSpeedMultCurrent);
 	   
 
 }
@@ -139,7 +140,7 @@ void ARTSPlayerEye::AddForwardMovementFromMouse(float AxisValue)
 {
 	auto Forward = m_pCameraSpringArm->GetForwardVector();
 	//Mouse based shuffle (todo: delta time)
-	AddActorWorldOffset(Forward.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_pCamera->AspectRatio);
+	AddActorWorldOffset(Forward.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_pCamera->AspectRatio * m_MovementSpeedMultCurrent);
 	
 
 }
@@ -152,7 +153,7 @@ void ARTSPlayerEye::AddRightMovementFromMouse(float AxisValue)
 		return;
 
 	}
-	AddActorWorldOffset(Right.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed);
+	AddActorWorldOffset(Right.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_MovementSpeedMultCurrent);
 
 }
 
@@ -202,14 +203,7 @@ void ARTSPlayerEye::ZoomOut()
 	if (m_ZoomIndex < (m_aZoomNodes.Num() - 1))
 	{
 		++m_ZoomIndex;
-		auto RelativeRot = m_pCameraSpringArm->RelativeRotation;
-		if (RelativeRot.Pitch > -m_aZoomNodes[m_ZoomIndex].m_PitchMax)
-		{
-			m_pCameraSpringArm->SetRelativeRotation(FRotator{ -m_aZoomNodes[m_ZoomIndex].m_PitchMax, m_pCameraSpringArm->RelativeRotation.Yaw, 0 });
-
-		}
-
-
+		m_MovementSpeedMultCurrent += m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
 	}
 
 
@@ -219,15 +213,8 @@ void ARTSPlayerEye::ZoomIn()
 {
 	if (m_ZoomIndex > 0)
 	{
+		m_MovementSpeedMultCurrent -= m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
 		--m_ZoomIndex;
-		auto RelativeRot = m_pCameraSpringArm->RelativeRotation;
-		if (RelativeRot.Pitch < -m_aZoomNodes[m_ZoomIndex].m_PitchMax)
-		{
-			m_pCameraSpringArm->SetRelativeRotation(FRotator{ -m_aZoomNodes[m_ZoomIndex].m_PitchMax, RelativeRot.Yaw, 0 });
-
-		}
-
-
 	}
 
 

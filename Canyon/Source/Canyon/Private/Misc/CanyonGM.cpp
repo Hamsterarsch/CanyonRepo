@@ -11,6 +11,7 @@
 #include "WidgetBase/PrettyWidget.h"
 #include "Player/RTSPlayerEye.h"
 #include "CanyonHelpers.h"
+#include "CanyonLogs.h"
 #include "Placeables/DeckSelector.h"
 
 
@@ -136,6 +137,7 @@ void ACanyonGM::BeginPlay()
 	//non savegame init
 	m_SessionSeed = FMath::Rand();
 	FMath::SRandInit(m_SessionSeed);
+	UE_LOG(LogCanyonCommon, Warning, TEXT("----BEGINNING GAME WITH SEED: %i ----"), m_SessionSeed);
 
 	m_pInfluenceData = UInfluenceDataObject::CreateFromFile();
 		
