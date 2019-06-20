@@ -5,5 +5,5 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogCanyonCommon, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogCanyonPlacement, Log, All);
-
+DECLARE_LOG_CATEGORY_EXTERN(LogCanyonPlacementRuler, Log, All);
 
