@@ -26,7 +26,6 @@ private:
 	bool m_bLastRet{ false };
 	FVector m_LastTerrainTracePos;
 	FVector m_LastPlaceablePosition;
-	FVector m_LastNonSweptPos;
 
 
 };

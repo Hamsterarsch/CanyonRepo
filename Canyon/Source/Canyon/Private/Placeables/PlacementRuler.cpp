@@ -12,7 +12,7 @@
 CPlacementRuler::CPlacementRuler() :
 	m_bInResnapRecovery{ false },
 	m_LastTerrainTracePos{ EForceInit::ForceInitToZero },
-	m_LastNonSweptPos{ EForceInit::ForceInitToZero }
+	m_LastPlaceablePosition{ EForceInit::ForceInitToZero }
 {
 }
 
@@ -73,19 +73,19 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 	}
 	//depen
 	TerrainHit.ImpactPoint.Z += .5;
+	m_LastTerrainTracePos = TerrainHit.ImpactPoint;
 
 
 //trivial (+ todo: also 'fixes' false positive sweep result, bc sweep with no delta doesnt hit --> use overlap
-	/*auto MovementDelta{FVector::Dist(m_LastTerrainTracePos, TerrainHit.ImpactPoint) };	
+	/*auto MovementDelta{FVector::Dist(m_LastPlaceablePosition, TerrainHit.ImpactPoint) };	
 	if(FMath::IsNearlyZero(MovementDelta, 0.0001f ))
 	{
 		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Postponing placement evaluation due to no changed mouse pos: %f"), MovementDelta);
 
 		out_NewPos = m_LastPlaceablePosition;
 		return m_bLastRet;
-	}
-	m_LastTerrainTracePos = TerrainHit.ImpactPoint;
-	*/
+	}*/
+	
 
 //Normal constraint
 	constexpr float NormalTolerance{ 10e-6 };
@@ -171,19 +171,20 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		m_bInResnapRecovery = false;		
 	}
 
-	//are there any overlaps		
+	//if target is unobstructed move to it
 	{
-		TArray<FOverlapResult> aCursorOverlaps;
+		TArray<FOverlapResult> aOutOverlaps;
 
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
+		ComponentQueryParams.bTraceComplex = true;
 
 		auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
 		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
 
 		pHullComp->GetWorld()->ComponentOverlapMulti
 		(
-			aCursorOverlaps, 
+			aOutOverlaps, 
 			pHullComp, 
 			TerrainHit.ImpactPoint + pHullComp->RelativeLocation, 
 			pHullComp->GetComponentQuat(), 
@@ -191,15 +192,16 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 			ObjectQueryParams
 		);
 
-		if(aCursorOverlaps.Num() == 0)
-		{
+		if(aOutOverlaps.Num() == 0)
+		{			
 			out_NewPos = TerrainHit.ImpactPoint;
 			return true;
-		}		
+		}
+
 	}
 
 
-	//there are overlaps so query sweep hits for the hull comp
+	//sweep hits to find a pos at the nearest building
 	TArray<FHitResult> aHits;
 	{
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
@@ -218,10 +220,29 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		);
 	}
 
-	//there are overlaps even though the sweep didnt find a result (wich means we just didnt move while colliding)
+	
+	//the sweep didnt get any hits (maybe bc we didnt move the building).
 	if(aHits.Num() == 0)
 	{
-		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied because we are overlapping with no sweep"));
+		//if we are not penetrated
+		UE_LOG(LogTemp, Warning, TEXT("No sweeps"));
+		out_NewPos = m_LastPlaceablePosition;
+		return m_bLastRet;		
+	}
+
+	int32 HitsPenOnStart{ 0 };
+	for(auto &&Hit : aHits)
+	{
+		if(Hit.bStartPenetrating)
+		{
+			++HitsPenOnStart;
+		}
+
+	}
+
+	if(HitsPenOnStart > 0)
+	{
+		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied because of pen sweep hits"));
 		out_NewPos = TerrainHit.ImpactPoint;
 		return false;
 	}
