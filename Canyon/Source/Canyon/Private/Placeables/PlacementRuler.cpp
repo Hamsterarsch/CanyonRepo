@@ -224,6 +224,33 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 	//the sweep didnt get any hits (maybe bc we didnt move the building).
 	if(aHits.Num() == 0)
 	{
+				TArray<FOverlapResult> aOutOverlaps;
+
+		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
+		ComponentQueryParams.AddIgnoredActor(pPlaceable);
+		ComponentQueryParams.bTraceComplex = true;
+
+		auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
+		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
+
+		pHullComp->GetWorld()->ComponentOverlapMulti
+		(
+			aOutOverlaps, 
+			pHullComp, 
+			TerrainHit.ImpactPoint + pHullComp->RelativeLocation, 
+			pHullComp->GetComponentQuat(), 
+			ComponentQueryParams, 
+			ObjectQueryParams
+		);
+
+		if(aOutOverlaps.Num() == 0)
+		{
+		UE_LOG(LogTemp, Warning, TEXT("No sweeps overidden"));
+			out_NewPos = TerrainHit.ImpactPoint;
+			return true;
+		}
+
+
 		//if we are not penetrated
 		UE_LOG(LogTemp, Warning, TEXT("No sweeps"));
 		out_NewPos = m_LastPlaceablePosition;

@@ -72,7 +72,7 @@ public:
 
 	inline int32 GetDeckGeneration() const { return m_DeckGeneration; }
 
-	inline void IncreaseDeckGeneration() { ++m_DeckGeneration; }
+	void IncreaseDeckGeneration();
 	
 
 protected:
@@ -110,6 +110,8 @@ private:
 	//Regenerates the sample set used to choose an index from
 	//the valid decks array.
 	void RegenerateValidDeckData();
+
+	void SearchForNewValidDecks();
 
 	FDeckData GetDeckDataFromValidDeckAt(int32 Index);
 

@@ -131,6 +131,14 @@ FDeckData UDeckSelector::GetEndlessDeckData()
 
 }
 
+void UDeckSelector::IncreaseDeckGeneration()
+{
+	++m_DeckGeneration;
+	SearchForNewValidDecks();
+
+
+}
+
 void UDeckSelector::AddFillerChargesToDeckData(const int32 FillerChargeCount, FDeckData &DeckData, UDeckDatabaseNative *pDeckTemplate)
 {	
 	//trivial case
@@ -252,7 +260,7 @@ void UDeckSelector::AddFillerCharges
 	//pick x filler buildings
 	for(int32 NumPickedFillers{ 0 }; NumPickedFillers < FillerChargeCount; ++NumPickedFillers)
 	{		
-		const auto PickedIndex{ GetRandomIndexSeeded(aFillerProbs.Num()) };		
+		const auto PickedIndex{ GetRandomIndexSeeded(FillerProbSampleSet.Num()) };		
 		auto AsSetIndex{ FSetElementId::FromInteger(PickedIndex)};
 
 		auto FillerCategory{ aFillerCat[ FillerProbSampleSet[AsSetIndex] ] };
@@ -290,6 +298,30 @@ void UDeckSelector::RegenerateValidDeckData()
 			m_ValidDeckIndexSampleSourceSet.Add(ValidDeckIndex);
 
 		}
+
+	}
+
+
+}
+
+void UDeckSelector::SearchForNewValidDecks()
+{
+	std::list<int32> ValidatedDeckIndices{};
+	for(int32 InvalidDeckIndex{ 0 }; InvalidDeckIndex < m_aDecksInvalid.Num(); ++InvalidDeckIndex)
+	{
+		if(m_aDecksInvalid[InvalidDeckIndex].ReqGeneration <= m_DeckGeneration)
+		{
+			m_aDecksValid.Add(std::move(m_aDecksInvalid[InvalidDeckIndex]));
+		}
+		
+		ValidatedDeckIndices.push_front(InvalidDeckIndex);
+
+	}
+
+	//todo: maybe remove with predicate search for invalid path
+	for(auto &&ValidatedIndex : ValidatedDeckIndices)
+	{
+		m_aDecksInvalid.RemoveAt(ValidatedIndex);
 
 	}
 
