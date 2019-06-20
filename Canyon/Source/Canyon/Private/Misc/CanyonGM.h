@@ -31,6 +31,8 @@ public:
 
 	FDeckData GetEndlessDeckData();
 
+	void FillUpDeckDataNonEndless(FDeckData &DeckData);
+
 
 	UFUNCTION(BlueprintCallable)
 		inline int32 GetPointsCurrent() const { return m_PointsCurrent; }

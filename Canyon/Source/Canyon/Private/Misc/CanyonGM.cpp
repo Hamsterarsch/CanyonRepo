@@ -87,6 +87,13 @@ FDeckData ACanyonGM::GetEndlessDeckData()
 
 }
 
+void ACanyonGM::FillUpDeckDataNonEndless(FDeckData& DeckData)
+{
+	m_pDeckSelector->FillUpDeckDataNonEndless(DeckData);
+
+
+}
+
 void ACanyonGM::SetPointsRequired(const int32 Points)
 {
 	m_PointsRequired = Points;

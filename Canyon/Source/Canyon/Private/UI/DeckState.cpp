@@ -41,7 +41,7 @@ void UDeckState::NotifyOnDisplayNewDecks()
 
 	m_aPendingSelectableDecks.Append(m_pGM->GetDeckData(NewDeckAmount));
 
-	//no valid deck exist
+	//no valid deck exist, assume endless mode
 	if(m_aPendingSelectableDecks.Num() == 0)
 	{
 		AddDeck(m_pGM->GetEndlessDeckData());
@@ -64,6 +64,8 @@ void UDeckState::NotifyOnDisplayNewDecks()
 
 void UDeckState::NotifyOnDeckWidgetClicked(int32 Index)
 {
+	m_pGM->FillUpDeckDataNonEndless(m_aPendingSelectableDecks[Index]);
+
 	AddDeck(m_aPendingSelectableDecks[Index]);
 	m_aPendingSelectableDecks.RemoveAt(Index);
 

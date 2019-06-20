@@ -115,6 +115,29 @@ TArray<FDeckData> UDeckSelector::GetDeckData(int32 ForAmount)
 
 }
 
+void UDeckSelector::FillUpDeckDataNonEndless(FDeckData &DeckData)
+{
+	auto *pDeckTemplate{ Cast<UDeckDatabaseNative>(DeckData.m_DeckAssetPath.TryLoad()) };
+
+	const auto FillerAmount{ m_pFillerBuildingAmountSource->GetFloatValue(m_DeckGeneration) };
+
+	if(FillerAmount > 0)
+	{
+		AddFillerChargesForDeck(FillerAmount, DeckData, pDeckTemplate);		
+	}
+	else if(FillerAmount == 0)
+	{
+		//need to add to issue here too
+		for(auto &&Entry : DeckData.m_ChargeMapping)
+		{
+			AddToIssuedChargesForCategory(Entry.Key, Entry.Value);
+
+		}
+	}
+	
+
+}
+
 FDeckData UDeckSelector::GetEndlessDeckData()
 {	
 	auto FillerBuildingAmount{ FMath::RoundToInt(m_pFillerBuildingAmountSource->GetFloatValue(m_DeckGeneration)) };
@@ -151,7 +174,8 @@ void UDeckSelector::AddFillerChargesToDeckData(const int32 FillerChargeCount, FD
 	
 	if(pDeckTemplate)
 	{
-		AddFillerChargesForDeck(FillerChargeCount, DeckData, pDeckTemplate);
+		//postponed for non endless decks
+		//AddFillerChargesForDeck(FillerChargeCount, DeckData, pDeckTemplate);
 	}
 	else
 	{
@@ -200,7 +224,7 @@ void UDeckSelector::AddFillerChargesForEndless(const int32 FillerChargeCount, FD
 		}
 	}
 		
-	AddFillerCharges(FillerChargeCount, DeckData, m_aEndlessFillerCats, m_aEndlessFillerProbs, m_EndlessFillerProbSampleSet);
+	AddFillerCharges(FillerChargeCount, DeckData, m_aEndlessFillerCats, m_aEndlessFillerProbs, m_EndlessFillerProbSampleSet, true);
 
 
 }
@@ -216,42 +240,59 @@ void UDeckSelector::AddFillerChargesForDeck(const int32 FillerChargeCount, FDeck
 
 
 	}
-	
-	//reparse map data
-	TArray<FString> aProbMapCategories;
-	FillerProbMap.GenerateKeyArray(aProbMapCategories);
-	
-	TArray<int32> aFillerProbMapValues;
-	FillerProbMap.GenerateValueArray(aFillerProbMapValues);
 
-	//generate sample source
-	TSet<int32, DefaultKeyFuncs<int32, true>> FillerSampleSourceSet{};
-
-	//approximate memory needed
-	FillerSampleSourceSet.Reserve(aProbMapCategories.Num() * aFillerProbMapValues.Num());
-
-	for(int32 CatIndex{ 0 }; CatIndex < aProbMapCategories.Num(); ++CatIndex)
-	{
-		for(int32 TimesAdded{ 0 }; TimesAdded < aFillerProbMapValues[CatIndex]; ++TimesAdded)
-		{
-			FillerSampleSourceSet.Add(CatIndex);
-			
-		}
+	//include categories unlocked with this deck into the issue list
+	//(so they can be filled in this deck too)
+	for(auto Entry : DeckData.m_ChargeMapping)
+	{		
+		AddToIssuedChargesForCategory(Entry.Key, Entry.Value);
 
 	}
 
-	AddFillerCharges(FillerChargeCount, DeckData, aProbMapCategories, aFillerProbMapValues, FillerSampleSourceSet);
+	//only use unlocked buildings
+	ApplyFillerMapConstraints(FillerProbMap);
+	
+	if(FillerProbMap.Num() > 0)
+	{
+		//reparse map data
+		TArray<FString> aProbMapCategories;
+		FillerProbMap.GenerateKeyArray(aProbMapCategories);
+		
+		TArray<int32> aFillerProbMapValues;
+		FillerProbMap.GenerateValueArray(aFillerProbMapValues);
+		   
+		//generate sample source
+		TSet<int32, DefaultKeyFuncs<int32, true>> FillerSampleSourceSet{};
 
+		//approximate memory needed
+		FillerSampleSourceSet.Reserve(aProbMapCategories.Num() * aFillerProbMapValues.Num());
+
+		for(int32 CatIndex{ 0 }; CatIndex < aProbMapCategories.Num(); ++CatIndex)
+		{
+			for(int32 TimesAdded{ 0 }; TimesAdded < aFillerProbMapValues[CatIndex]; ++TimesAdded)
+			{
+				FillerSampleSourceSet.Add(CatIndex);
+				
+			}
+
+		}
+
+		//dont add filler charges to issued
+		AddFillerCharges(FillerChargeCount, DeckData, aProbMapCategories, aFillerProbMapValues, FillerSampleSourceSet, true);
+	}
+
+	
 
 }
 
 void UDeckSelector::AddFillerCharges
 (
-	int32 FillerChargeCount, 
+	const int32 FillerChargeCount, 
 	FDeckData &DeckData, 
 	const TArray<FString> &aFillerCat, 
 	const TArray<int32> &aFillerProbs, 
-	TSet<int32, DefaultKeyFuncs<int32, true>> &FillerProbSampleSet
+	TSet<int32, DefaultKeyFuncs<int32, true>> &FillerProbSampleSet,
+	const bool bAddFillersToIssued
 )
 {
 	//compact set to enable indexed access
@@ -276,14 +317,17 @@ void UDeckSelector::AddFillerCharges
 			NumCharges = FMath::Clamp(NumCharges, 0, MaxChargeTypeOnMap - ChargesAlreadyIssued);
 		}
 		checkf(NumCharges >= 0, TEXT("Deck Selector charges smaller than zero"));
-
+			   
 		auto &Value{ DeckData.m_ChargeMapping.FindOrAdd(FillerCategory) };
 		Value += NumCharges;
 
-		AddToIssuedChargesForCategory(FillerCategory, NumCharges);
+		if(bAddFillersToIssued)
+		{
+			AddToIssuedChargesForCategory(FillerCategory, NumCharges);
+		}
 
 	}
-
+	
 
 }
 
@@ -328,6 +372,29 @@ void UDeckSelector::SearchForNewValidDecks()
 
 }
 
+void UDeckSelector::ApplyFillerMapConstraints(TMap<FString, int32> &ToFillerMap)
+{
+	std::list<FString> InvalidFillerCats{};
+
+	for(auto &&Entry : ToFillerMap)
+	{
+		if(!m_IssuedChargesMap.Contains(Entry.Key))
+		{
+			InvalidFillerCats.emplace_back(Entry.Key);
+		}
+
+	}
+
+	for(auto &&KeyToRemove : InvalidFillerCats)
+	{
+		ToFillerMap.Remove(KeyToRemove);
+
+	}
+	ToFillerMap.Compact();
+
+
+}
+
 FDeckData UDeckSelector::GetDeckDataFromValidDeckAt(const int32 Index) 
 {
 	auto *pDeckDataAsset{ Cast<UDeckDatabaseNative>(m_aDecksValid[Index].Path.TryLoad()) };
@@ -335,6 +402,7 @@ FDeckData UDeckSelector::GetDeckDataFromValidDeckAt(const int32 Index)
 	//fixed buildings
 	FDeckData DeckData{};
 	DeckData.m_DeckWidgetClass = pDeckDataAsset->GetDeckWidget();
+	DeckData.m_DeckAssetPath = std::move(m_aDecksValid[Index].Path);
 
 	{
 		const auto NumData{ pDeckDataAsset->GetNumData() };
@@ -354,7 +422,8 @@ FDeckData UDeckSelector::GetDeckDataFromValidDeckAt(const int32 Index)
 			}
 			checkf(NumCharges >= 0, TEXT("Deck Selector charges smaller than zero"));
 
-			AddToIssuedChargesForCategory(Category, NumCharges);
+			//postpone this to endless decks only
+			//AddToIssuedChargesForCategory(Category, NumCharges);
 
 			DeckData.m_ChargeMapping.Add(Category, NumCharges);
 		}

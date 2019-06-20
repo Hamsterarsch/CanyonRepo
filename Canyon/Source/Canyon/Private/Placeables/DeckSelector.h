@@ -16,6 +16,9 @@ public:
 	UPROPERTY()
 		TSubclassOf<UPrettyWidget> m_DeckWidgetClass;
 
+	UPROPERTY()
+		FSoftObjectPath m_DeckAssetPath;
+
 
 };
 
@@ -66,6 +69,8 @@ public:
 
 	TArray<FDeckData> GetDeckData(int32 ForAmount = 2);
 
+	void FillUpDeckDataNonEndless(FDeckData &DeckData);
+
 	//Generates deck data without a deck template
 	//and filler charges only. Will be empty if no filler charges are permitted.
 	FDeckData GetEndlessDeckData();
@@ -96,6 +101,7 @@ private:
 
 	void AddFillerChargesForEndless(int32 FillerChargeCount, FDeckData &DeckData);
 
+	//only called when the deck should be filled up after it was picked
 	void AddFillerChargesForDeck(int32 FillerChargeCount, FDeckData &DeckData, class UDeckDatabaseNative *pDeckTemplate);
 
 	void AddFillerCharges
@@ -104,7 +110,8 @@ private:
 		FDeckData &DeckData, 
 		const TArray<FString> &aFillerCat, 
 		const TArray<int32> &aFillerProbs, 
-		TSet<int32, DefaultKeyFuncs<int32, true>> &FillerProbSampleSet
+		TSet<int32, DefaultKeyFuncs<int32, true>> &FillerProbSampleSet,
+		bool bAddFillersToIssued
 	);
 
 	//Regenerates the sample set used to choose an index from
@@ -112,6 +119,8 @@ private:
 	void RegenerateValidDeckData();
 
 	void SearchForNewValidDecks();
+
+	void ApplyFillerMapConstraints(TMap<FString, int32> &ToFillerMap);
 
 	FDeckData GetDeckDataFromValidDeckAt(int32 Index);
 
