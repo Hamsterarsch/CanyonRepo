@@ -356,9 +356,9 @@ void UDeckSelector::SearchForNewValidDecks()
 		if(m_aDecksInvalid[InvalidDeckIndex].ReqGeneration <= m_DeckGeneration)
 		{
 			m_aDecksValid.Add(std::move(m_aDecksInvalid[InvalidDeckIndex]));
+			ValidatedDeckIndices.push_front(InvalidDeckIndex);
 		}
 		
-		ValidatedDeckIndices.push_front(InvalidDeckIndex);
 
 	}
 
