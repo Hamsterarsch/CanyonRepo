@@ -72,7 +72,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 	}
 	//depen
-	TerrainHit.ImpactPoint.Z += .5;
+	TerrainHit.ImpactPoint.Z += 1;
 	m_LastTerrainTracePos = TerrainHit.ImpactPoint;
 
 
@@ -181,6 +181,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
 		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
+		ObjectQueryParams.AddObjectTypesToQuery(GetCCTerrain());
 
 		pHullComp->GetWorld()->ComponentOverlapMulti
 		(
@@ -232,6 +233,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
 		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
+		ObjectQueryParams.AddObjectTypesToQuery(GetCCTerrain());
 
 		pHullComp->GetWorld()->ComponentOverlapMulti
 		(

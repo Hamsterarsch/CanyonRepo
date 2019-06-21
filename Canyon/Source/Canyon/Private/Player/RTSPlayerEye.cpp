@@ -273,7 +273,7 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 		//fetch preview data and destroy
 		auto *pBuildingClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
 		const auto PreviewedInfluence{ m_pPlaceablePreviewCurrent->GetCurrentInfluence() };
-
+		
 		m_pPlaceablePreviewCurrent->Destroy();
 		m_pPlaceablePreviewCurrent = nullptr;
 

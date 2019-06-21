@@ -54,13 +54,17 @@ private:
 
 	const int32 m_DesiredDeckAmount{ 2 };
 
-	FOnDeckStateChangedDelegate m_eOnDeckStateChanged;
+	UPROPERTY()
+		FOnDeckStateChangedDelegate m_eOnDeckStateChanged;
 
-	FOnDeckStateNewDecksSetDelegate m_eOnDeckStateNewDecksSet;
+	UPROPERTY()
+		FOnDeckStateNewDecksSetDelegate m_eOnDeckStateNewDecksSet;
 
-	TMap<TSubclassOf<class UPlaceableIconWidgetBase>, FCategoryData> m_DataMapping;
+	UPROPERTY()
+		TMap<TSubclassOf<class UPlaceableIconWidgetBase>, FCategoryData> m_DataMapping;
 
-	TMap<FString, TSubclassOf<class APlaceableBase>> m_CachedPlaceableClasses;
+	UPROPERTY()
+		TMap<FString, TSubclassOf<class APlaceableBase>> m_CachedPlaceableClasses;
 	
 	int32 m_ChargesAmount;
 
