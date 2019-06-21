@@ -42,17 +42,16 @@ struct FZoomNode
 	GENERATED_BODY()
 
 public:	
-	FZoomNode(float Distance = 300, float Pitch = -30) 
+	FZoomNode(float Distance = 300) :
+	m_Distance(Distance)
 	{
-		m_Distance = Distance;
-		m_PitchMax =  Pitch;
-	};
+	}
 		
 	UPROPERTY(EditAnywhere, DisplayName="Distance")
 		float m_Distance;
 
-	UPROPERTY(EditAnywhere, DisplayName="Max Pitch")
-		float m_PitchMax;
+	UPROPERTY(EditAnywhere, DisplayName="Movement Speed Multiplier Delta")
+		float m_MovementSpeedMultDelta;
 
 
 };
@@ -98,6 +97,16 @@ public:
 	bool TryCommitPlaceablePreview();
 
 	void DiscardCurrentPlaceablePreview(bool bIsIntigatedByPlayer = false);
+
+	inline bool GetIsInPlacement() const { return m_PlacementState.GetIsInPlacement(); }
+
+	int32 GetCurrentChargesForPlaceables() const;
+
+	void NotifyOnDisplayNewDecks();
+
+	bool GetAreDecksSelectable() const;
+
+	inline float GetPlacementAbortSuccessTime() const { return m_PlacementAbortSuccessTime; }
 
 
 	const static FName s_AxisMouseX;
@@ -160,11 +169,19 @@ protected:
 	UPROPERTY(EditDefaultsOnly, DisplayName = "Min Camera Pitch", Category="Controls")
 		float m_CameraMinPitch;
 
+	UPROPERTY(EditDefaultsOnly)
+		//the maximum hold time (in seconds) of the placement abort button
+		//that incurs an abort of the placement
+		float m_PlacementAbortSuccessTime;
+
 	UPROPERTY(EditDefaultsOnly, DisplayName = "Building Rotation Steps", Category="Controls")
 		int32 m_BuildingRotationSteps;
 
 	UPROPERTY(EditDefaultsOnly, Category="Controls")
 		TArray<FZoomNode> m_aZoomNodes;
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UMainHudWidgetBase> m_MainHudClass;
 
 	UPROPERTY()
 		class UGameViewportClient *m_pViewportClient;
@@ -175,12 +192,20 @@ protected:
 	UPROPERTY()
 		class APlaceablePreview *m_pPlaceablePreviewCurrent;
 
+	UPROPERTY()
+		class UDeckState *m_pDeckState;
+
+	UPROPERTY()
+		class UDeckStateRenderer *m_pDeckStateRenderer;
+
+
 	bool m_bIsPlaceablePlaceable;
 	FVector2D m_MouseShufflePreMousePos;
 	float m_ZoomTargetDist;
 	float m_ZoomTargetPitch;
 	int32 m_ZoomIndex;
 	FVector m_SeamlessRotationPrePos;
+	float m_MovementSpeedMultCurrent;
 
 	CCameraStateMachine m_CameraState;
 	CPlacementStateMachine m_PlacementState;

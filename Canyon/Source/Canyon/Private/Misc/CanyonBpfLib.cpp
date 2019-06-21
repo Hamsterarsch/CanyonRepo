@@ -2,9 +2,12 @@
 
 
 #include "CanyonBpfLib.h"
-#include "Misc/CanyonHelpers.h"
+#include "CanyonHelpers.h"
 #include "Placeables/PlaceableBase.h"
 #include "AssetRegistryModule.h"
+#include "Placeables/DeckDatabaseNative.h"
+#include <set>
+#include "Misc/CanyonLogs.h"
 #include "Paths.h"
 
 TSubclassOf<APlaceableBase> UCanyonBpfLib::GetCategoryPlaceableClass(FString Category)
@@ -25,19 +28,34 @@ TSubclassOf<APlaceableBase> UCanyonBpfLib::GetCategoryPlaceableClass(FString Cat
 	Filter.PackagePaths.Add(*(TEXT("/Game/Placeables") + Category));
 	Filter.bRecursivePaths = true;
 
+	UE_LOG(LogCanyonPlacement, Log, TEXT("Searching for placeable bp instance in path %s"), *(Filter.PackagePaths[0].ToString()) );
+
 	Registry.Get().ScanFilesSynchronous({ TEXT("/Game/Placeables") });
 	TArray<FAssetData> aFoundAssets;
 	Registry.Get().GetAssets(Filter, aFoundAssets);
 
 	if(aFoundAssets.Num() == 0)
 	{
+		UE_LOG(LogCanyonPlacement, Error, TEXT("Could not find any placeable bp for the specified category."));
 		return nullptr;
 	}
 	
 	auto &AssetData{ aFoundAssets[GetRandomIndex(aFoundAssets.Num())] };
 
+	FString GeneratedClassPath{ AssetData.ObjectPath.ToString() };
+	GeneratedClassPath += TEXT("_C");
 
-	//todo: clean this up, it should suffic to add _C to the found assets path and loading that (this equals the generated class)
+	auto ClassObjectPath{FPackageName::ExportTextPathToObjectPath(GeneratedClassPath) };
+	auto *pClass{ LoadClass<APlaceableBase>(nullptr, *GeneratedClassPath) };
+
+	if(!pClass)
+	{
+		UE_LOG(LogCanyonPlacement, Error, TEXT("Could not load generated class for placeable bp instance"));
+	}
+
+	return pClass;
+	/*
+	//todo: clean this up, it should suffice to add _C to the found assets path and loading that (this equals the generated class)
 #if WITH_EDITOR
 	auto *pAsset{ AssetData.GetAsset() };
 	auto *pAsBp{ Cast<UBlueprint>(pAsset) };
@@ -58,6 +76,86 @@ TSubclassOf<APlaceableBase> UCanyonBpfLib::GetCategoryPlaceableClass(FString Cat
 
 	return b ? GeneratedClass : nullptr;
 #endif
+	*/
+
+
+}
+
+TArray<UDeckDatabaseNative *> UCanyonBpfLib::GetRandomDecks(const int32 NumDecks, FString SubCategory)
+{
+	//get data assets
+	auto &Registry{ FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")) };
+	
+	FARFilter Filter{};
+	Filter.ClassNames.Add(*UDeckDatabaseNative::StaticClass()->GetName());
+	Filter.bRecursiveClasses = true;
+
+	if(!SubCategory.IsEmpty())
+	{
+		SubCategory.InsertAt(0, '/');
+	}
+	
+	Filter.PackagePaths.Add( *(TEXT("/Game/Placeables/Decks") + SubCategory));
+	Filter.bRecursivePaths = true;
+	
+	TArray<FAssetData> aFoundAssets;
+	Registry.Get().GetAssets(Filter, aFoundAssets);
+
+	if(aFoundAssets.Num() < NumDecks)
+	{
+		return {};
+	}
+
+
+	//populate set	
+	std::set<int32> UnusedIndicesSet{};
+	for(int32 Index{ 0 }; Index < aFoundAssets.Num(); ++Index)
+	{
+		UnusedIndicesSet.emplace(Index);
+
+	}
+
+
+	//get random decks
+	TArray<UDeckDatabaseNative *> aOutDecks{};
+	for(int32 DeckIndex{ 0 }; DeckIndex < NumDecks; ++DeckIndex)
+	{
+		auto SetOffset{ GetRandomIndex(UnusedIndicesSet.size()) };
+		auto SetItr{ UnusedIndicesSet.begin() };
+
+		//retarded itr increment
+		for(int32 Index{ 0 }; Index < SetOffset; ++Index)
+		{
+			++SetItr;
+
+		}
+
+		aOutDecks.Add
+		(
+			Cast<UDeckDatabaseNative>
+			(
+				aFoundAssets[ *SetItr ].GetAsset()
+			)
+		);
+		UnusedIndicesSet.erase(SetItr);		
+
+	}
+
+	return aOutDecks;
+
+
+}
+
+uint8 UCanyonBpfLib::EnumStringToEnumByte(const UUserDefinedEnum* pEnum, const FString& EnumIdentifier)
+{
+	if(!pEnum)
+	{
+		return 255;
+
+		
+	}
+
+	return pEnum->GetIndexByNameString(EnumIdentifier);
 
 
 }

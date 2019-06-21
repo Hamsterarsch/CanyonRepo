@@ -76,3 +76,7 @@ DerivedDataCache/
 #exclude plugin debug symbols
 **/Plugins/**/*.pdb
 **/Plugins/Binaries/**/*.pdb
+
+
+#
+/**/*-DebugGame.dll

@@ -6,25 +6,37 @@
 #include "Misc/CollisionChannels.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/LocalPlayer.h"
+#include "Misc/CanyonLogs.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 
 CPlacementRuler::CPlacementRuler() :
 	m_bInResnapRecovery{ false },
-	m_LastHitPosition{ EForceInit::ForceInitToZero }
+	m_LastTerrainTracePos{ EForceInit::ForceInitToZero },
+	m_LastPlaceablePosition{ EForceInit::ForceInitToZero }
 {
 }
 
+bool CPlacementRuler::HandleBuildingRules(APlaceableBase* pPlaceable, FVector& out_NewPos)
+{
+	m_bLastRet = HandleBuildingRulesInternal(pPlaceable, m_LastPlaceablePosition);
+	out_NewPos = m_LastPlaceablePosition;
+
+	return m_bLastRet;
+
+
+}
+
 //outputs a new position for the cursor root and whether or not the building could be placed there
-bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &out_NewPos)
+bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FVector &out_NewPos)
 {
 	//preconditions
 	//ForHit resulted form a trace against a per se valid placement surface (not surface type valid)
 	//pPlaceable points to a valid object instance
-
+	   
 	//Get hit or
 	FHitResult TerrainHit;
 	TraceForTerrainUnderCursor(TerrainHit, pPlaceable->GetWorld());
-	
+	   
 	//todo: handle no hit situations	
 	if(!TerrainHit.IsValidBlockingHit())
 	{
@@ -49,20 +61,33 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 		FVector ScreenWorldPos, ScreenWorldDir;
 		pPc->DeprojectScreenPositionToWorld(MousePos.X, MousePos.Y, ScreenWorldPos, ScreenWorldDir);
 
-		const float TargetZHeight{ m_LastHitPosition.Z };
+		const float TargetZHeight{ m_LastTerrainTracePos.Z };
 		const auto RayExtrusionFactor{ (TargetZHeight - ScreenWorldPos.Z) / ScreenWorldDir.Z };
 
+		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc there is no terrain"));
+
 		out_NewPos = ScreenWorldPos + ScreenWorldDir * RayExtrusionFactor;
-		m_LastPlaceablePosition = out_NewPos;
 		return false;
 
 
 	}
 	//depen
 	TerrainHit.ImpactPoint.Z += .5;
-	m_LastHitPosition = TerrainHit.ImpactPoint;
+	m_LastTerrainTracePos = TerrainHit.ImpactPoint;
+
+
+//trivial (+ todo: also 'fixes' false positive sweep result, bc sweep with no delta doesnt hit --> use overlap
+	/*auto MovementDelta{FVector::Dist(m_LastPlaceablePosition, TerrainHit.ImpactPoint) };	
+	if(FMath::IsNearlyZero(MovementDelta, 0.0001f ))
+	{
+		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Postponing placement evaluation due to no changed mouse pos: %f"), MovementDelta);
+
+		out_NewPos = m_LastPlaceablePosition;
+		return m_bLastRet;
+	}*/
 	
-	//Normal constraint
+
+//Normal constraint
 	constexpr float NormalTolerance{ 10e-6 };
 	auto ImpactNormalZ{ TerrainHit.ImpactNormal.GetUnsafeNormal().Z };
 	if
@@ -72,11 +97,14 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 	)
 	{
 		out_NewPos = TerrainHit.ImpactPoint;
-		m_LastPlaceablePosition = out_NewPos;
+
+		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc the terrain normals are invalid"));
+
 		return false;
 	}
 
-	//Surface type constraint
+
+//Surface type constraint
 	if (auto *pPhyMat{ TerrainHit.PhysMaterial.Get() })
 	{
 		auto SurfaceType{ UPhysicalMaterial::DetermineSurfaceType(pPhyMat) };
@@ -86,23 +114,15 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 			&& SurfaceType != EPhysicalSurface::SurfaceType_Default
 		)
 		{
+			UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc of invalid terrain type"));
+
 			out_NewPos = TerrainHit.ImpactPoint;
-			m_LastPlaceablePosition = out_NewPos;
 			return false;
 		}
 	}
 
-	//TerrainOverlapping
-	/*
-	TArray<AActor *> aOverlappers;
-	pPlaceable->GetOverlappingActors(aOverlappers, AEnvironmentActor::StaticClass());
-	if(aOverlappers.Num() > 0)
-	{
-		
-	}
-	*/
 
-	//Mouse distance override
+//Mouse distance override
 	FVector2D CursorRootScreenPos;
 	FVector2D MousePos;
 	pPlaceable->GetWorld()->GetFirstPlayerController()->ProjectWorldLocationToScreen(pPlaceable->GetActorLocation(), CursorRootScreenPos);
@@ -112,22 +132,22 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 	auto Dist{ FVector2D::Distance(CursorRootScreenPos, MousePos) };
 	if(Dist > 130)
 	{
+		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc the mouse moved to far from the building"));
+
 		m_bInResnapRecovery = true;
 		out_NewPos = TerrainHit.ImpactPoint;
 		return false;
 	}
 
-	//handle building penetrations after snapping
-	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
 
-	auto MovementDelta{FVector::Dist(m_LastPlaceablePosition, TerrainHit.ImpactPoint) };
-	
-	UE_LOG(LogTemp, Log, TEXT("%f"), MovementDelta);
-	if(m_bInResnapRecovery || FMath::IsNearlyZero(MovementDelta, 0.0001f ))
+//handle building penetrations after a snapping situation last frame
+	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
+		
+	if(m_bInResnapRecovery)
 	{
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
-		ComponentQueryParams.bTraceComplex = true;
+		//ComponentQueryParams.bTraceComplex = true;
 		
 		TArray<FOverlapResult> aOverlaps;
 		pHullComp->GetWorld()->ComponentOverlapMulti
@@ -139,11 +159,11 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 			ComponentQueryParams
 		);
 		
-		UE_LOG(LogTemp, Log, TEXT("=>  %i"), aOverlaps.Num());
 		if(aOverlaps.Num() != 0)
 		{
+			UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied because of non zero overlap count:\t%i"), aOverlaps.Num());
+
 			out_NewPos = TerrainHit.ImpactPoint;
-			m_LastPlaceablePosition = out_NewPos;
 			return false;
 
 
@@ -151,12 +171,38 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 		m_bInResnapRecovery = false;		
 	}
 
+	//if target is unobstructed move to it
+	{
+		TArray<FOverlapResult> aOutOverlaps;
 
-	FVector DispToApply{ EForceInit::ForceInitToZero };
+		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
+		ComponentQueryParams.AddIgnoredActor(pPlaceable);
+		ComponentQueryParams.bTraceComplex = true;
+
+		auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
+		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
+
+		pHullComp->GetWorld()->ComponentOverlapMulti
+		(
+			aOutOverlaps, 
+			pHullComp, 
+			TerrainHit.ImpactPoint + pHullComp->RelativeLocation, 
+			pHullComp->GetComponentQuat(), 
+			ComponentQueryParams, 
+			ObjectQueryParams
+		);
+
+		if(aOutOverlaps.Num() == 0)
+		{			
+			out_NewPos = TerrainHit.ImpactPoint;
+			return true;
+		}
+
+	}
+
+
+	//sweep hits to find a pos at the nearest building
 	TArray<FHitResult> aHits;
-
-
-	//query sweep hits for the hull comp
 	{
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
@@ -174,95 +220,79 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase *pPlaceable, FVector &o
 		);
 	}
 
-	if(aHits.Num() > 0)
+	
+	//the sweep didnt get any hits (maybe bc we didnt move the building).
+	if(aHits.Num() == 0)
 	{
-		int HitsPenetratedOnStart{ 0 };
-		for(auto &&Hit : aHits)
-		{
-			if(Hit.bStartPenetrating)
-			{
-				++HitsPenetratedOnStart;
-			}
-		}
-		
-		UE_LOG(LogTemp, Warning, TEXT("Num Hits: %i,\t Num Pen: %i"), aHits.Num(), HitsPenetratedOnStart);
+				TArray<FOverlapResult> aOutOverlaps;
 
-		if(HitsPenetratedOnStart > 0)
+		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
+		ComponentQueryParams.AddIgnoredActor(pPlaceable);
+		ComponentQueryParams.bTraceComplex = true;
+
+		auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
+		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
+
+		pHullComp->GetWorld()->ComponentOverlapMulti
+		(
+			aOutOverlaps, 
+			pHullComp, 
+			TerrainHit.ImpactPoint + pHullComp->RelativeLocation, 
+			pHullComp->GetComponentQuat(), 
+			ComponentQueryParams, 
+			ObjectQueryParams
+		);
+
+		if(aOutOverlaps.Num() == 0)
 		{
+		UE_LOG(LogTemp, Warning, TEXT("No sweeps overidden"));
 			out_NewPos = TerrainHit.ImpactPoint;
-			m_LastPlaceablePosition = out_NewPos;
-			return false;
+			return true;
 		}
 
-		//resolve slide
 
-		//check for conflicting normals in the sweep
-		/*
-		if(aHits.Num() >= 2)
-		{
-			for(auto &&OuterHit : aHits)
-			{
-				for(auto &&InnerHit : aHits)
-				{
-					if(OuterHit == InnerHit)
-					{
-						continue;
-					}
-
-					if
-					(
-						FVector::DotProduct(OuterHit.ImpactNormal.GetUnsafeNormal2D(), InnerHit.ImpactNormal.GetUnsafeNormal2D())
-						>= 0
-					)
-					{
-						//2 normals swept that point towards each other
-						return false;
-					}
-
-
-
-				}
-
-			}
-		}
-		*/
-		//there were blocking hits so the closest determines the hull pos
-		aHits.Sort([](const decltype(aHits)::ElementType &Left, const decltype(aHits)::ElementType &Right)
-		{
-			return Left.Time < Right.Time;
-
-
-		});
-
-		//new placeable pos
-		auto DepenetrationDisp{ aHits[0].ImpactNormal };
-		if (aHits.Num() == 2)
-		{
-			DepenetrationDisp += aHits[1].ImpactNormal;
-			DepenetrationDisp /= 2;
-		}
-
-		if(aHits.Num() > 2)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Hit slides: %i"), aHits.Num());
-		}
-
-		out_NewPos = aHits[0].Location - pHullComp->RelativeLocation + DepenetrationDisp;
-		out_NewPos.Z = TerrainHit.ImpactPoint.Z;
-		m_LastPlaceablePosition = out_NewPos;
-		return true;
-		
+		//if we are not penetrated
+		UE_LOG(LogTemp, Warning, TEXT("No sweeps"));
+		out_NewPos = m_LastPlaceablePosition;
+		return m_bLastRet;		
 	}
-	else
+
+	int32 HitsPenOnStart{ 0 };
+	for(auto &&Hit : aHits)
 	{
-		//no sweep results => set to location
-		out_NewPos = TerrainHit.ImpactPoint;
-		m_LastPlaceablePosition = out_NewPos;
-		return true;
+		if(Hit.bStartPenetrating)
+		{
+			++HitsPenOnStart;
+		}
+
 	}
+
+	if(HitsPenOnStart > 0)
+	{
+		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied because of pen sweep hits"));
+		out_NewPos = TerrainHit.ImpactPoint;
+		return false;
+	}
+
+	//there were blocking hits so the closest determines the hull pos
+	aHits.Sort([](const decltype(aHits)::ElementType &Left, const decltype(aHits)::ElementType &Right)
+	{
+		return Left.Time < Right.Time;
+
+
+	});
+
+	//new placeable pos from swept hit	
+	FVector DepenetrationDisp{ aHits[0].ImpactNormal };
+
+	out_NewPos = aHits[0].Location - pHullComp->RelativeLocation + DepenetrationDisp * .5;
+	out_NewPos.Z = TerrainHit.ImpactPoint.Z;
+	return true;
 
 
 }
+
+
 
 FVector CPlacementRuler::ComputeTerrainDepenetration(const FHitResult &ForHit, const APlaceableBase *pPlaceable)
 {

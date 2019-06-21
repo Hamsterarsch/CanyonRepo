@@ -18,10 +18,13 @@ public:
 	//max accepted normal angle for placement
 
 private:
+	bool HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FVector &out_NewPos);
+
 	void HandlePenetratingHits(APlaceableBase *pPlaceable) const;
 
 	bool m_bInResnapRecovery;
-	FVector m_LastHitPosition;
+	bool m_bLastRet{ false };
+	FVector m_LastTerrainTracePos;
 	FVector m_LastPlaceablePosition;
 
 

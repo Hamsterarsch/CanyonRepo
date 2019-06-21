@@ -10,7 +10,8 @@ CPlacementStateMachine::CPlacementStateMachine() :
 
 CPlacementStateMachine::CPlacementStateMachine(class ARTSPlayerEye *pOwner) :
 	m_pCurrentState{ std::make_unique<CPlacementState_Idle>() },
-	m_pOwningEye{ pOwner }
+	m_pOwningEye{ pOwner },
+	m_bIsInPlacement{ false }
 {
 }
 
@@ -40,6 +41,12 @@ void CPlacementStateMachine::HandleInput(EAbstractInputEvent Input)
 
 }
 
+void CPlacementStateMachine::SetIsInPlacement(bool bIsInPlacement)
+{
+	m_bIsInPlacement = bIsInPlacement;
+
+
+}
 
 
 //STATES
@@ -74,7 +81,7 @@ std::unique_ptr<IPlacementState> CPlacementState_PlacementBuilding::HandleInput(
 		break;
 	case EAbstractInputEvent::ActionContext_End:
 		auto m_PassedTime{ pParent->GetEye()->GetWorld()->GetTimeSeconds() - m_AbortStartTime };
-		if (m_PassedTime < m_AbortSuccessTime)
+		if (m_PassedTime < pParent->GetEye()->GetPlacementAbortSuccessTime())
 		{
 			pParent->GetEye()->DiscardCurrentPlaceablePreview(true);
 			return std::make_unique<CPlacementState_Idle>();
@@ -93,6 +100,20 @@ void CPlacementState_PlacementBuilding::Update(CPlacementStateMachine *pParent)
 
 	//notify preview about placable state
 	pParent->GetEye()->UpdateCurrentPlaceablePreview();
+
+
+}
+
+void CPlacementState_PlacementBuilding::ReceiveOnExit(CPlacementStateMachine* pParent)
+{
+	pParent->SetIsInPlacement(false);
+
+
+}
+
+void CPlacementState_PlacementBuilding::ReceiveOnEnter(CPlacementStateMachine* pParent)
+{
+	pParent->SetIsInPlacement(true);
 
 
 }

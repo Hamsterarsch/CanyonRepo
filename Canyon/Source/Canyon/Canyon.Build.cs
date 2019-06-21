@@ -10,7 +10,7 @@ public class Canyon : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Wwiseext", "AssetRegistry", "StomtPlugin" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		PrivateDependencyModuleNames.AddRange(new string[] { "SlateCore" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "GameAnalytics" });
 		PrivateIncludePathModuleNames.AddRange(new string[] { "GameAnalytics"});

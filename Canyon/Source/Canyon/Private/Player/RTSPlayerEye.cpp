@@ -13,11 +13,13 @@
 #include "RTSPlayerController.h"
 #include "Engine/World.h"
 #include "Misc/CollisionChannels.h"
-#include "Misc/CanyonHelpers.h"
+#include "CanyonHelpers.h"
 #include "Components/StaticMeshCanyonComp.h"
 #include "Placeables/PlaceablePreview.h"
+#include "UI/DeckState.h"
+#include "UI/DeckStateRenderer.h"
+#include "WidgetBase/MainHudWidgetBase.h"
 #include "Misc/CanyonGM.h"
-
 
 const FName ARTSPlayerEye::s_AxisMouseX{ TEXT("MouseX") };
 const FName ARTSPlayerEye::s_AxisMouseY{ TEXT("MouseY") };
@@ -30,13 +32,15 @@ ARTSPlayerEye::ARTSPlayerEye() :
 	m_MouseTurnSpeed{ 1 },
 	m_CameraMaxPitch{ 90 },
 	m_CameraMinPitch{ 0 },
+	m_PlacementAbortSuccessTime{ .18 },
 	m_BuildingRotationSteps{ 8 },
 	m_bIsPlaceablePlaceable{ false },
 	m_ZoomTargetDist{ 300 },
 	m_ZoomTargetPitch{ -30 },
+	m_MovementSpeedMultCurrent{ 1 },
 	m_CameraState{ this },
 	m_PlacementState{ this }
-{
+{	
 	SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
 	GetMovementComponent()->SetUpdatedComponent(GetRootComponent());
 
@@ -55,7 +59,7 @@ ARTSPlayerEye::ARTSPlayerEye() :
 	m_pCamera->SetupAttachment(m_pCameraSpringArm);
 	m_pCamera->bEditableWhenInherited = true;
 
-	m_aZoomNodes.Add(FZoomNode{ 300, 30 });
+	m_aZoomNodes.Add(FZoomNode{ 300 });
 
 	m_pCursorRoot = CreateDefaultSubobject<USceneComponent>(TEXT("CursorRoot"));
 	//m_pCursorRoot->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
@@ -111,7 +115,7 @@ void ARTSPlayerEye::AddForwardMovement(const float AxisValue)
 	}
 	auto Forward = m_pCameraSpringArm->GetForwardVector();
 	//todo: delta time
-	AddActorWorldOffset(Forward.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed);
+	AddActorWorldOffset(Forward.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed * m_MovementSpeedMultCurrent);
 
 
 
@@ -127,7 +131,7 @@ void ARTSPlayerEye::AddRightMovement(const float AxisValue)
 	}
 	auto Right = m_pCameraSpringArm->GetRightVector();
 	//todo: delta time
-	AddActorWorldOffset(Right.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed);
+	AddActorWorldOffset(Right.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed * m_MovementSpeedMultCurrent);
 	   
 
 }
@@ -136,7 +140,7 @@ void ARTSPlayerEye::AddForwardMovementFromMouse(float AxisValue)
 {
 	auto Forward = m_pCameraSpringArm->GetForwardVector();
 	//Mouse based shuffle (todo: delta time)
-	AddActorWorldOffset(Forward.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_pCamera->AspectRatio);
+	AddActorWorldOffset(Forward.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_pCamera->AspectRatio * m_MovementSpeedMultCurrent);
 	
 
 }
@@ -149,7 +153,7 @@ void ARTSPlayerEye::AddRightMovementFromMouse(float AxisValue)
 		return;
 
 	}
-	AddActorWorldOffset(Right.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed);
+	AddActorWorldOffset(Right.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_MovementSpeedMultCurrent);
 
 }
 
@@ -199,14 +203,7 @@ void ARTSPlayerEye::ZoomOut()
 	if (m_ZoomIndex < (m_aZoomNodes.Num() - 1))
 	{
 		++m_ZoomIndex;
-		auto RelativeRot = m_pCameraSpringArm->RelativeRotation;
-		if (RelativeRot.Pitch > -m_aZoomNodes[m_ZoomIndex].m_PitchMax)
-		{
-			m_pCameraSpringArm->SetRelativeRotation(FRotator{ -m_aZoomNodes[m_ZoomIndex].m_PitchMax, m_pCameraSpringArm->RelativeRotation.Yaw, 0 });
-
-		}
-
-
+		m_MovementSpeedMultCurrent += m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
 	}
 
 
@@ -216,15 +213,8 @@ void ARTSPlayerEye::ZoomIn()
 {
 	if (m_ZoomIndex > 0)
 	{
+		m_MovementSpeedMultCurrent -= m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
 		--m_ZoomIndex;
-		auto RelativeRot = m_pCameraSpringArm->RelativeRotation;
-		if (RelativeRot.Pitch < -m_aZoomNodes[m_ZoomIndex].m_PitchMax)
-		{
-			m_pCameraSpringArm->SetRelativeRotation(FRotator{ -m_aZoomNodes[m_ZoomIndex].m_PitchMax, RelativeRot.Yaw, 0 });
-
-		}
-
-
 	}
 
 
@@ -274,22 +264,36 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 	if(!m_pPlaceablePreviewCurrent)
 	{
 		return false;
+
+
 	}
 
 	if(m_bIsPlaceablePlaceable)
 	{
-		auto *pClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
-
-		auto *pGm{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
-		pGm->AddPointsCurrent(m_pPlaceablePreviewCurrent->GetCurrentInfluence());
+		//fetch preview data and destroy
+		auto *pBuildingClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
+		const auto PreviewedInfluence{ m_pPlaceablePreviewCurrent->GetCurrentInfluence() };
 
 		m_pPlaceablePreviewCurrent->Destroy();
 		m_pPlaceablePreviewCurrent = nullptr;
 
-		auto Transform{ m_pCursorRoot->GetComponentTransform() };
-		GetWorld()->SpawnActor(pClass, &Transform);
-				
+		//spawn building
+
+		const auto Transform{ m_pCursorRoot->GetComponentTransform() };
+		auto *pSpawned{ GetWorld()->SpawnActor<APlaceableBase>(pBuildingClass, Transform) };
+		
+		//Update deck state (has to be done before gm notify)
+		const auto PlaceableCategory{ pSpawned->GetPlaceableCategory() };
+		m_pDeckState->ClearCachedPlaceableForCategory(PlaceableCategory);
+		m_pDeckState->ChargeCountDecrementFor(PlaceableCategory);
+
+		//Update gm
+		auto *pGm{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
+		pGm->AddPointsCurrent(PreviewedInfluence);
+								
 		return true;
+
+
 	}
 	return false;
 
@@ -298,17 +302,33 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 
 void ARTSPlayerEye::DiscardCurrentPlaceablePreview(const bool bIsInstigatedByPlayer)
 {
-	if(bIsInstigatedByPlayer)
-	{
-		Cast<ACanyonGM>(GetWorld()->GetAuthGameMode())->OnPlacementAborted();
-	}
-
 	if(m_pPlaceablePreviewCurrent)
 	{
 		UE_LOG(LogCanyonPlacement, Log, TEXT("Discarding current placeable."));
 		m_pPlaceablePreviewCurrent->Destroy();
 	}
 	m_bIsPlaceablePlaceable = false;
+
+
+}
+
+int32 ARTSPlayerEye::GetCurrentChargesForPlaceables() const
+{
+	 return m_pDeckState->GetChargesCurrent();
+
+
+}
+
+void ARTSPlayerEye::NotifyOnDisplayNewDecks()
+{
+	m_pDeckState->NotifyOnDisplayNewDecks();
+
+
+}
+
+bool ARTSPlayerEye::GetAreDecksSelectable() const
+{
+	return m_pDeckState->GetAreDecksSelectable();
 
 
 }
@@ -341,7 +361,17 @@ void ARTSPlayerEye::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//
+	auto *pGM{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
 
+	auto *pWidget{ CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get()) };
+	pWidget->AddToViewport();
+
+	m_pDeckState = UDeckState::Construct(pGM);
+	m_pDeckStateRenderer = UDeckStateRenderer::Construct(pGM, m_pDeckState, pWidget);
+
+	NotifyOnDisplayNewDecks();
+	
 }
 
 

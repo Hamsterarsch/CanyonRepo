@@ -1,8 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "SoftObjectPtr.h"
-#include "Engine/UserDefinedStruct.h"
 #include "DeckDatabaseNative.generated.h"
 
 UCLASS(Blueprintable)
@@ -15,10 +13,13 @@ public:
 		int32 GetNumData() const;
 
 	UFUNCTION(BlueprintImplementableEvent)
-		TSubclassOf<UUserWidget> GetDeckWidget() const;
+		TSubclassOf<class UPrettyWidget> GetDeckWidget() const;
 
 	UFUNCTION(BlueprintImplementableEvent)
 		 FString GetDependencyCategoryAtIndex(int32 Index) const;
+
+	UFUNCTION(BlueprintImplementableEvent)
+		TMap<FString, int32> GetRelativeFillerProbabilites() const;
 
 	UFUNCTION(BlueprintImplementableEvent)
 		int32 GetMinAmountAtIndex(int32 Index) const;
@@ -29,5 +30,8 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		int32 GetRequiredDeckGeneration() const;
 
+	UPROPERTY()
+		int32 m_RelativeProbability{ 1 };
+	
 
 };

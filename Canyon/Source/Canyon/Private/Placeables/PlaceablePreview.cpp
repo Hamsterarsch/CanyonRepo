@@ -3,7 +3,7 @@
 
 #include "PlaceablePreview.h"
 #include "Engine/World.h"
-#include "Misc/CanyonHelpers.h"
+#include "CanyonHelpers.h"
 #include "Components/StaticMeshCanyonComp.h"
 #include "Components/SphereComponent.h"
 #include "Components/RadiusVisComp.h"
@@ -51,7 +51,7 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 )
 {
 	auto *pPreviewedPlaceableClass{ PreviewedPlaceableClass.Get() };
-	if(!pWorld | !pPreviewedPlaceableClass)
+	if(!pWorld || !pPreviewedPlaceableClass)
 	{
 		return nullptr;
 	}
@@ -93,7 +93,7 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 	auto DependencyRadius{ pGm->GetPlaceableDependencyRadius(CategoryName) };
 	pPreview->SetInfluenceRadius(DependencyRadius);
 
-	pPreview->m_InfluenceCurrentGain = pGm->GetInfluenceForBaseCategory(CategoryName);
+	pPreview->m_InfluenceCurrentGain = pGm->GetInfluenceBasisForCategory(CategoryName);
 	pPreview->InitInfluenceDisplayWidget(pCdo->GetInfluenceWidgetClass());
 	pPreview->SetInfluenceDisplayed(pPreview->m_InfluenceCurrentGain);
 
