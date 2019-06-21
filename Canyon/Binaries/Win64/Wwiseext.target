@@ -1,10 +1,10 @@
 {
-	"TargetName": "Canyon",
+	"TargetName": "Wwiseext",
 	"Platform": "Win64",
 	"Configuration": "Development",
 	"TargetType": "Game",
 	"Project": "../../Canyon.uproject",
-	"Launch": "$(ProjectDir)/Binaries/Win64/Canyon.exe",
+	"Launch": "$(ProjectDir)/Binaries/Win64/Wwiseext.exe",
 	"Version": 
 	{
 		"MajorVersion": 4,
@@ -20,11 +20,11 @@
 	},
 	"BuildProducts": [
 		{
-			"Path": "$(ProjectDir)/Binaries/Win64/Canyon.exe",
+			"Path": "$(ProjectDir)/Binaries/Win64/Wwiseext.exe",
 			"Type": "Executable"
 		},
 		{
-			"Path": "$(ProjectDir)/Binaries/Win64/Canyon.pdb",
+			"Path": "$(ProjectDir)/Binaries/Win64/Wwiseext.pdb",
 			"Type": "SymbolFile"
 		}
 	],

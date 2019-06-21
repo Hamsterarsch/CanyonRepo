@@ -103,6 +103,10 @@ void UDeckState::ReceiveOnWidgetClicked(const UWidget* pClickedWidget)
 		ClassOf = UCanyonBpfLib::GetCategoryPlaceableClass(pWidgetData->m_CategoryName);		
 	}
 
+	if(!ClassOf.Get())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("deck state widget clicked, class of not getable"));
+	}
 	pPlayer->CreateNewPlacablePreview(ClassOf);
 
 	//if the building placement is aborted no further handling is needed.

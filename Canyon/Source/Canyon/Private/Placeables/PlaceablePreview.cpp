@@ -51,7 +51,7 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 )
 {
 	auto *pPreviewedPlaceableClass{ PreviewedPlaceableClass.Get() };
-	if(!pWorld | !pPreviewedPlaceableClass)
+	if(!pWorld || !pPreviewedPlaceableClass)
 	{
 		return nullptr;
 	}
