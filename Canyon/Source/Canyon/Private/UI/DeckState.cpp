@@ -9,6 +9,12 @@
 
 //Public-------------------
 
+UDeckState::UDeckState() :
+	m_ChargesAmount{ 0 },
+	m_bAreDecksSelectable{ false }
+{
+}
+
 void UDeckState::ChargeCountDecrementFor(const FString& Category)
 {
 	auto WidgetClass{ m_pGM->GetPlaceableWidget(Category) };
@@ -37,6 +43,7 @@ void UDeckState::ClearCachedPlaceableForCategory(const FString& Category)
 
 void UDeckState::NotifyOnDisplayNewDecks()
 {
+	m_bAreDecksSelectable = true;
 	const auto NewDeckAmount{ m_DesiredDeckAmount - m_aPendingSelectableDecks.Num() };
 
 	m_aPendingSelectableDecks.Append(m_pGM->GetDeckData(NewDeckAmount));
@@ -64,6 +71,7 @@ void UDeckState::NotifyOnDisplayNewDecks()
 
 void UDeckState::NotifyOnDeckWidgetClicked(int32 Index)
 {
+	m_bAreDecksSelectable = false;
 	m_pGM->FillUpDeckDataNonEndless(m_aPendingSelectableDecks[Index]);
 
 	AddDeck(m_aPendingSelectableDecks[Index]);

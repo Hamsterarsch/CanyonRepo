@@ -20,13 +20,15 @@ class UDeckState : public UObject
 	GENERATED_BODY()
 
 public:
+	UDeckState();
+
 	void ChargeCountDecrementFor(const FString &Category);
 
 	void ClearCachedPlaceableForCategory(const FString &Category);
 
 	inline int32 GetChargesCurrent() const { return m_ChargesAmount; }
 
-	inline bool GetAreDecksSelectable() const { return m_aPendingSelectableDecks.Num(); }
+	inline bool GetAreDecksSelectable() const { return m_bAreDecksSelectable; }
 
 	void NotifyOnDisplayNewDecks();
 
@@ -61,6 +63,8 @@ private:
 	TMap<FString, TSubclassOf<class APlaceableBase>> m_CachedPlaceableClasses;
 	
 	int32 m_ChargesAmount;
+
+	bool m_bAreDecksSelectable;
 
 
 public:

@@ -108,6 +108,7 @@ void ACanyonGM::SetPointsRequired(const int32 Points)
 void ACanyonGM::OnLoose()
 {
 	m_pLooseWidget->ShowWidget();
+	m_pLooseWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
 
 
 }
