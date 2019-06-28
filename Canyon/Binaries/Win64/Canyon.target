@@ -9,9 +9,9 @@
 	{
 		"MajorVersion": 4,
 		"MinorVersion": 22,
-		"PatchVersion": 1,
-		"Changelist": 6063286,
-		"CompatibleChangelist": 5660361,
+		"PatchVersion": 0,
+		"Changelist": 5660361,
+		"CompatibleChangelist": 0,
 		"IsLicenseeVersion": 0,
 		"IsPromotedBuild": 1,
 		"BranchName": "++UE4+Release-4.22",
@@ -42,7 +42,7 @@
 			"Type": "UFS"
 		},
 		{
-			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin-UE-4.22/StomtPlugin.uplugin",
+			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin/StomtPlugin.uplugin",
 			"Type": "UFS"
 		},
 		{
@@ -1248,10 +1248,6 @@
 		{
 			"Path": "$(EngineDir)/Content/SlateDebug/Fonts/LastResort.ttf",
 			"Type": "DebugNonUFS"
-		},
-		{
-			"Path": "$(EngineDir)/Binaries/ThirdParty/libsndfile/Win64/libsndfile-1.dll",
-			"Type": "NonUFS"
 		},
 		{
 			"Path": "$(EngineDir)/Binaries/ThirdParty/NVIDIA/NVaftermath/Win64/GFSDK_Aftermath_Lib.x64.dll",
