@@ -38,12 +38,15 @@ public:
 	UFUNCTION()
 		void ReceiveOnWidgetClicked(const class UWidget *pClickedWidget);
 
+	UFUNCTION()
+		UWidget *GetTooltipWidgetForDeckWidget(const UWidget *pInstigator);
 
 	static UDeckState *Construct(class ACanyonGM *pGM);			
 
 
 private:
 	void AddDeck(const FDeckData &Deck);
+
 
 
 	UPROPERTY()
@@ -59,7 +62,7 @@ private:
 
 	UPROPERTY()
 		FOnDeckStateNewDecksSetDelegate m_eOnDeckStateNewDecksSet;
-
+	
 	UPROPERTY()
 		TMap<TSubclassOf<class UPlaceableIconWidgetBase>, FCategoryData> m_DataMapping;
 

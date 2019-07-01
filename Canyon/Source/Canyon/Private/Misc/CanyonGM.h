@@ -22,6 +22,8 @@ public:
 	int32 GetInfluenceForPlaceable(const FString &FirstInfluenceQualifier, const FString &SecondInfluenceQualifier) const;
 
 	int32 GetInfluenceBasisForCategory(const FString &CategoryName) const;
+	
+	const TMap<FString, int32> &GetTempInfluenceMappingForCategory(const FString &CategoryName) const;
 
 	void AddPointsCurrent(int32 Points);
 
@@ -33,6 +35,8 @@ public:
 
 	void FillUpDeckDataNonEndless(FDeckData &DeckData);
 
+	UFUNCTION(BlueprintCallable)
+		FString GetPrettyNameForCategory(const FString &CategoryName);
 
 	UFUNCTION(BlueprintCallable)
 		inline int32 GetPointsCurrent() const { return m_PointsCurrent; }
@@ -68,6 +72,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 		TSubclassOf<class UDeckSelector> m_DeckSelectorClass;
 
+	UPROPERTY(EditDefaultsOnly)
+		class UCategoryStringMappingDAL *m_pPrettyCategoryNameSource;
+
 
 private:
 	void ReceiveOnPointsChanged();
@@ -88,7 +95,7 @@ private:
 
 	UPROPERTY()
 		class UPrettyWidget *m_pLooseWidget;
-
+	
 	int32 m_PointsCurrent;
 	int32 m_PointsRequired;
 	int32 m_SessionSeed;

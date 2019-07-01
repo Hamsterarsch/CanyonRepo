@@ -13,6 +13,7 @@
 #include "CanyonHelpers.h"
 #include "CanyonLogs.h"
 #include "Placeables/DeckSelector.h"
+#include "Misc/CategoryStringMappingDAL.h"
 
 
 //Public-------------
@@ -38,6 +39,13 @@ int32 ACanyonGM::GetInfluenceForPlaceable
 int32 ACanyonGM::GetInfluenceBasisForCategory(const FString& CategoryName) const
 {
 	return (*m_pInfluenceData)[CategoryName].m_BasePointAmount;
+
+
+}
+
+const TMap<FString, int32>& ACanyonGM::GetTempInfluenceMappingForCategory(const FString& CategoryName) const
+{
+	return (*m_pInfluenceData)[CategoryName].m_InfluenceMapping;
 
 
 }
@@ -91,6 +99,14 @@ FDeckData ACanyonGM::GetEndlessDeckData()
 void ACanyonGM::FillUpDeckDataNonEndless(FDeckData& DeckData)
 {
 	m_pDeckSelector->FillUpDeckDataNonEndless(DeckData);
+
+
+}
+
+FString ACanyonGM::GetPrettyNameForCategory(const FString& CategoryName)
+{
+	auto MappedString{ m_pPrettyCategoryNameSource->GetStringForCategory(CategoryName) };
+	return MappedString.IsEmpty() ? CategoryName : MappedString;
 
 
 }

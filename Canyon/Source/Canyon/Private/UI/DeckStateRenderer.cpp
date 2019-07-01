@@ -25,6 +25,10 @@ void UDeckStateRenderer::NotifyOnIconWidgetChanged(const TSubclassOf<UPlaceableI
 		Delegate.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UDeckStateRenderer, NotifyOnIconClicked));
 		(*ppWidget)->AddEventToOnClicked(Delegate);
 
+		FGetDeckWidget TooltipDelegate{};
+		TooltipDelegate.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UDeckStateRenderer, NotifyOnTooltipInvoked));
+		(*ppWidget)->SetDelegateOnTooltipInvoked(TooltipDelegate);
+
 		m_pTargetWidget->OnNewPlaceableIconAvailable(*ppWidget);		
 	}
 
@@ -84,7 +88,11 @@ UDeckStateRenderer* UDeckStateRenderer::Construct(ACanyonGM* pGM, UDeckState *pD
 	UDeckStateRenderer::t_OnIconClickedDelegate OnIconClickedDelegate{};
 	OnIconClickedDelegate.BindUFunction(pObj->m_pDeckState, GET_FUNCTION_NAME_CHECKED(UDeckState, ReceiveOnWidgetClicked));
 	pObj->AddEventToOnClicked(OnIconClickedDelegate);
-	   
+
+	FGetDeckWidget GetTooltipDelegate{};
+	GetTooltipDelegate.BindUFunction(pDeckState, GET_FUNCTION_NAME_CHECKED(UDeckState, GetTooltipWidgetForDeckWidget));
+	pObj->SetDelegateOnTooltipInvoked(GetTooltipDelegate);
+
 	return pObj;
 
 
@@ -112,6 +120,20 @@ void UDeckStateRenderer::NotifyOnDeckClicked(UPrettyWidget *pClickedWidget)
 
 }
 
+UWidget* UDeckStateRenderer::NotifyOnTooltipInvoked(const UWidget *pInstigator)
+{
+	if(!m_dOnTooltipInvoked.IsBound())
+	{
+		return CreateWidget(m_pGM->GetWorld());
+
+
+	}
+
+	return m_dOnTooltipInvoked.Execute(pInstigator);
+
+
+}
+
 void UDeckStateRenderer::AddEventToOnClicked(t_OnIconClickedDelegate& Callback)
 {
 	m_eOnIconClicked.Add(Callback);
@@ -122,6 +144,20 @@ void UDeckStateRenderer::AddEventToOnClicked(t_OnIconClickedDelegate& Callback)
 void UDeckStateRenderer::RemoveEventFromOnClicked(t_OnIconClickedDelegate& Callback)
 {
 	m_eOnIconClicked.Remove(Callback);
+
+
+}
+
+void UDeckStateRenderer::SetDelegateOnTooltipInvoked(const FGetDeckWidget& Callback)
+{
+	m_dOnTooltipInvoked = Callback;
+
+
+}
+
+void UDeckStateRenderer::ClearDelegateOnTooltipInvoked()
+{
+	m_dOnTooltipInvoked.Clear();
 
 
 }

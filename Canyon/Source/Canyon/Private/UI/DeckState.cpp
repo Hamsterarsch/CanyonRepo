@@ -6,6 +6,7 @@
 #include "Player/RTSPlayerEye.h"
 #include "WidgetBase/PlaceableIconWidgetBase.h"
 #include "Misc/CanyonBpfLib.h"
+#include "WidgetBase/InfluenceTooltipWidgetBase.h"
 
 //Public-------------------
 
@@ -91,7 +92,6 @@ void UDeckState::ReceiveOnWidgetClicked(const UWidget* pClickedWidget)
 
 	std::remove_reference_t<decltype(m_DataMapping)::KeyInitType> AsKey{ pClickedWidget->GetClass() };
 	auto *pWidgetData{ m_DataMapping.Find(AsKey) };
-
 	checkf(pWidgetData, TEXT("A deck widget has lost its data mapping"));
 
 	//find or add entry
@@ -112,6 +112,23 @@ void UDeckState::ReceiveOnWidgetClicked(const UWidget* pClickedWidget)
 	//if the building placement is aborted no further handling is needed.
 	//for successful placement, see ARTSPlayerEye::TryCommitPreviewBuilding,
 	//where ClearCachedPlaceableForCategory and ChargeCountDecrementFor are called
+
+}
+
+UWidget* UDeckState::GetTooltipWidgetForDeckWidget(const UWidget* pInstigator)
+{
+	std::remove_reference_t<decltype(m_DataMapping)::KeyInitType> AsKey{ pInstigator->GetClass() };
+	auto *pWidgetData{ m_DataMapping.Find(AsKey) };
+	checkf(pWidgetData, TEXT("A deck widget has lost its data mapping"));
+
+	auto *pTooltipClass{ LoadClass<UInfluenceTooltipWidgetBase>(nullptr, TEXT("WidgetBlueprint'/Game/Widgets/TooltipWidget_BP.TooltipWidget_BP_C'")) };
+	auto *pWidget { CreateWidget<UInfluenceTooltipWidgetBase>(m_pGM->GetWorld(), pTooltipClass) };
+	
+	pWidget->SetHeaderName(m_pGM->GetPrettyNameForCategory(pWidgetData->m_CategoryName));
+	pWidget->SetInfluenceRelationships(m_pGM->GetTempInfluenceMappingForCategory(pWidgetData->m_CategoryName));
+
+	return pWidget;
+	
 
 }
 
