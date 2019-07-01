@@ -59,7 +59,8 @@ private:
 
 	int32 m_InfluenceCurrentGain;
 
-	TSubclassOf<APlaceableBase> m_PreviewedClass;
+	UPROPERTY()
+		TSubclassOf<APlaceableBase> m_PreviewedClass;
 
 
 };
