@@ -21,7 +21,8 @@ public:
 	(
 		class UWorld *pWorld,
 		const FTransform &Transform, 
-		TSubclassOf<APlaceableBase> PreviewedPlaceableClass
+		const TSubclassOf<APlaceableBase> &PreviewedPlaceableClass,
+		const TSubclassOf<class UInfluenceDisplayWidgetBase> &InfluenceWidgetClass
 	);
 
 	UClass *GetPreviewedClass() const;

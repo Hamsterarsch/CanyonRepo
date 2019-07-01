@@ -170,6 +170,9 @@ protected:
 		float m_CameraMinPitch;
 
 	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<class UInfluenceDisplayWidgetBase> m_PreviewInfluenceDisplayWidget;
+
+	UPROPERTY(EditDefaultsOnly)
 		//the maximum hold time (in seconds) of the placement abort button
 		//that incurs an abort of the placement
 		float m_PlacementAbortSuccessTime;

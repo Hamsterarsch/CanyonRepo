@@ -47,7 +47,8 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 (
 	UWorld *pWorld,	
 	const FTransform &Transform, 
-	TSubclassOf<APlaceableBase> PreviewedPlaceableClass
+	const TSubclassOf<APlaceableBase> &PreviewedPlaceableClass,
+	const TSubclassOf<class UInfluenceDisplayWidgetBase> &InfluenceWidgetClass
 )
 {
 	auto *pPreviewedPlaceableClass{ PreviewedPlaceableClass.Get() };
@@ -94,7 +95,7 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 	pPreview->SetInfluenceRadius(DependencyRadius);
 
 	pPreview->m_InfluenceCurrentGain = pGm->GetInfluenceBasisForCategory(CategoryName);
-	pPreview->InitInfluenceDisplayWidget(pCdo->GetInfluenceWidgetClass());
+	pPreview->InitInfluenceDisplayWidget(InfluenceWidgetClass.Get());
 	pPreview->SetInfluenceDisplayed(pPreview->m_InfluenceCurrentGain);
 
 	UGameplayStatics::FinishSpawningActor(pPreview, Transform);

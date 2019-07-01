@@ -8,6 +8,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Misc/CanyonLogs.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Engine/StaticMesh.h"
 
 CPlacementRuler::CPlacementRuler() :
 	m_bInResnapRecovery{ false },
@@ -140,8 +141,9 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 	}
 
 
-//handle building penetrations after a snapping situation last frame
 	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
+
+//handle building penetrations after a snapping situation last frame
 		
 	if(m_bInResnapRecovery)
 	{
@@ -201,6 +203,36 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 	}
 
+	//edge placement case
+	{
+		auto *pVertexBuffer{ &pHullComp->GetStaticMesh()->RenderData->LODResources[0].VertexBuffers.PositionVertexBuffer };
+		bool bIsPlaceable{ true };
+		if(pVertexBuffer)
+		{
+			int32 Counter{ 0 };
+			for(uint32 VertIndex{ 0 }; VertIndex < pVertexBuffer->GetNumVertices(); ++VertIndex)
+			{
+				const auto &VertexPos{ pVertexBuffer->VertexPosition(VertIndex) };
+				if( FMath::IsNearlyZero(VertexPos.Z, .5f) )
+				{
+					++Counter;
+					auto Transformed{ pHullComp->GetComponentTransform().TransformPosition(VertexPos) };
+					
+					FHitResult Hit;
+					bIsPlaceable &= pHullComp->GetWorld()->LineTraceSingleByChannel(Hit, Transformed, Transformed - FVector{0,0,5}, GetCCTerrain());
+				}
+
+			}
+			UE_LOG(LogTemp, Log, TEXT("Relevant vert count: %i"), Counter);
+		}
+
+		if(!bIsPlaceable)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Discard bc of edge"));
+			out_NewPos = TerrainHit.ImpactPoint;
+			return false;
+		}
+	}
 
 	//sweep hits to find a pos at the nearest building
 	TArray<FHitResult> aHits;
@@ -247,7 +279,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		if(aOutOverlaps.Num() == 0)
 		{
-		UE_LOG(LogTemp, Warning, TEXT("No sweeps overidden"));
+			UE_LOG(LogTemp, Warning, TEXT("No sweeps overidden"));
 			out_NewPos = TerrainHit.ImpactPoint;
 			return true;
 		}
@@ -268,7 +300,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		}
 
 	}
-
+	
 	if(HitsPenOnStart > 0)
 	{
 		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied because of pen sweep hits"));

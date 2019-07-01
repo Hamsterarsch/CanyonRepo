@@ -85,7 +85,7 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 		m_pCursorRoot->SetWorldLocation(Hit.ImpactPoint);
 	}
 	
-	auto *pNewPlaceable{ APlaceablePreview::SpawnPlaceablePreview(GetWorld(), FTransform::Identity, NewPlaceableClass) };
+	auto *pNewPlaceable{ APlaceablePreview::SpawnPlaceablePreview(GetWorld(), FTransform::Identity, NewPlaceableClass, m_PreviewInfluenceDisplayWidget) };
 	if(!pNewPlaceable)
 	{
 		UE_LOG(LogCanyonPlacement, Error, TEXT("Could not spawn new placeable from class."))
