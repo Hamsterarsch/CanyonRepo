@@ -1,0 +1,11 @@
+- Anfang muss Hook haben indem das Gebäude mit der Landschaft reagiert
+- Insel zu gross
+- Spieler müssen am Anfang auch direkt mal einen Minuspunkt haben
+- Die Verbindungen der einzelnen Gebäude muss überdenkt werden
+
+
+- Wiederspielwert
+- Feiern des Spielers bei erreichen benötigter Punkte
+- Benötigte Punkte überdenken
+- Playerfeedback
+- 
