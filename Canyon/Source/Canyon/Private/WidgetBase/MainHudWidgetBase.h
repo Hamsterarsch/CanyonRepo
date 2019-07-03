@@ -28,6 +28,15 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnDeckSelected(int32 Index);
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnPointsCurrentChanged(int32 NewCurrentPoints);
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnPointsRequiredChanged(int32 NewPointsRequired);
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnNextLevelAccessible();
+	
+	
 };
 

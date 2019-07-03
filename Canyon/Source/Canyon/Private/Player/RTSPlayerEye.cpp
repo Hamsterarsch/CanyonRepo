@@ -68,6 +68,22 @@ ARTSPlayerEye::ARTSPlayerEye() :
 
 }
 
+void ARTSPlayerEye::BeginGame()
+{
+	auto *pGM{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
+
+	m_pMainHudWidget->AddToViewport();
+		
+	m_pLooseWidget->AddToViewport();
+
+	m_pDeckState = UDeckState::Construct(pGM);
+	m_pDeckStateRenderer = UDeckStateRenderer::Construct(pGM, m_pDeckState, m_pMainHudWidget);
+
+	NotifyOnDisplayNewDecks();
+		
+
+}
+
 void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlaceableClass)
 {
 	auto *pClass{ NewPlaceableClass.Get() };
@@ -333,6 +349,35 @@ bool ARTSPlayerEye::GetAreDecksSelectable() const
 
 }
 
+void ARTSPlayerEye::OnLoose()
+{
+	m_pLooseWidget->ShowWidget();
+	m_pLooseWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+
+}
+
+void ARTSPlayerEye::OnPointsRequiredChanged(const int32 NewPoints)
+{
+	m_pMainHudWidget->OnPointsRequiredChanged(NewPoints);
+
+
+}
+
+void ARTSPlayerEye::OnPointsCurrentChanged(const int32 NewPoints)
+{
+	m_pMainHudWidget->OnPointsCurrentChanged(NewPoints);
+
+
+}
+
+void ARTSPlayerEye::OnNextLevelAccessible()
+{
+	m_pMainHudWidget->OnNextLevelAccessible();
+
+
+}
+
 //Protected------------------
 
 void ARTSPlayerEye::PostInitializeComponents()
@@ -361,17 +406,12 @@ void ARTSPlayerEye::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//
-	auto *pGM{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
+	m_pLooseWidget = CreateWidget<UPrettyWidget>(GetWorld(), m_LooseWidgetClass.Get());
+	m_pLooseWidget->HideWidget();
 
-	auto *pWidget{ CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get()) };
-	pWidget->AddToViewport();
+	m_pMainHudWidget = CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get());
 
-	m_pDeckState = UDeckState::Construct(pGM);
-	m_pDeckStateRenderer = UDeckStateRenderer::Construct(pGM, m_pDeckState, pWidget);
 
-	NotifyOnDisplayNewDecks();
-	
 }
 
 

@@ -162,6 +162,18 @@ void UDeckSelector::IncreaseDeckGeneration()
 
 }
 
+void UDeckSelector::AddDeckDataToIssued(const FDeckData& DeckData)
+{
+	for(auto &&Entry : DeckData.m_ChargeMapping)
+	{
+		auto &ChargeCount{ m_IssuedChargesMap.FindOrAdd(Entry.Key) };
+		ChargeCount += Entry.Value;
+
+	}
+
+
+}
+
 void UDeckSelector::AddFillerChargesToDeckData(const int32 FillerChargeCount, FDeckData &DeckData, UDeckDatabaseNative *pDeckTemplate)
 {	
 	//trivial case

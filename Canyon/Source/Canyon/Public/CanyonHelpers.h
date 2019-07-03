@@ -107,3 +107,11 @@ T *SafeLoadObjectPtr(const TSoftObjectPtr<T> &ObjectPtr)
 
 }
 
+template<class T>
+T *GetFirstPlayerPawn(UWorld *pWorld)
+{
+	return Cast<T>(pWorld->GetFirstPlayerController()->GetPawn());
+
+
+}
+

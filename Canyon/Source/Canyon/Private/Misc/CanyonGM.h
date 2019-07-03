@@ -19,6 +19,12 @@ class ACanyonGM : public AGameModeBase
 public:
 	ACanyonGM();
 
+	void BeginGame();
+
+	void InitPointState(int32 CarryOverPoints);
+
+	void AddDeckDataToIssuedCharges(const struct FDeckData &DeckData);
+
 	int32 GetInfluenceForPlaceable(const FString &FirstInfluenceQualifier, const FString &SecondInfluenceQualifier) const;
 
 	int32 GetInfluenceBasisForCategory(const FString &CategoryName) const;
@@ -44,6 +50,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 		inline int32 GetPointsRequired() const { return m_PointsRequired; }
 
+	UFUNCTION(BlueprintCallable)
+		inline bool GetIsNextLevelAccessible() const { return m_bIsNextLevelAccessible; }
+
+	UFUNCTION(BlueprintCallable)
+		void EnterNextLevel();
+
+	UFUNCTION(BlueprintCallable)
+		int32 GetRequiredPointsDeltaForNextLevel() const { return m_NextLevelRequiredPointsDelta; }
+
 	float GetPlaceableDependencyRadius(const FString &CategoryName) const;
 
 	TSubclassOf<class UPlaceableIconWidgetBase> GetPlaceableWidget(const FString &CategoryName) const;
@@ -57,23 +72,24 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnPointsChanged();
 
-	UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<class UPointIndicatorWidgetBase> m_PointIndicatorWidgetClass;
 
-	UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<class UPrettyWidget> m_LooseWidgetClass;
+	UPROPERTY(EditDefaultsOnly, Category="Canyon|UI")
+		class UCategoryStringMappingDAL *m_pPrettyCategoryNameSource;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level")
 		UCurveFloat *m_pRequiredPointsSource;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level")
 		class UInfluenceFloatMapDAL *m_pDeckFillerProbOverride;
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level")
 		TSubclassOf<class UDeckSelector> m_DeckSelectorClass;
 
-	UPROPERTY(EditDefaultsOnly)
-		class UCategoryStringMappingDAL *m_pPrettyCategoryNameSource;
+	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level")
+		TArray<TSoftObjectPtr<UWorld>> m_aNextLevelsPool;
+
+	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level")
+		int32 m_NextLevelRequiredPointsDelta;
 
 
 private:
@@ -91,14 +107,14 @@ private:
 		class UInfluenceDataObject *m_pInfluenceData;
 
 	UPROPERTY()
-		class UPointIndicatorWidgetBase *m_pPointWidget;
+		int32 m_PointsOnLevelOpen;
 
 	UPROPERTY()
-		class UPrettyWidget *m_pLooseWidget;
-	
+		bool m_bIsNextLevelAccessible;
+
 	int32 m_PointsCurrent;
 	int32 m_PointsRequired;
-	int32 m_SessionSeed;
+	
 		
 	
 };
