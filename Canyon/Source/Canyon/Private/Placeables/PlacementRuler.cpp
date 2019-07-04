@@ -87,39 +87,86 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		out_NewPos = m_LastPlaceablePosition;
 		return m_bLastRet;
 	}*/
+	/*
+					//Normal constraint
+					constexpr float NormalTolerance{ 10e-6 };
+					auto ImpactNormalZ{ Hit.ImpactNormal.GetUnsafeNormal().Z };
+					if
+					(
+						(ImpactNormalZ + NormalTolerance) <= pPlaceable->GetPlaceableNormalZMin() 
+						|| (ImpactNormalZ - NormalTolerance) >= pPlaceable->GetPlaceableNormalZMax() 
+					)
+					{
+						out_NewPos = TerrainHit.ImpactPoint;
+
+						UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc the terrain normals are invalid"));
+						return false;
+
+
+					}
+	*/
+
+
+	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
 	
-
-//Normal constraint
-	constexpr float NormalTolerance{ 10e-6 };
-	auto ImpactNormalZ{ TerrainHit.ImpactNormal.GetUnsafeNormal().Z };
-	if
-	(
-		(ImpactNormalZ + NormalTolerance) <= pPlaceable->GetPlaceableNormalZMin() 
-		|| (ImpactNormalZ - NormalTolerance) >= pPlaceable->GetPlaceableNormalZMax() 
-	)
+	//collider corner based queries
 	{
-		out_NewPos = TerrainHit.ImpactPoint;
-
-		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc the terrain normals are invalid"));
-
-		return false;
-	}
-
-
-//Surface type constraint
-	if (auto *pPhyMat{ TerrainHit.PhysMaterial.Get() })
-	{
-		auto SurfaceType{ UPhysicalMaterial::DetermineSurfaceType(pPhyMat) };
-		if
-		(
-			SurfaceType != pPlaceable->GetPlacableSurfaceType()
-			&& SurfaceType != EPhysicalSurface::SurfaceType_Default
-		)
+		constexpr float CornerTraceDepth{ 2 };
+		auto *pVertexBuffer{ &pHullComp->GetStaticMesh()->RenderData->LODResources[0].VertexBuffers.PositionVertexBuffer };
+		bool bIsPlaceable{ true };
+		if(pVertexBuffer)
 		{
-			UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc of invalid terrain type"));
+			int32 Counter{ 0 };
+			for(uint32 VertIndex{ 0 }; VertIndex < pVertexBuffer->GetNumVertices(); ++VertIndex)
+			{
+				const auto &VertexPos{ pVertexBuffer->VertexPosition(VertIndex) };
+				if( FMath::IsNearlyZero(VertexPos.Z, .5f) )
+				{
+					++Counter;
+					auto Transformed{ pHullComp->GetComponentTransform().TransformPosition(VertexPos) };
 
-			out_NewPos = TerrainHit.ImpactPoint;
-			return false;
+				//Edge check (all relevant points have to be close to the ground/ not floating
+					FHitResult Hit;
+
+					if
+					(
+						!pHullComp->GetWorld()->LineTraceSingleByChannel
+						(
+							Hit, 
+							Transformed,
+							Transformed - FVector{0,0,CornerTraceDepth},
+							GetCCTerrain()
+						)
+					)
+					{
+						UE_LOG(LogTemp, Log, TEXT("Discard bc of edge"));
+						out_NewPos = TerrainHit.ImpactPoint;
+						return false;
+
+
+					}
+
+				//Surface type constraint
+					if (auto *pPhyMat{ Hit.PhysMaterial.Get() })
+					{
+						auto SurfaceType{ UPhysicalMaterial::DetermineSurfaceType(pPhyMat) };
+						if
+						(
+							SurfaceType != pPlaceable->GetPlacableSurfaceType()
+							&& SurfaceType != EPhysicalSurface::SurfaceType_Default
+						)
+						{
+							UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc of invalid terrain type"));
+							out_NewPos = TerrainHit.ImpactPoint;
+							return false;
+
+
+						}
+					}
+				}
+
+			}
+			UE_LOG(LogTemp, Log, TEXT("Relevant vert count: %i"), Counter);
 		}
 	}
 	
@@ -141,8 +188,6 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		return false;
 	}
 
-
-	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
 	
 //handle building penetrations after a snapping situation last frame
 		
@@ -204,36 +249,6 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 	}
 
-	//edge placement case
-	{
-		auto *pVertexBuffer{ &pHullComp->GetStaticMesh()->RenderData->LODResources[0].VertexBuffers.PositionVertexBuffer };
-		bool bIsPlaceable{ true };
-		if(pVertexBuffer)
-		{
-			int32 Counter{ 0 };
-			for(uint32 VertIndex{ 0 }; VertIndex < pVertexBuffer->GetNumVertices(); ++VertIndex)
-			{
-				const auto &VertexPos{ pVertexBuffer->VertexPosition(VertIndex) };
-				if( FMath::IsNearlyZero(VertexPos.Z, .5f) )
-				{
-					++Counter;
-					auto Transformed{ pHullComp->GetComponentTransform().TransformPosition(VertexPos) };
-					
-					FHitResult Hit;
-					bIsPlaceable &= pHullComp->GetWorld()->LineTraceSingleByChannel(Hit, Transformed, Transformed - FVector{0,0,5}, GetCCTerrain());
-				}
-
-			}
-			UE_LOG(LogTemp, Log, TEXT("Relevant vert count: %i"), Counter);
-		}
-
-		if(!bIsPlaceable)
-		{
-			UE_LOG(LogTemp, Log, TEXT("Discard bc of edge"));
-			out_NewPos = TerrainHit.ImpactPoint;
-			return false;
-		}
-	}
 
 	//sweep hits to find a pos at the nearest building
 	TArray<FHitResult> aHits;
