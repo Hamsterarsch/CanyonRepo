@@ -37,7 +37,8 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 	//Get hit or
 	FHitResult TerrainHit;
 	TraceForTerrainUnderCursor(TerrainHit, pPlaceable->GetWorld());
-	   
+	const bool bUseComplex{ false };
+
 	//todo: handle no hit situations	
 	if(!TerrainHit.IsValidBlockingHit())
 	{
@@ -121,7 +122,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 			return false;
 		}
 	}
-
+	
 
 //Mouse distance override
 	FVector2D CursorRootScreenPos;
@@ -142,14 +143,14 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 
 	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
-
+	
 //handle building penetrations after a snapping situation last frame
 		
 	if(m_bInResnapRecovery)
 	{
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
-		//ComponentQueryParams.bTraceComplex = true;
+		ComponentQueryParams.bTraceComplex = bUseComplex;
 		
 		TArray<FOverlapResult> aOverlaps;
 		pHullComp->GetWorld()->ComponentOverlapMulti
@@ -179,7 +180,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
-		//ComponentQueryParams.bTraceComplex = true;
+		ComponentQueryParams.bTraceComplex = bUseComplex;
 
 		auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
 		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
@@ -240,7 +241,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
 		ComponentQueryParams.bIgnoreTouches = true;
-		//ComponentQueryParams.bTraceComplex = true;
+		ComponentQueryParams.bTraceComplex = bUseComplex;
 		
 		pHullComp->GetWorld()->ComponentSweepMulti
 		(
@@ -252,21 +253,21 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 			ComponentQueryParams
 		);
 	}
-
+	
 	
 	//the sweep didnt get any hits (maybe bc we didnt move the building).
 	if(aHits.Num() == 0)
 	{
-				TArray<FOverlapResult> aOutOverlaps;
+		TArray<FOverlapResult> aOutOverlaps;
 
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
-		//ComponentQueryParams.bTraceComplex = true;
-
+		ComponentQueryParams.bTraceComplex = bUseComplex;
+		
 		auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
 		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
 		ObjectQueryParams.AddObjectTypesToQuery(GetCCTerrain());
-
+		
 		pHullComp->GetWorld()->ComponentOverlapMulti
 		(
 			aOutOverlaps, 

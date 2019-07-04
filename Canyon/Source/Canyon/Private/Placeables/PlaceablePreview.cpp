@@ -66,6 +66,8 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 	for(auto &&pNode : apNodes)
 	{
 		auto *pMeshComp{ NewObject<UStaticMeshCanyonComp>(pPreview, UStaticMeshCanyonComp::StaticClass(), NAME_None, RF_NoFlags, pNode->ComponentTemplate) };
+
+		//attach to previews root
 		pMeshComp->AttachToComponent(pPreview->GetRootComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 
 		auto *pAsSceneComp{ Cast<USceneComponent>(pNode->ComponentTemplate) };
