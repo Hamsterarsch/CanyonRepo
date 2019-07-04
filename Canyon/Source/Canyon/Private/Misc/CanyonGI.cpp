@@ -8,9 +8,12 @@
 #include "Misc/CanyonLogs.h"
 #include "CanyonGM.h"
 #include "Player/RTSPlayerEye.h"
+#include "ModuleManager.h"
+#include "AssetRegistryModule.h"
 
 
 UCanyonGI::UCanyonGI() :
+	m_bLoadAllPlaceablesOnStartup{ true },
 	m_CarryOverCharges{},
 	m_CarryOverScore{ 0 },
 	m_Seed{ 0 }
@@ -30,6 +33,44 @@ void UCanyonGI::Init()
 
 	UE_LOG(LogCanyonCommon, Warning, TEXT("----INIT WITH SEED: %i ----"), m_Seed);
 
+	if(!m_bLoadAllPlaceablesOnStartup)
+	{
+		return;
+
+
+	}
+	UE_LOG(LogCanyonCommon, Warning, TEXT("Begin pre loading placeable assets"));
+
+	auto &Registry{ FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")) };
+
+	FARFilter Filter{};
+	
+	Filter.PackagePaths.Add(TEXT("/Game/Placeables"));
+	Filter.bRecursivePaths = true;
+
+
+	//ensure registry population
+	Registry.Get().ScanFilesSynchronous({ TEXT("/Game/Placeables") });
+
+	//fetch
+	TArray<FAssetData> aFoundAssets;
+	Registry.Get().GetAssets(Filter, aFoundAssets);
+
+	for(auto &&AssetData : aFoundAssets)
+	{		
+		if(AssetData.ObjectPath.ToString().Contains("Decks"))
+		{
+			continue;
+		}
+
+		auto *pLoaded{ LoadClass<UObject>(nullptr, *(AssetData.ObjectPath.ToString() + "_C")) };
+		if(pLoaded)
+		{
+			m_apPreLoadedPlaceables.Add(pLoaded);			
+		}
+		
+	}
+		UE_LOG(LogCanyonCommon, Warning, TEXT("End pre loading placeable assets"));
 
 }
 
@@ -139,8 +180,10 @@ void UCanyonGI::ReceiveOnPostMapLoaded(UWorld* pLoadedWorld)
 	auto *pGM{ Cast<ACanyonGM>(pLoadedWorld->GetAuthGameMode()) };
 	if(pGM && pPlayer)
 	{
+#if !UE_EDITOR
 		pPlayer->BeginGame();
 		pGM->BeginGame();
+#endif
 	}
 
 	OnEndLoadingScreen(pLoadedWorld);

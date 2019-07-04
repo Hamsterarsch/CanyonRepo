@@ -22,9 +22,8 @@ class UDeckState : public UObject
 public:
 	UDeckState();
 
-	void ChargeCountDecrementFor(const FString &Category);
+	void NotifyOnCategoryPlaceablePlaced(const FString &Category);
 
-	void ClearCachedPlaceableForCategory(const FString &Category);
 
 	inline int32 GetChargesCurrent() const { return m_ChargesAmount; }
 
@@ -46,6 +45,8 @@ public:
 
 private:
 	void AddDeck(const FDeckData &Deck);
+
+	void ClearCachedPlaceableForCategory(const FString &Category);
 
 
 

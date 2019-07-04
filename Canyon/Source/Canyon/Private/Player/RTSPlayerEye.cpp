@@ -300,8 +300,7 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 		
 		//Update deck state (has to be done before gm notify)
 		const auto PlaceableCategory{ pSpawned->GetPlaceableCategory() };
-		m_pDeckState->ClearCachedPlaceableForCategory(PlaceableCategory);
-		m_pDeckState->ChargeCountDecrementFor(PlaceableCategory);
+		m_pDeckState->NotifyOnCategoryPlaceablePlaced(PlaceableCategory);
 
 		//Update gm
 		auto *pGm{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
@@ -411,6 +410,10 @@ void ARTSPlayerEye::BeginPlay()
 
 	m_pMainHudWidget = CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get());
 
+	
+#if UE_EDITOR
+	BeginGame();
+#endif
 
 }
 

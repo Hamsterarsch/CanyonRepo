@@ -48,6 +48,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level")
 		TArray<TSoftObjectPtr<UWorld>> m_aFirstLevelsPool;
 
+	UPROPERTY(EditDefaultsOnly)
+		bool m_bLoadAllPlaceablesOnStartup;
+
 
 private:
 	void FetchCarryOverDataFromOldLevel(const UWorld *pWorld);
@@ -63,7 +66,10 @@ private:
 		
 	UPROPERTY()
 		FDeckData m_CarryOverCharges;
-		
+
+	UPROPERTY()
+		TArray<UObject *> m_apPreLoadedPlaceables;
+
 	int32 m_CarryOverScore;
 
 	int32 m_Seed;

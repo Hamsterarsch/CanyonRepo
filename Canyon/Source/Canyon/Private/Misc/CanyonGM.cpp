@@ -15,6 +15,7 @@
 #include "Placeables/DeckSelector.h"
 #include "Misc/CategoryStringMappingDAL.h"
 #include "CanyonGI.h"
+#include "WidgetBlueprintLibrary.h"
 
 
 //Public-------------
@@ -29,6 +30,12 @@ ACanyonGM::ACanyonGM() :
 
 void ACanyonGM::BeginGame()
 {	
+	FInputModeGameAndUI InputMode{};
+	InputMode.SetHideCursorDuringCapture(false);
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockInFullscreen);
+	GetWorld()->GetFirstPlayerController()->SetInputMode(InputMode);
+
+	UWidgetBlueprintLibrary::SetFocusToGameViewport();
 
 
 }
@@ -195,6 +202,11 @@ void ACanyonGM::BeginPlay()
 		
 	m_pDeckSelector = UDeckSelector::Construct(m_DeckSelectorClass.Get());
 
+
+#if UE_EDITOR
+	BeginGame();
+#endif
+	
 
 }
 

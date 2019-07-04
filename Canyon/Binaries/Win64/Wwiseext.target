@@ -42,7 +42,7 @@
 			"Type": "UFS"
 		},
 		{
-			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin-UE-4.22/StomtPlugin.uplugin",
+			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin/StomtPlugin.uplugin",
 			"Type": "UFS"
 		},
 		{
