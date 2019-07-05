@@ -41,6 +41,11 @@ public:
 
 	void FillUpDeckDataNonEndless(FDeckData &DeckData);
 
+	inline class AMeshInstancer *GetMeshInstancer() { return m_pMeshInstancer; }
+
+	UFUNCTION(Exec)
+		void DebugAddChargesForCategory(const FString &Category, int32 Num) const;
+
 	UFUNCTION(BlueprintCallable)
 		FString GetPrettyNameForCategory(const FString &CategoryName);
 
@@ -90,7 +95,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level")
 		int32 m_NextLevelRequiredPointsDelta;
-
+	
 
 private:
 	void ReceiveOnPointsChanged();
@@ -111,6 +116,9 @@ private:
 
 	UPROPERTY()
 		bool m_bIsNextLevelAccessible;
+
+	UPROPERTY()
+		class AMeshInstancer *m_pMeshInstancer;
 
 	int32 m_PointsCurrent;
 	int32 m_PointsRequired;

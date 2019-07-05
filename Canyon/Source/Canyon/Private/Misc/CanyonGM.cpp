@@ -16,6 +16,7 @@
 #include "Misc/CategoryStringMappingDAL.h"
 #include "CanyonGI.h"
 #include "WidgetBlueprintLibrary.h"
+#include "ActorDeferredPlay.h"
 
 
 //Public-------------
@@ -36,6 +37,8 @@ void ACanyonGM::BeginGame()
 	GetWorld()->GetFirstPlayerController()->SetInputMode(InputMode);
 
 	UWidgetBlueprintLibrary::SetFocusToGameViewport();
+
+	AActorDeferredPlay::BroadcastBeginGame();
 
 
 }
@@ -140,6 +143,17 @@ void ACanyonGM::FillUpDeckDataNonEndless(FDeckData& DeckData)
 
 }
 
+void ACanyonGM::DebugAddChargesForCategory(const FString& Category, int32 Num) const
+{
+	auto *pPlayer{ GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
+	if(pPlayer)
+	{
+		pPlayer->DebugAddChargesForCategory(Category, Num);
+	}
+
+
+}
+
 FString ACanyonGM::GetPrettyNameForCategory(const FString& CategoryName)
 {
 	auto MappedString{ m_pPrettyCategoryNameSource->GetStringForCategory(CategoryName) };
@@ -199,9 +213,8 @@ void ACanyonGM::BeginPlay()
 	Super::BeginPlay();
 
 	m_pInfluenceData = UInfluenceDataObject::CreateFromFile();
-		
 	m_pDeckSelector = UDeckSelector::Construct(m_DeckSelectorClass.Get());
-
+	m_pMeshInstancer = GetWorld()->SpawnActor<AMeshInstancer>();
 
 #if UE_EDITOR
 	BeginGame();

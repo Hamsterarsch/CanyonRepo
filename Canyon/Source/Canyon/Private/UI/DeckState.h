@@ -23,8 +23,7 @@ public:
 	UDeckState();
 
 	void NotifyOnCategoryPlaceablePlaced(const FString &Category);
-
-
+	
 	inline int32 GetChargesCurrent() const { return m_ChargesAmount; }
 
 	inline bool GetAreDecksSelectable() const { return m_bAreDecksSelectable; }
@@ -32,6 +31,8 @@ public:
 	void NotifyOnDisplayNewDecks();
 
 	void NotifyOnDeckWidgetClicked(int32 Index);
+
+	void DebugAddChargesForCategory(const FString &Categoty, int32 Num);
 
 
 	UFUNCTION()
