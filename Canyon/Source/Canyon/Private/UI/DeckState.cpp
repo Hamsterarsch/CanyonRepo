@@ -82,6 +82,16 @@ void UDeckState::NotifyOnDeckWidgetClicked(int32 Index)
 
 }
 
+void UDeckState::DebugAddChargesForCategory(const FString& Category, const int32 Num)
+{
+	FDeckData Data{};
+	Data.m_ChargeMapping.Add(Category, Num);
+
+	AddDeck(Data);
+
+
+}
+
 void UDeckState::ReceiveOnWidgetClicked(const UWidget* pClickedWidget)
 {
 	auto *pPlayer{ Cast<ARTSPlayerEye>( m_pGM->GetWorld()->GetFirstPlayerController()->GetPawn() ) };

@@ -72,6 +72,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void CreateNewPlacablePreview(TSubclassOf<class APlaceableBase> NewPlaceableClass);
 
+	void DebugAddChargesForCategory(const FString &Category, int32 Num);
+
 	//Movement
 	void AddForwardMovement(float AxisValue);
 

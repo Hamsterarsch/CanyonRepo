@@ -121,6 +121,16 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 
 }
 
+void ARTSPlayerEye::DebugAddChargesForCategory(const FString& Category, int32 Num)
+{
+	if(m_pDeckState)
+	{
+		m_pDeckState->DebugAddChargesForCategory(Category, Num);
+	}
+
+
+}
+
 #pragma region Movement
 void ARTSPlayerEye::AddForwardMovement(const float AxisValue)
 {
