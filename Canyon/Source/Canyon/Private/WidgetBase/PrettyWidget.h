@@ -6,6 +6,7 @@
 #include "UserWidget.h"
 #include "PrettyWidget.generated.h"
 
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMouseButtonDownPrettyDelegate, class UPrettyWidget *, pWidget);
 
 UCLASS()
@@ -14,10 +15,10 @@ class UPrettyWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:	
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		void ShowWidget();
 	
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		void HideWidget();
 
 

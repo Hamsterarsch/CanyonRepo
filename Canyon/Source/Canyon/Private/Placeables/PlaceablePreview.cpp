@@ -47,7 +47,8 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 (
 	UWorld *pWorld,	
 	const FTransform &Transform, 
-	TSubclassOf<APlaceableBase> PreviewedPlaceableClass
+	const TSubclassOf<APlaceableBase> &PreviewedPlaceableClass,
+	const TSubclassOf<class UInfluenceDisplayWidgetBase> &InfluenceWidgetClass
 )
 {
 	auto *pPreviewedPlaceableClass{ PreviewedPlaceableClass.Get() };
@@ -65,6 +66,8 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 	for(auto &&pNode : apNodes)
 	{
 		auto *pMeshComp{ NewObject<UStaticMeshCanyonComp>(pPreview, UStaticMeshCanyonComp::StaticClass(), NAME_None, RF_NoFlags, pNode->ComponentTemplate) };
+
+		//attach to previews root
 		pMeshComp->AttachToComponent(pPreview->GetRootComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 
 		auto *pAsSceneComp{ Cast<USceneComponent>(pNode->ComponentTemplate) };
@@ -94,7 +97,7 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 	pPreview->SetInfluenceRadius(DependencyRadius);
 
 	pPreview->m_InfluenceCurrentGain = pGm->GetInfluenceBasisForCategory(CategoryName);
-	pPreview->InitInfluenceDisplayWidget(pCdo->GetInfluenceWidgetClass());
+	pPreview->InitInfluenceDisplayWidget(InfluenceWidgetClass.Get());
 	pPreview->SetInfluenceDisplayed(pPreview->m_InfluenceCurrentGain);
 
 	UGameplayStatics::FinishSpawningActor(pPreview, Transform);

@@ -22,10 +22,8 @@ class UDeckState : public UObject
 public:
 	UDeckState();
 
-	void ChargeCountDecrementFor(const FString &Category);
-
-	void ClearCachedPlaceableForCategory(const FString &Category);
-
+	void NotifyOnCategoryPlaceablePlaced(const FString &Category);
+	
 	inline int32 GetChargesCurrent() const { return m_ChargesAmount; }
 
 	inline bool GetAreDecksSelectable() const { return m_bAreDecksSelectable; }
@@ -34,16 +32,23 @@ public:
 
 	void NotifyOnDeckWidgetClicked(int32 Index);
 
+	void DebugAddChargesForCategory(const FString &Categoty, int32 Num);
+
 
 	UFUNCTION()
 		void ReceiveOnWidgetClicked(const class UWidget *pClickedWidget);
 
+	UFUNCTION()
+		UWidget *GetTooltipWidgetForDeckWidget(const UWidget *pInstigator);
 
 	static UDeckState *Construct(class ACanyonGM *pGM);			
 
 
 private:
 	void AddDeck(const FDeckData &Deck);
+
+	void ClearCachedPlaceableForCategory(const FString &Category);
+
 
 
 	UPROPERTY()
@@ -59,7 +64,7 @@ private:
 
 	UPROPERTY()
 		FOnDeckStateNewDecksSetDelegate m_eOnDeckStateNewDecksSet;
-
+	
 	UPROPERTY()
 		TMap<TSubclassOf<class UPlaceableIconWidgetBase>, FCategoryData> m_DataMapping;
 

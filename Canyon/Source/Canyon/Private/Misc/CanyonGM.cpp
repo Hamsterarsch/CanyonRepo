@@ -13,15 +13,57 @@
 #include "CanyonHelpers.h"
 #include "CanyonLogs.h"
 #include "Placeables/DeckSelector.h"
+#include "Misc/CategoryStringMappingDAL.h"
+#include "CanyonGI.h"
+#include "WidgetBlueprintLibrary.h"
+#include "ActorDeferredPlay.h"
 
 
 //Public-------------
 
 ACanyonGM::ACanyonGM() :
+	m_PointsOnLevelOpen{ 0 },
+	m_bIsNextLevelAccessible{ false },
 	m_PointsCurrent{ 0 },
-	m_PointsRequired{ 0 },
-	m_SessionSeed{ 0 }	
+	m_PointsRequired{ 0 }
 {
+}
+
+void ACanyonGM::BeginGame()
+{	
+	FInputModeGameAndUI InputMode{};
+	InputMode.SetHideCursorDuringCapture(false);
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockInFullscreen);
+	GetWorld()->GetFirstPlayerController()->SetInputMode(InputMode);
+
+	UWidgetBlueprintLibrary::SetFocusToGameViewport();
+
+	AActorDeferredPlay::BroadcastBeginGame();
+
+
+}
+
+void ACanyonGM::InitPointState(int32 CarryOverPoints)
+{
+	m_PointsRequired = CarryOverPoints;
+	m_PointsCurrent = CarryOverPoints;
+	m_PointsOnLevelOpen = CarryOverPoints;
+
+	auto *pPlayer{GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
+	
+	pPlayer->OnPointsRequiredChanged(m_PointsRequired);
+	pPlayer->OnPointsCurrentChanged(m_PointsCurrent);
+
+	//don't use the regular OnPointsChanged here
+	//bc this update is just po
+	
+}
+
+void ACanyonGM::AddDeckDataToIssuedCharges(const FDeckData& DeckData)
+{
+	m_pDeckSelector->AddDeckDataToIssued(DeckData);
+
+
 }
 
 int32 ACanyonGM::GetInfluenceForPlaceable
@@ -42,10 +84,16 @@ int32 ACanyonGM::GetInfluenceBasisForCategory(const FString& CategoryName) const
 
 }
 
+const TMap<FString, int32>& ACanyonGM::GetTempInfluenceMappingForCategory(const FString& CategoryName) const
+{
+	return (*m_pInfluenceData)[CategoryName].m_InfluenceMapping;
+
+
+}
+
 void ACanyonGM::AddPointsCurrent(const int32 Points)
 {	
 	m_PointsCurrent += Points;
-	m_pPointWidget->OnPointsCurrentChanged(m_PointsCurrent);
 
 	ReceiveOnPointsChanged();
 
@@ -95,10 +143,30 @@ void ACanyonGM::FillUpDeckDataNonEndless(FDeckData& DeckData)
 
 }
 
+void ACanyonGM::DebugAddChargesForCategory(const FString& Category, int32 Num) const
+{
+	auto *pPlayer{ GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
+	if(pPlayer)
+	{
+		pPlayer->DebugAddChargesForCategory(Category, Num);
+	}
+
+
+}
+
+FString ACanyonGM::GetPrettyNameForCategory(const FString& CategoryName)
+{
+	auto MappedString{ m_pPrettyCategoryNameSource->GetStringForCategory(CategoryName) };
+	return MappedString.IsEmpty() ? CategoryName : MappedString;
+
+
+}
+
 void ACanyonGM::SetPointsRequired(const int32 Points)
 {
 	m_PointsRequired = Points;
-	m_pPointWidget->OnPointsRequiredChanged(m_PointsRequired);
+	auto *pPlayer{GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
+	pPlayer->OnPointsRequiredChanged(m_PointsRequired);
 
 	ReceiveOnPointsChanged();
 
@@ -107,12 +175,21 @@ void ACanyonGM::SetPointsRequired(const int32 Points)
 
 void ACanyonGM::OnLoose()
 {
-	m_pLooseWidget->ShowWidget();
-	m_pLooseWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+	auto *pPlayer{GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
+	pPlayer->OnLoose();
 
 
 }
 
+
+void ACanyonGM::EnterNextLevel()
+{
+	auto *pGI{ Cast<UCanyonGI>(GetGameInstance()) };
+	
+	pGI->BeginLevelSwitch(m_aNextLevelsPool[GetRandomIndexSeeded(m_aNextLevelsPool.Num())]);
+
+
+}
 
 float ACanyonGM::GetPlaceableDependencyRadius(const FString& CategoryName) const
 {
@@ -135,22 +212,14 @@ void ACanyonGM::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//non savegame init
-	m_SessionSeed = FMath::Rand();
-	FMath::SRandInit(m_SessionSeed);
-	UE_LOG(LogCanyonCommon, Warning, TEXT("----BEGINNING GAME WITH SEED: %i ----"), m_SessionSeed);
-
 	m_pInfluenceData = UInfluenceDataObject::CreateFromFile();
-		
-	m_pPointWidget = CreateWidget<UPointIndicatorWidgetBase>(GetWorld(), m_PointIndicatorWidgetClass.Get());
-	m_pPointWidget->AddToViewport();
-	
-	m_pLooseWidget = CreateWidget<UPrettyWidget>(GetWorld(), m_LooseWidgetClass.Get());
-	m_pLooseWidget->HideWidget();
-	m_pLooseWidget->AddToViewport();
-
 	m_pDeckSelector = UDeckSelector::Construct(m_DeckSelectorClass.Get());
+	m_pMeshInstancer = GetWorld()->SpawnActor<AMeshInstancer>();
 
+#if UE_EDITOR
+	BeginGame();
+#endif
+	
 
 }
 
@@ -158,7 +227,9 @@ void ACanyonGM::BeginPlay()
 
 void ACanyonGM::ReceiveOnPointsChanged()
 {
-	auto *pPlayer{ Cast<ARTSPlayerEye>(GetWorld()->GetFirstPlayerController()->GetPawn()) };
+	auto *pPlayer{ GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
+
+	pPlayer->OnPointsCurrentChanged(m_PointsCurrent);
 	if(m_PointsCurrent >= m_PointsRequired)
 	{
 		pPlayer->NotifyOnDisplayNewDecks();		
@@ -173,6 +244,13 @@ void ACanyonGM::ReceiveOnPointsChanged()
 	)
 	{
 		OnLoose();
+	}
+
+	//next level accessible
+	if(	(m_PointsCurrent - m_PointsOnLevelOpen) >= m_NextLevelRequiredPointsDelta && !m_bIsNextLevelAccessible)
+	{
+		m_bIsNextLevelAccessible = true;		
+		pPlayer->OnNextLevelAccessible();
 	}
 
 

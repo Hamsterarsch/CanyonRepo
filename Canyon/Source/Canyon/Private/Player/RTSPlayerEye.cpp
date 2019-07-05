@@ -68,6 +68,22 @@ ARTSPlayerEye::ARTSPlayerEye() :
 
 }
 
+void ARTSPlayerEye::BeginGame()
+{
+	auto *pGM{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
+
+	m_pMainHudWidget->AddToViewport();
+		
+	m_pLooseWidget->AddToViewport();
+
+	m_pDeckState = UDeckState::Construct(pGM);
+	m_pDeckStateRenderer = UDeckStateRenderer::Construct(pGM, m_pDeckState, m_pMainHudWidget);
+
+	NotifyOnDisplayNewDecks();
+		
+
+}
+
 void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlaceableClass)
 {
 	auto *pClass{ NewPlaceableClass.Get() };
@@ -85,7 +101,7 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 		m_pCursorRoot->SetWorldLocation(Hit.ImpactPoint);
 	}
 	
-	auto *pNewPlaceable{ APlaceablePreview::SpawnPlaceablePreview(GetWorld(), FTransform::Identity, NewPlaceableClass) };
+	auto *pNewPlaceable{ APlaceablePreview::SpawnPlaceablePreview(GetWorld(), FTransform::Identity, NewPlaceableClass, m_PreviewInfluenceDisplayWidget) };
 	if(!pNewPlaceable)
 	{
 		UE_LOG(LogCanyonPlacement, Error, TEXT("Could not spawn new placeable from class."))
@@ -102,6 +118,16 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 
 	m_PlacementState.HandleInput(EAbstractInputEvent::PlaceBuilding_Start);
 	
+
+}
+
+void ARTSPlayerEye::DebugAddChargesForCategory(const FString& Category, int32 Num)
+{
+	if(m_pDeckState)
+	{
+		m_pDeckState->DebugAddChargesForCategory(Category, Num);
+	}
+
 
 }
 
@@ -284,8 +310,7 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 		
 		//Update deck state (has to be done before gm notify)
 		const auto PlaceableCategory{ pSpawned->GetPlaceableCategory() };
-		m_pDeckState->ClearCachedPlaceableForCategory(PlaceableCategory);
-		m_pDeckState->ChargeCountDecrementFor(PlaceableCategory);
+		m_pDeckState->NotifyOnCategoryPlaceablePlaced(PlaceableCategory);
 
 		//Update gm
 		auto *pGm{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
@@ -333,6 +358,35 @@ bool ARTSPlayerEye::GetAreDecksSelectable() const
 
 }
 
+void ARTSPlayerEye::OnLoose()
+{
+	m_pLooseWidget->ShowWidget();
+	m_pLooseWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+
+}
+
+void ARTSPlayerEye::OnPointsRequiredChanged(const int32 NewPoints)
+{
+	m_pMainHudWidget->OnPointsRequiredChanged(NewPoints);
+
+
+}
+
+void ARTSPlayerEye::OnPointsCurrentChanged(const int32 NewPoints)
+{
+	m_pMainHudWidget->OnPointsCurrentChanged(NewPoints);
+
+
+}
+
+void ARTSPlayerEye::OnNextLevelAccessible()
+{
+	m_pMainHudWidget->OnNextLevelAccessible();
+
+
+}
+
 //Protected------------------
 
 void ARTSPlayerEye::PostInitializeComponents()
@@ -361,17 +415,16 @@ void ARTSPlayerEye::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//
-	auto *pGM{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
+	m_pLooseWidget = CreateWidget<UPrettyWidget>(GetWorld(), m_LooseWidgetClass.Get());
+	m_pLooseWidget->HideWidget();
 
-	auto *pWidget{ CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get()) };
-	pWidget->AddToViewport();
+	m_pMainHudWidget = CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get());
 
-	m_pDeckState = UDeckState::Construct(pGM);
-	m_pDeckStateRenderer = UDeckStateRenderer::Construct(pGM, m_pDeckState, pWidget);
-
-	NotifyOnDisplayNewDecks();
 	
+#if UE_EDITOR
+	BeginGame();
+#endif
+
 }
 
 

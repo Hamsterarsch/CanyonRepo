@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "ActorAutoCollectedInstancedMeshes.h"
 #include "Engine/UserDefinedEnum.h"
 #include "PlaceableBase.generated.h"
 
 
 UCLASS()
-class APlaceableBase : public AActor
+class APlaceableBase : public AActorDeferredPlay
 {
 	GENERATED_BODY()
 	

@@ -8,6 +8,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Misc/CanyonLogs.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Engine/StaticMesh.h"
 
 CPlacementRuler::CPlacementRuler() :
 	m_bInResnapRecovery{ false },
@@ -36,7 +37,8 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 	//Get hit or
 	FHitResult TerrainHit;
 	TraceForTerrainUnderCursor(TerrainHit, pPlaceable->GetWorld());
-	   
+	const bool bUseComplex{ false };
+
 	//todo: handle no hit situations	
 	if(!TerrainHit.IsValidBlockingHit())
 	{
@@ -85,42 +87,89 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		out_NewPos = m_LastPlaceablePosition;
 		return m_bLastRet;
 	}*/
+	/*
+					//Normal constraint
+					constexpr float NormalTolerance{ 10e-6 };
+					auto ImpactNormalZ{ Hit.ImpactNormal.GetUnsafeNormal().Z };
+					if
+					(
+						(ImpactNormalZ + NormalTolerance) <= pPlaceable->GetPlaceableNormalZMin() 
+						|| (ImpactNormalZ - NormalTolerance) >= pPlaceable->GetPlaceableNormalZMax() 
+					)
+					{
+						out_NewPos = TerrainHit.ImpactPoint;
+
+						UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc the terrain normals are invalid"));
+						return false;
+
+
+					}
+	*/
+
+
+	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
 	
-
-//Normal constraint
-	constexpr float NormalTolerance{ 10e-6 };
-	auto ImpactNormalZ{ TerrainHit.ImpactNormal.GetUnsafeNormal().Z };
-	if
-	(
-		(ImpactNormalZ + NormalTolerance) <= pPlaceable->GetPlaceableNormalZMin() 
-		|| (ImpactNormalZ - NormalTolerance) >= pPlaceable->GetPlaceableNormalZMax() 
-	)
+	//collider corner based queries
 	{
-		out_NewPos = TerrainHit.ImpactPoint;
-
-		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc the terrain normals are invalid"));
-
-		return false;
-	}
-
-
-//Surface type constraint
-	if (auto *pPhyMat{ TerrainHit.PhysMaterial.Get() })
-	{
-		auto SurfaceType{ UPhysicalMaterial::DetermineSurfaceType(pPhyMat) };
-		if
-		(
-			SurfaceType != pPlaceable->GetPlacableSurfaceType()
-			&& SurfaceType != EPhysicalSurface::SurfaceType_Default
-		)
+		constexpr float CornerTraceDepth{ 2 };
+		auto *pVertexBuffer{ &pHullComp->GetStaticMesh()->RenderData->LODResources[0].VertexBuffers.PositionVertexBuffer };
+		bool bIsPlaceable{ true };
+		if(pVertexBuffer)
 		{
-			UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc of invalid terrain type"));
+			int32 Counter{ 0 };
+			for(uint32 VertIndex{ 0 }; VertIndex < pVertexBuffer->GetNumVertices(); ++VertIndex)
+			{
+				const auto &VertexPos{ pVertexBuffer->VertexPosition(VertIndex) };
+				if( FMath::IsNearlyZero(VertexPos.Z, .5f) )
+				{
+					++Counter;
+					auto Transformed{ pHullComp->GetComponentTransform().TransformPosition(VertexPos) };
 
-			out_NewPos = TerrainHit.ImpactPoint;
-			return false;
+				//Edge check (all relevant points have to be close to the ground/ not floating
+					FHitResult Hit;
+
+					if
+					(
+						!pHullComp->GetWorld()->LineTraceSingleByChannel
+						(
+							Hit, 
+							Transformed,
+							Transformed - FVector{0,0,CornerTraceDepth},
+							GetCCTerrain()
+						)
+					)
+					{
+						UE_LOG(LogTemp, Log, TEXT("Discard bc of edge"));
+						out_NewPos = TerrainHit.ImpactPoint;
+						return false;
+
+
+					}
+
+				//Surface type constraint
+					if (auto *pPhyMat{ Hit.PhysMaterial.Get() })
+					{
+						auto SurfaceType{ UPhysicalMaterial::DetermineSurfaceType(pPhyMat) };
+						if
+						(
+							SurfaceType != pPlaceable->GetPlacableSurfaceType()
+							&& SurfaceType != EPhysicalSurface::SurfaceType_Default
+						)
+						{
+							UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc of invalid terrain type"));
+							out_NewPos = TerrainHit.ImpactPoint;
+							return false;
+
+
+						}
+					}
+				}
+
+			}
+			UE_LOG(LogTemp, Log, TEXT("Relevant vert count: %i"), Counter);
 		}
 	}
-
+	
 
 //Mouse distance override
 	FVector2D CursorRootScreenPos;
@@ -139,15 +188,14 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		return false;
 	}
 
-
+	
 //handle building penetrations after a snapping situation last frame
-	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
 		
 	if(m_bInResnapRecovery)
 	{
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
-		//ComponentQueryParams.bTraceComplex = true;
+		ComponentQueryParams.bTraceComplex = bUseComplex;
 		
 		TArray<FOverlapResult> aOverlaps;
 		pHullComp->GetWorld()->ComponentOverlapMulti
@@ -177,7 +225,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
-		ComponentQueryParams.bTraceComplex = true;
+		ComponentQueryParams.bTraceComplex = bUseComplex;
 
 		auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
 		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
@@ -208,7 +256,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
 		ComponentQueryParams.bIgnoreTouches = true;
-		//ComponentQueryParams.bTraceComplex = true;
+		ComponentQueryParams.bTraceComplex = bUseComplex;
 		
 		pHullComp->GetWorld()->ComponentSweepMulti
 		(
@@ -220,21 +268,21 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 			ComponentQueryParams
 		);
 	}
-
+	
 	
 	//the sweep didnt get any hits (maybe bc we didnt move the building).
 	if(aHits.Num() == 0)
 	{
-				TArray<FOverlapResult> aOutOverlaps;
+		TArray<FOverlapResult> aOutOverlaps;
 
 		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
 		ComponentQueryParams.AddIgnoredActor(pPlaceable);
-		ComponentQueryParams.bTraceComplex = true;
-
+		ComponentQueryParams.bTraceComplex = bUseComplex;
+		
 		auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
 		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
 		ObjectQueryParams.AddObjectTypesToQuery(GetCCTerrain());
-
+		
 		pHullComp->GetWorld()->ComponentOverlapMulti
 		(
 			aOutOverlaps, 
@@ -247,7 +295,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		if(aOutOverlaps.Num() == 0)
 		{
-		UE_LOG(LogTemp, Warning, TEXT("No sweeps overidden"));
+			UE_LOG(LogTemp, Warning, TEXT("No sweeps overidden"));
 			out_NewPos = TerrainHit.ImpactPoint;
 			return true;
 		}
@@ -268,10 +316,10 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		}
 
 	}
-
+	
 	if(HitsPenOnStart > 0)
 	{
-		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied because of pen sweep hits"));
+		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied because of pen sweep hits (%i)"), HitsPenOnStart);
 		out_NewPos = TerrainHit.ImpactPoint;
 		return false;
 	}

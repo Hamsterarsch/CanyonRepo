@@ -67,8 +67,12 @@ class CANYON_API ARTSPlayerEye : public ASpectatorPawn
 public:
 	ARTSPlayerEye();
 
+	void BeginGame();
+
 	UFUNCTION(BlueprintCallable)
 		void CreateNewPlacablePreview(TSubclassOf<class APlaceableBase> NewPlaceableClass);
+
+	void DebugAddChargesForCategory(const FString &Category, int32 Num);
 
 	//Movement
 	void AddForwardMovement(float AxisValue);
@@ -107,6 +111,14 @@ public:
 	bool GetAreDecksSelectable() const;
 
 	inline float GetPlacementAbortSuccessTime() const { return m_PlacementAbortSuccessTime; }
+
+	void OnLoose();
+
+	void OnPointsRequiredChanged(int32 NewPoints);
+
+	void OnPointsCurrentChanged(int32 NewPoints);
+
+	void OnNextLevelAccessible();
 
 
 	const static FName s_AxisMouseX;
@@ -169,6 +181,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, DisplayName = "Min Camera Pitch", Category="Controls")
 		float m_CameraMinPitch;
 
+	UPROPERTY(EditDefaultsOnly, Category="Canyon|UI")
+		TSubclassOf<class UPrettyWidget> m_LooseWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category="Canyon|UI")
+		TSubclassOf<class UInfluenceDisplayWidgetBase> m_PreviewInfluenceDisplayWidget;
+
 	UPROPERTY(EditDefaultsOnly)
 		//the maximum hold time (in seconds) of the placement abort button
 		//that incurs an abort of the placement
@@ -198,6 +216,12 @@ protected:
 	UPROPERTY()
 		class UDeckStateRenderer *m_pDeckStateRenderer;
 
+	UPROPERTY()
+		class UPrettyWidget *m_pLooseWidget;
+
+	UPROPERTY()
+		class UMainHudWidgetBase *m_pMainHudWidget;
+	
 
 	bool m_bIsPlaceablePlaceable;
 	FVector2D m_MouseShufflePreMousePos;

@@ -23,5 +23,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		static uint8 EnumStringToEnumByte(const class UUserDefinedEnum *pEnum, const FString &EnumIdentifier);
 
+	UFUNCTION(BlueprintCallable)
+		static void SetBrushImage(UPARAM(ref) struct FSlateBrush &Target, UObject *pObject);
 	
+
 };

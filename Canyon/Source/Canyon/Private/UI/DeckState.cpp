@@ -6,6 +6,7 @@
 #include "Player/RTSPlayerEye.h"
 #include "WidgetBase/PlaceableIconWidgetBase.h"
 #include "Misc/CanyonBpfLib.h"
+#include "WidgetBase/InfluenceTooltipWidgetBase.h"
 
 //Public-------------------
 
@@ -15,7 +16,7 @@ UDeckState::UDeckState() :
 {
 }
 
-void UDeckState::ChargeCountDecrementFor(const FString& Category)
+void UDeckState::NotifyOnCategoryPlaceablePlaced(const FString& Category)
 {
 	auto WidgetClass{ m_pGM->GetPlaceableWidget(Category) };
 	auto *pData{ m_DataMapping.Find(WidgetClass) };
@@ -26,19 +27,20 @@ void UDeckState::ChargeCountDecrementFor(const FString& Category)
 
 	m_eOnDeckStateChanged.Broadcast(WidgetClass, *pData);
 
+	//clear old instance
+	ClearCachedPlaceableForCategory(Category);
+
 	if(pData->m_ChargeCount <= 0)
 	{
 		m_DataMapping.Remove(WidgetClass);
 	}
-
-
-}
-
-void UDeckState::ClearCachedPlaceableForCategory(const FString& Category)
-{
-	m_CachedPlaceableClasses.Remove(Category);
-
-
+	else
+	{
+		//if charges are left, load new placeable instance
+		m_CachedPlaceableClasses.Add(Category, UCanyonBpfLib::GetCategoryPlaceableClass(Category));
+	}
+	
+	
 }
 
 void UDeckState::NotifyOnDisplayNewDecks()
@@ -80,6 +82,16 @@ void UDeckState::NotifyOnDeckWidgetClicked(int32 Index)
 
 }
 
+void UDeckState::DebugAddChargesForCategory(const FString& Category, const int32 Num)
+{
+	FDeckData Data{};
+	Data.m_ChargeMapping.Add(Category, Num);
+
+	AddDeck(Data);
+
+
+}
+
 void UDeckState::ReceiveOnWidgetClicked(const UWidget* pClickedWidget)
 {
 	auto *pPlayer{ Cast<ARTSPlayerEye>( m_pGM->GetWorld()->GetFirstPlayerController()->GetPawn() ) };
@@ -91,27 +103,37 @@ void UDeckState::ReceiveOnWidgetClicked(const UWidget* pClickedWidget)
 
 	std::remove_reference_t<decltype(m_DataMapping)::KeyInitType> AsKey{ pClickedWidget->GetClass() };
 	auto *pWidgetData{ m_DataMapping.Find(AsKey) };
-
 	checkf(pWidgetData, TEXT("A deck widget has lost its data mapping"));
 
 	//find or add entry
-	auto &ClassOf{ m_CachedPlaceableClasses.FindOrAdd(pWidgetData->m_CategoryName) };
+	auto *pClassOf{ m_CachedPlaceableClasses.Find(pWidgetData->m_CategoryName) };
 
-	//optional init
-	if(!ClassOf.Get())
+	if(!pClassOf || !pClassOf->Get())
 	{
-		ClassOf = UCanyonBpfLib::GetCategoryPlaceableClass(pWidgetData->m_CategoryName);		
+		UE_LOG(LogTemp, Warning, TEXT("deck state widget clicked, but placeable class not getable"));
 	}
-
-	if(!ClassOf.Get())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("deck state widget clicked, class of not getable"));
-	}
-	pPlayer->CreateNewPlacablePreview(ClassOf);
+	pPlayer->CreateNewPlacablePreview(*pClassOf);
 
 	//if the building placement is aborted no further handling is needed.
 	//for successful placement, see ARTSPlayerEye::TryCommitPreviewBuilding,
-	//where ClearCachedPlaceableForCategory and ChargeCountDecrementFor are called
+	//where ClearCachedPlaceableForCategory and NotifyOnCategoryPlaceablePlaced are called
+
+}
+
+UWidget* UDeckState::GetTooltipWidgetForDeckWidget(const UWidget* pInstigator)
+{
+	std::remove_reference_t<decltype(m_DataMapping)::KeyInitType> AsKey{ pInstigator->GetClass() };
+	auto *pWidgetData{ m_DataMapping.Find(AsKey) };
+	checkf(pWidgetData, TEXT("A deck widget has lost its data mapping"));
+
+	auto *pTooltipClass{ LoadClass<UInfluenceTooltipWidgetBase>(nullptr, TEXT("WidgetBlueprint'/Game/Widgets/TooltipWidget_BP.TooltipWidget_BP_C'")) };
+	auto *pWidget { CreateWidget<UInfluenceTooltipWidgetBase>(m_pGM->GetWorld(), pTooltipClass) };
+	
+	pWidget->SetHeaderName(m_pGM->GetPrettyNameForCategory(pWidgetData->m_CategoryName));
+	pWidget->SetInfluenceRelationships(m_pGM->GetTempInfluenceMappingForCategory(pWidgetData->m_CategoryName));
+
+	return pWidget;
+	
 
 }
 
@@ -139,13 +161,21 @@ void UDeckState::AddDeck(const FDeckData &Deck)
 		
 		if(!pCatData)
 		{
-			pCatData = &m_DataMapping.Add(WidgetClass, FCategoryData{ Entry.Key });	
+			//todo: maybe dont cache the complete deck but only buildings that had placement aborted, if all buildings will be preloaded by the game instance in the future.
+			pCatData = &m_DataMapping.Add(WidgetClass, FCategoryData{ Entry.Key });
+
+			//also pre load an instance of this placeable class and cache it
+			auto &ClassOf{ m_CachedPlaceableClasses.Add(Entry.Key) };
+
+			//init
+			ClassOf = UCanyonBpfLib::GetCategoryPlaceableClass(Entry.Key);	
 		}
 
 		//Update deck data:
 			//Add amount
 		m_ChargesAmount += Entry.Value;
 		pCatData->m_ChargeCount += Entry.Value;
+
 		
 
 		//Notify listeners
@@ -157,6 +187,13 @@ void UDeckState::AddDeck(const FDeckData &Deck)
 	m_pGM->IncreaseDeckGeneration();
 	
 	
+}
+
+void UDeckState::ClearCachedPlaceableForCategory(const FString& Category)
+{
+	m_CachedPlaceableClasses.Remove(Category);
+
+
 }
 
 UDeckState* UDeckState::Construct(ACanyonGM* pGM)

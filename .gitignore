@@ -80,3 +80,6 @@ DerivedDataCache/
 
 #
 /**/*-DebugGame.dll
+Canyon/Binaries/Win64/Canyon-Win64-DebugGame.target
+Canyon/Binaries/Win64/Canyon-Win64-DebugGame.exp
+Documents/.tmp.drivedownload/

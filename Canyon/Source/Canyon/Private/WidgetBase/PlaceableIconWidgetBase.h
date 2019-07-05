@@ -36,15 +36,26 @@ protected:
 
 
 private:
-	FDeckWidgetClickedDelegate m_eOnClicked;
+	UFUNCTION()
+		UWidget *ReceiveOnTooltipInvoked();
 
+	UPROPERTY()
+		FDeckWidgetClickedDelegate m_eOnClicked;
 
+	UPROPERTY()
+		FGetDeckWidget m_dOnInvokeTooltip;
+
+	
 public:
 	using t_ClickDelegate = decltype(m_eOnClicked)::FDelegate;
 
 	void AddEventToOnClicked(t_ClickDelegate &Callback);
 
 	void RemoveEventFromOnClicked(t_ClickDelegate &Callback);
+
+	void SetDelegateOnTooltipInvoked(const FGetDeckWidget &Callback);
+		
+	void ClearDelegateOnTooltipInvoked();
 
 	
 };

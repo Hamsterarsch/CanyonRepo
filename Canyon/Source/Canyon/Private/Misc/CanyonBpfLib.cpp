@@ -9,6 +9,7 @@
 #include <set>
 #include "Misc/CanyonLogs.h"
 #include "Paths.h"
+#include "SlateBrush.h"
 
 TSubclassOf<APlaceableBase> UCanyonBpfLib::GetCategoryPlaceableClass(FString Category)
 {
@@ -156,6 +157,13 @@ uint8 UCanyonBpfLib::EnumStringToEnumByte(const UUserDefinedEnum* pEnum, const F
 	}
 
 	return pEnum->GetIndexByNameString(EnumIdentifier);
+
+
+}
+
+void UCanyonBpfLib::SetBrushImage(FSlateBrush &Target, UObject* pObject)
+{
+	Target.SetResourceObject(pObject);
 
 
 }

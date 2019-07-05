@@ -100,11 +100,11 @@
 			"Type": "SymbolFile"
 		},
 		{
-			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin-UE-4.22/Binaries/Win64/UE4Editor-StomtPlugin.dll",
+			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin/Binaries/Win64/UE4Editor-StomtPlugin.dll",
 			"Type": "DynamicLibrary"
 		},
 		{
-			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin-UE-4.22/Binaries/Win64/UE4Editor-StomtPlugin.pdb",
+			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin/Binaries/Win64/UE4Editor-StomtPlugin.pdb",
 			"Type": "SymbolFile"
 		},
 		{
@@ -3780,7 +3780,7 @@
 			"Type": "RequiredResource"
 		},
 		{
-			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin-UE-4.22/Binaries/Win64/UE4Editor.modules",
+			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin/Binaries/Win64/UE4Editor.modules",
 			"Type": "RequiredResource"
 		},
 		{
@@ -4110,7 +4110,7 @@
 			"Type": "UFS"
 		},
 		{
-			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin-UE-4.22/StomtPlugin.uplugin",
+			"Path": "$(ProjectDir)/Plugins/stomt-unreal-plugin/StomtPlugin.uplugin",
 			"Type": "UFS"
 		},
 		{
