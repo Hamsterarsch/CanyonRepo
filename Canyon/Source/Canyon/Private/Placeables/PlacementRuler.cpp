@@ -108,7 +108,8 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 
 	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
-	
+	pHullComp->SetUseCCD(true);
+
 	//collider corner based queries
 	{
 		constexpr float CornerTraceDepth{ 2 };
@@ -249,94 +250,157 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 	}
 
+	
 
-	//sweep hits to find a pos at the nearest building
-	TArray<FHitResult> aHits;
+	FVector SweepStart{ pPlaceable->GetActorLocation() - pHullComp->RelativeLocation };
+	FVector2D MovementDisp{ TerrainHit.ImpactPoint - SweepStart };
+	FVector SweepEnd{ SweepStart + FVector{ MovementDisp.X, MovementDisp.Y, 0} };
+
+	if(MovementDisp.IsZero())
 	{
-		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
-		ComponentQueryParams.AddIgnoredActor(pPlaceable);
-		ComponentQueryParams.bIgnoreTouches = true;
-		ComponentQueryParams.bTraceComplex = bUseComplex;
-		
+		out_NewPos = m_LastPlaceablePosition;
+		return m_bLastRet;
+	}
+
+	auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
+	ComponentQueryParams.AddIgnoredActor(pPlaceable);
+	ComponentQueryParams.bIgnoreTouches = true;
+	ComponentQueryParams.bTraceComplex = bUseComplex;
+	FVector NewHullPos{ m_LastPlaceablePosition };
+	FVector LastHitPos{ m_LastPlaceablePosition };
+	FVector2D LastMovementDisp{ MovementDisp };
+
+	int32 IterationCount{ 0 };
+	while (IterationCount < 12)
+	{
+		//sweep hits to find hits
+		TArray<FHitResult> aHits;
+				
+		MovementDisp = FVector2D{ TerrainHit.ImpactPoint - SweepStart };
+		SweepEnd = SweepStart + FVector{ MovementDisp.X, MovementDisp.Y, 0 };
+
 		pHullComp->GetWorld()->ComponentSweepMulti
 		(
 			aHits,
 			pHullComp,
-			pHullComp->GetComponentLocation(),
-			TerrainHit.ImpactPoint + pHullComp->RelativeLocation,
+			SweepStart,
+			SweepEnd,
 			pHullComp->GetComponentQuat(),
 			ComponentQueryParams
 		);
-	}
-	
-	
-	//the sweep didnt get any hits (maybe bc we didnt move the building).
-	if(aHits.Num() == 0)
-	{
-		TArray<FOverlapResult> aOutOverlaps;
 
-		auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
-		ComponentQueryParams.AddIgnoredActor(pPlaceable);
-		ComponentQueryParams.bTraceComplex = bUseComplex;
+		auto NumHits{ aHits.Num() };
+		if(aHits.Num() == 0)
+		{
+			
+			NewHullPos = SweepEnd;
+			break;
+		}
+
+		aHits.Sort([](const decltype(aHits)::ElementType &Left, const decltype(aHits)::ElementType &Right)
+		{
+			if(Left.Time == Right.Time)
+			{
+				return Left.PenetrationDepth > Right.PenetrationDepth;
+			}
+			return Left.Time < Right.Time;
+
+
+		});
+	
+		auto FirstHitLocation{ aHits[0].Location + aHits[0].ImpactNormal * aHits[0].PenetrationDepth };
+		//always depen the first hit location, otherwise the displacement sweep will always get a pen hit
+		//auto DepenCoeff{ aHits[0].PenetrationDepth >= 0.005f ? aHits[0].PenetrationDepth : 0.0001f };
 		
-		auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
-		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
-		ObjectQueryParams.AddObjectTypesToQuery(GetCCTerrain());
+		//aHits[0].Location += aHits[0].ImpactNormal * DepenCoeff;			
 		
-		pHullComp->GetWorld()->ComponentOverlapMulti
+		
+		
+		FVector2D Perpendicular{ -aHits[0].ImpactNormal.Y, aHits[0].ImpactNormal.X };
+		if (FMath::IsNearlyZero(Perpendicular.X, 0.005f))
+		{
+			Perpendicular.X = 0;
+		}
+
+		if (FMath::IsNearlyZero(Perpendicular.Y, 0.005f))
+		{
+			Perpendicular.Y = 0;
+		}
+
+		auto Dot{ FVector2D::DotProduct(MovementDisp, Perpendicular) };
+
+		if (FMath::IsNearlyZero(FVector2D::DotProduct(MovementDisp.GetSafeNormal(), Perpendicular), .05f))
+		{			
+			NewHullPos = FirstHitLocation;
+			break;
+
+
+		}
+		else if (Dot > 0)
+		{
+			MovementDisp = Perpendicular * Dot;
+		}
+		else   //Dot < 0
+		{
+			MovementDisp = -Perpendicular * -Dot;
+		}
+
+		TArray<FHitResult> aDisplacementHits;
+		pHullComp->GetWorld()->ComponentSweepMulti
 		(
-			aOutOverlaps, 
-			pHullComp, 
-			TerrainHit.ImpactPoint + pHullComp->RelativeLocation, 
-			pHullComp->GetComponentQuat(), 
-			ComponentQueryParams, 
-			ObjectQueryParams
+			aDisplacementHits,
+			pHullComp,
+			FirstHitLocation,
+			FirstHitLocation + FVector{ MovementDisp.X, MovementDisp.Y, 0 },
+			pHullComp->GetComponentQuat(),
+			ComponentQueryParams
 		);
 
-		if(aOutOverlaps.Num() == 0)
+		aDisplacementHits.RemoveAll([HandledNormal = aHits[0].ImpactNormal](const decltype(aHits)::ElementType &Elem)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("No sweeps overidden"));
-			out_NewPos = TerrainHit.ImpactPoint;
-			return true;
+			return (Elem.ImpactNormal - HandledNormal).IsNearlyZero(0.05f) || Elem.Distance <= 0.0001f;
+
+
+		});
+
+		if(aDisplacementHits.Num() > 0)
+		{
+			aDisplacementHits.Sort([](const decltype(aHits)::ElementType &Left, const decltype(aHits)::ElementType &Right)
+			{
+				return Left.Time < Right.Time;
+
+
+			});
+			
+			MovementDisp *= aDisplacementHits[0].Time;
+			//NewHullPos = aDisplacementHits[0].Location;
+			//break;			
+
+			if(FMath::IsNearlyZero(FVector::DotProduct(aDisplacementHits[0].ImpactNormal, aHits[0].ImpactNormal), .05f))
+			{
+				NewHullPos = FirstHitLocation + FVector{ MovementDisp.X, MovementDisp.Y, 0 };
+				break;
+			}
+
+			
+			if(MovementDisp.IsNearlyZero(0.0001))
+			{
+				NewHullPos = FirstHitLocation;
+				break;
+			}
+			
+			
+
 		}
 
+		SweepStart = FirstHitLocation + FVector{ MovementDisp.X, MovementDisp.Y, 0 };
+		LastHitPos = FirstHitLocation;
+		LastMovementDisp = MovementDisp;
 
-		//if we are not penetrated
-		UE_LOG(LogTemp, Warning, TEXT("No sweeps"));
-		out_NewPos = m_LastPlaceablePosition;
-		return m_bLastRet;		
+		++IterationCount;
 	}
 
-	int32 HitsPenOnStart{ 0 };
-	for(auto &&Hit : aHits)
-	{
-		if(Hit.bStartPenetrating)
-		{
-			++HitsPenOnStart;
-		}
-
-	}
-	
-	if(HitsPenOnStart > 0)
-	{
-		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied because of pen sweep hits (%i)"), HitsPenOnStart);
-		out_NewPos = TerrainHit.ImpactPoint;
-		return false;
-	}
-
-	//there were blocking hits so the closest determines the hull pos
-	aHits.Sort([](const decltype(aHits)::ElementType &Left, const decltype(aHits)::ElementType &Right)
-	{
-		return Left.Time < Right.Time;
-
-
-	});
-
-	//new placeable pos from swept hit	
-	FVector DepenetrationDisp{ aHits[0].ImpactNormal };
-
-	out_NewPos = aHits[0].Location - pHullComp->RelativeLocation + DepenetrationDisp * .5;
-	out_NewPos.Z = TerrainHit.ImpactPoint.Z;
+	out_NewPos = NewHullPos + pHullComp->RelativeLocation;
 	return true;
 
 
