@@ -13,7 +13,8 @@
 CPlacementRuler::CPlacementRuler() :
 	m_bInResnapRecovery{ false },
 	m_LastTerrainTracePos{ EForceInit::ForceInitToZero },
-	m_LastPlaceablePosition{ EForceInit::ForceInitToZero }
+	m_LastPlaceablePosition{ EForceInit::ForceInitToZero },
+	m_LastPlaceablePositionValid{ EForceInit::ForceInitToZero }
 {
 }
 
@@ -21,6 +22,11 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase* pPlaceable, FVector& o
 {
 	m_bLastRet = HandleBuildingRulesInternal(pPlaceable, m_LastPlaceablePosition);
 	out_NewPos = m_LastPlaceablePosition;
+
+	if(m_bLastRet)
+	{
+		m_LastPlaceablePositionValid = out_NewPos;
+	}
 
 	return m_bLastRet;
 
@@ -270,6 +276,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 	FVector LastHitPos{ m_LastPlaceablePosition };
 	FVector2D LastMovementDisp{ MovementDisp };
 
+	FVector AlternateNonMovedHitPos{ 0, 0, 0 };
 	int32 IterationCount{ 0 };
 	while (IterationCount < 12)
 	{
@@ -291,8 +298,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		auto NumHits{ aHits.Num() };
 		if(aHits.Num() == 0)
-		{
-			
+		{			
 			NewHullPos = SweepEnd;
 			break;
 		}
@@ -309,6 +315,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		});
 	
 		auto FirstHitLocation{ aHits[0].Location + aHits[0].ImpactNormal * aHits[0].PenetrationDepth };
+		AlternateNonMovedHitPos = FirstHitLocation;
 		//always depen the first hit location, otherwise the displacement sweep will always get a pen hit
 		//auto DepenCoeff{ aHits[0].PenetrationDepth >= 0.005f ? aHits[0].PenetrationDepth : 0.0001f };
 		
@@ -331,9 +338,51 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		if (FMath::IsNearlyZero(FVector2D::DotProduct(MovementDisp.GetSafeNormal(), Perpendicular), .05f))
 		{			
-			NewHullPos = FirstHitLocation;
-			break;
+			//if(aHits.Num() == 1)
+			{
+				NewHullPos = FirstHitLocation;
+				break;
+			}
 
+			/*
+			//smaller check
+			auto Scale{ FVector{ 1, 1, 1 } - aHits[0].ImpactNormal.GetAbs() * 0.0625 };
+			Scale.Z = 1;
+
+			auto OldScale{ pHullComp->RelativeScale3D };
+			pHullComp->SetWorldScale3D(Scale);
+
+			TArray<FHitResult> aDisplacementHits{};
+			pHullComp->GetWorld()->ComponentSweepMulti
+			(
+				aDisplacementHits,
+				pHullComp,
+				SweepStart,
+				SweepEnd,
+				pHullComp->GetComponentQuat(),
+				ComponentQueryParams
+			);
+
+			pHullComp->SetRelativeScale3D(OldScale);
+
+			if(aDisplacementHits.Num() == 0)
+			{
+				NewHullPos = FirstHitLocation;
+				break;
+			}
+
+			aDisplacementHits.Sort([](const decltype(aHits)::ElementType &Left, const decltype(aHits)::ElementType &Right)
+			{
+				return Left.Time < Right.Time;
+
+
+			});
+
+			
+
+			NewHullPos = aDisplacementHits[0].Location + aDisplacementHits[0].ImpactNormal * aDisplacementHits[0].PenetrationDepth;
+			break;
+			*/
 
 		}
 		else if (Dot > 0)
@@ -356,9 +405,16 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 			ComponentQueryParams
 		);
 
+		aDisplacementHits.Sort([](const decltype(aHits)::ElementType &Left, const decltype(aHits)::ElementType &Right)
+		{
+			return Left.Time < Right.Time;
+
+
+		});
+
 		aDisplacementHits.RemoveAll([HandledNormal = aHits[0].ImpactNormal](const decltype(aHits)::ElementType &Elem)
 		{
-			return (Elem.ImpactNormal - HandledNormal).IsNearlyZero(0.05f) || Elem.Distance <= 0.0001f;
+			return (Elem.ImpactNormal - HandledNormal).IsNearlyZero(0.05f) || Elem.Distance <= 0.001f;
 
 
 		});
@@ -400,7 +456,16 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		++IterationCount;
 	}
 
+
 	out_NewPos = NewHullPos + pHullComp->RelativeLocation;
+	auto Result{ IsNewHullPositionValid(out_NewPos, pHullComp, 1, bUseComplex) };
+
+	if(!Result)
+	{
+		out_NewPos =   AlternateNonMovedHitPos;
+		return true;
+	}
+
 	return true;
 
 
@@ -427,5 +492,112 @@ bool TraceForTerrainUnderCursor(FHitResult& OutHit, const UWorld* pWorld)
 {
 	return pWorld->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel3, true, OutHit);
 	   
+
+}
+
+
+struct OverlapKeyFunct : public BaseKeyFuncs<FOverlapResult, FOverlapResult, true>
+{
+public:
+	typedef TCallTraits<FOverlapResult>::ParamType KeyInitType;
+	typedef TCallTraits<FOverlapResult>::ParamType ElementInitType;
+
+	/**
+	 * @return The key used to index the given element.
+	 */
+	static FORCEINLINE KeyInitType GetSetKey(ElementInitType Element)
+	{
+		return Element;
+	}
+
+	/**
+	 * @return True if the keys match.
+	 */
+	static FORCEINLINE bool Matches(KeyInitType A,KeyInitType B)
+	{
+		return A.Actor == B.Actor;
+	}
+
+	/** Calculates a hash index for a key. */
+	static FORCEINLINE uint32 GetKeyHash(KeyInitType Key)
+	{
+		return GetTypeHash(Key.Actor);
+	}
+
+};
+
+bool IsNewHullPositionValid(const FVector& HullPos, UCanyonMeshCollisionComp* pHullComp, const float Threshold, const bool bUseComplex)
+{
+	auto ComponentQueryParams{ FComponentQueryParams::DefaultComponentQueryParams };
+	//ComponentQueryParams.bIgnoreTouches = true;
+	ComponentQueryParams.bTraceComplex = bUseComplex;
+
+	auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
+	ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
+
+	TArray<FOverlapResult> aAllFoundOverlaps{};
+
+	const TArray<FVector> aDisplacements{ { Threshold, Threshold, 0 }, { -Threshold, Threshold, 0 }, { Threshold, -Threshold, 0 }, { -Threshold, -Threshold, 0 } };
+	TSet<FOverlapResult, OverlapKeyFunct> Set0{};
+	TSet<FOverlapResult, OverlapKeyFunct> Set1{};
+	TSet<FOverlapResult, OverlapKeyFunct> Set2{};
+	TSet<FOverlapResult, OverlapKeyFunct> Set3{};
+
+	for(int32 DisplacementIndex{ 0 }; DisplacementIndex < aDisplacements.Num(); ++DisplacementIndex)
+	{
+		TArray<FOverlapResult> aFoundOverlaps;
+
+		pHullComp->GetWorld()->ComponentOverlapMultiByChannel
+		(
+			aFoundOverlaps,
+			pHullComp,
+			HullPos + aDisplacements[DisplacementIndex],
+			pHullComp->GetComponentQuat(),
+			GetCCPlaceables(),
+			ComponentQueryParams,
+			ObjectQueryParams
+		);
+
+		switch(DisplacementIndex)
+		{
+		case 0:
+			Set0.Append(std::move(aFoundOverlaps));		
+			break;			
+		case 1:
+			Set1.Append(std::move(aFoundOverlaps));		
+			break;			
+		case 2:
+			Set2.Append(std::move(aFoundOverlaps));		
+			break;			
+		case 3:
+			Set3.Append(std::move(aFoundOverlaps));		
+			break;
+		default:
+			check(false);
+		}
+
+	}
+
+	const auto Intersection0{ Set0.Intersect(Set1) };
+	const auto Intersection1{ Set2.Intersect(Set3) };
+	const auto FinalIntersection{ Intersection0.Intersect(Intersection1) };
+
+	auto aAsArray{ FinalIntersection.Array() };
+	auto oldNum{ aAsArray.Num() };
+	aAsArray.RemoveAll([pPlaceable = pHullComp->GetOwner()](const FOverlapResult &Elem)
+	{
+		return !Elem.Actor.IsValid() || Elem.Actor.Get() == pPlaceable;
+
+	});
+	auto newNum{ aAsArray.Num() };
+
+
+	if(FinalIntersection.Num() > 0)
+	{
+		int32 d{ 0 };
+		return false;
+	}
+	return true;
+
 
 }
