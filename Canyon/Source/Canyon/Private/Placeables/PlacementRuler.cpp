@@ -291,8 +291,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		auto NumHits{ aHits.Num() };
 		if(aHits.Num() == 0)
-		{
-			
+		{			
 			NewHullPos = SweepEnd;
 			break;
 		}
@@ -331,7 +330,48 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		if (FMath::IsNearlyZero(FVector2D::DotProduct(MovementDisp.GetSafeNormal(), Perpendicular), .05f))
 		{			
-			NewHullPos = FirstHitLocation;
+			if(aHits.Num() == 1)
+			{
+				NewHullPos = FirstHitLocation;
+				break;
+			}
+
+			//smaller check
+			auto Scale{ FVector{ 1, 1, 1 } - aHits[0].ImpactNormal.GetAbs() * 0.0625 };
+			Scale.Z = 1;
+
+			auto OldScale{ pHullComp->RelativeScale3D };
+			pHullComp->SetWorldScale3D(Scale);
+
+			TArray<FHitResult> aDisplacementHits{};
+			pHullComp->GetWorld()->ComponentSweepMulti
+			(
+				aDisplacementHits,
+				pHullComp,
+				SweepStart,
+				SweepEnd,
+				pHullComp->GetComponentQuat(),
+				ComponentQueryParams
+			);
+
+			pHullComp->SetRelativeScale3D(OldScale);
+
+			if(aDisplacementHits.Num() == 0)
+			{
+				NewHullPos = FirstHitLocation;
+				break;
+			}
+
+			aDisplacementHits.Sort([](const decltype(aHits)::ElementType &Left, const decltype(aHits)::ElementType &Right)
+			{
+				return Left.Time < Right.Time;
+
+
+			});
+
+			
+
+			NewHullPos = aDisplacementHits[0].Location + aDisplacementHits[0].ImpactNormal * aDisplacementHits[0].PenetrationDepth;
 			break;
 
 
@@ -356,9 +396,16 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 			ComponentQueryParams
 		);
 
+		aDisplacementHits.Sort([](const decltype(aHits)::ElementType &Left, const decltype(aHits)::ElementType &Right)
+		{
+			return Left.Time < Right.Time;
+
+
+		});
+
 		aDisplacementHits.RemoveAll([HandledNormal = aHits[0].ImpactNormal](const decltype(aHits)::ElementType &Elem)
 		{
-			return (Elem.ImpactNormal - HandledNormal).IsNearlyZero(0.05f) || Elem.Distance <= 0.0001f;
+			return (Elem.ImpactNormal - HandledNormal).IsNearlyZero(0.05f);// || Elem.Distance <= 0.0001f;
 
 
 		});
