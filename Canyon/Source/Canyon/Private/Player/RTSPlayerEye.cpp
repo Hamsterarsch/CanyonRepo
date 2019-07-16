@@ -131,6 +131,20 @@ void ARTSPlayerEye::DebugAddChargesForCategory(const FString& Category, int32 Nu
 
 }
 
+void ARTSPlayerEye::AddCarryOverChargesToDeck(const FCarryOverCharges& CarryCharges)
+{
+	m_pDeckState->AddCarryOverCharges(CarryCharges);
+
+
+}
+
+void ARTSPlayerEye::NotifyBuildingSelectionChanged(int32 CountSelectedCurrent, int32 CountSelectedMax)
+{
+	m_pMainHudWidget->OnPlaceableSelectionChanged(CountSelectedCurrent, CountSelectedMax);
+
+
+}
+
 #pragma region Movement
 void ARTSPlayerEye::AddForwardMovement(const float AxisValue)
 {
@@ -325,7 +339,7 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 	
 }
 
-void ARTSPlayerEye::DiscardCurrentPlaceablePreview(const bool bIsInstigatedByPlayer)
+void ARTSPlayerEye::DiscardCurrentPlaceablePreview()
 {
 	if(m_pPlaceablePreviewCurrent)
 	{
@@ -383,6 +397,22 @@ void ARTSPlayerEye::OnPointsCurrentChanged(const int32 NewPoints)
 void ARTSPlayerEye::OnNextLevelAccessible()
 {
 	m_pMainHudWidget->OnNextLevelAccessible();
+
+
+}
+
+void ARTSPlayerEye::SwitchToPlaceableSelectionMode()
+{
+	DiscardCurrentPlaceablePreview();
+		
+	m_pMainHudWidget->SwitchToPlaceableSelectionUI();
+
+
+}
+
+void ARTSPlayerEye::SwitchToPlaceablePlacementMode()
+{
+	m_pMainHudWidget->SwitchToPlaceablePlacementUI();
 
 
 }
@@ -464,6 +494,17 @@ void ARTSPlayerEye::ActionSelectStart()
 	m_CameraState.HandleInput(EAbstractInputEvent::ActionSelect_Start);
 	m_PlacementState.HandleInput(EAbstractInputEvent::ActionSelect_Start);
 
+	auto Hit{ TraceForPlaceable() };
+	if(Hit.IsValidBlockingHit())
+	{
+		if(auto *pGM{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) })
+		{
+			pGM->NotifyPlaceableActionSelect(Hit);
+
+		}
+	}
+
+
 }
 
 void ARTSPlayerEye::ActionSelectEnd()
@@ -528,3 +569,23 @@ void ARTSPlayerEye::DecreaseBuildingRot()
 }
 #pragma endregion
 
+FHitResult ARTSPlayerEye::TraceForPlaceable()
+{
+	FHitResult OutHit{};
+	Cast<APlayerController>(GetController())->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, OutHit);
+
+	if(OutHit.IsValidBlockingHit())
+	{
+		if(auto *pHitActor{ OutHit.Actor.Get() })
+		{
+			if(pHitActor->IsA<APlaceableBase>())
+			{
+				return OutHit;
+			}
+		}
+	}
+
+	return {};
+
+
+}

@@ -162,14 +162,16 @@ void UDeckSelector::IncreaseDeckGeneration()
 
 }
 
-void UDeckSelector::AddDeckDataToIssued(const FDeckData& DeckData)
+void UDeckSelector::AddCarryOverChargesToIssued(const FCarryOverCharges &ChargeData)
 {
-	for(auto &&Entry : DeckData.m_ChargeMapping)
+	for(auto &&Entry : ChargeData.m_Charges)
 	{
-		auto &ChargeCount{ m_IssuedChargesMap.FindOrAdd(Entry.Key) };
-		ChargeCount += Entry.Value;
-
+		auto &IssuedChargeCount{ m_IssuedChargesMap.FindOrAdd(Entry.Key) };
+		IssuedChargeCount += Entry.Value.Data.Num();
+		
 	}
+
+
 
 
 }

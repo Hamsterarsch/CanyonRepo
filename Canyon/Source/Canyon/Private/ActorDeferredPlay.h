@@ -12,6 +12,8 @@ class AActorDeferredPlay : public AActor
 public:
 	static void BroadcastBeginGame();
 
+	static void BroadcastEndGame();
+
 
 protected:
 	void NotifyBeginGame();
@@ -28,7 +30,7 @@ private:
 	static UPROPERTY()
 		FSimpleMulticastDelegate s_eBeginGame;
 	
-	static bool s_bHasBegunPlay;
+	static bool s_bHasBegunGame;
 
 	
 };

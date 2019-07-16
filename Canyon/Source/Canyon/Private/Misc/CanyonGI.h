@@ -32,9 +32,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 		int32 GetCarryOverScore() const { return m_CarryOverScore; }
 
-	void AddCarryOverCharge(const FString &CategoryName);
-
-	void RemoveCarryOverCharge(const FString &CategoryName);
+	void BuildCarryOverChargesFormSelection(const TArray<APlaceableBase *> &apSelected);
 
 
 protected:
@@ -57,6 +55,8 @@ private:
 
 	void SetupCarryOverDataInNewLevel(UWorld *pWorld) const;
 
+	void CleanupWorld(UWorld *pWorld, bool bSessionEnded, bool bCleanupResources);
+
 
 	UFUNCTION()
 		void ReceiveOnPreMapLoaded(const FString &MapName);
@@ -65,7 +65,7 @@ private:
 		void ReceiveOnPostMapLoaded(UWorld *pLoadedWorld);
 		
 	UPROPERTY()
-		FDeckData m_CarryOverCharges;
+		FCarryOverCharges m_CarryOverCharges;
 
 	UPROPERTY()
 		TArray<UObject *> m_apPreLoadedPlaceables;

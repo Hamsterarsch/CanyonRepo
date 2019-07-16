@@ -22,10 +22,13 @@
 //Public-------------
 
 ACanyonGM::ACanyonGM() :
+	m_CarryOverBuildingCountMax{ 4 },
 	m_PointsOnLevelOpen{ 0 },
 	m_bIsNextLevelAccessible{ false },
+	m_apSelectedCarryPlaceables{},
 	m_PointsCurrent{ 0 },
-	m_PointsRequired{ 0 }
+	m_PointsRequired{ 0 },
+	m_bIsInPlaceableSelectionMode{ false }
 {
 }
 
@@ -59,9 +62,9 @@ void ACanyonGM::InitPointState(int32 CarryOverPoints)
 	
 }
 
-void ACanyonGM::AddDeckDataToIssuedCharges(const FDeckData& DeckData)
+void ACanyonGM::AddCarryOverChargesToIssued(const FCarryOverCharges &DeckData)
 {
-	m_pDeckSelector->AddDeckDataToIssued(DeckData);
+	m_pDeckSelector->AddCarryOverChargesToIssued(DeckData);
 
 
 }
@@ -143,6 +146,45 @@ void ACanyonGM::FillUpDeckDataNonEndless(FDeckData& DeckData)
 
 }
 
+void ACanyonGM::NotifyPlaceableActionSelect(FHitResult& Hit)
+{
+	auto *pPlaceable{ Cast<APlaceableBase>(Hit.Actor.Get()) };
+
+	if(!pPlaceable)
+	{
+		return;
+
+
+	}
+
+	//todo: use data asset
+	if(pPlaceable->GetPlaceableCategory() == "Tree" || pPlaceable->GetPlaceableCategory() == "StartBuilding")
+	{
+		return;
+
+
+	}
+
+	if(m_bIsInPlaceableSelectionMode)
+	{
+		if(!pPlaceable->IsHightlighted() && m_apSelectedCarryPlaceables.Num() < m_CarryOverBuildingCountMax)
+		{
+			pPlaceable->ToggleSelectionHighlight();
+			m_apSelectedCarryPlaceables.Add(pPlaceable);
+		}
+		else if(pPlaceable->IsHightlighted())
+		{
+			pPlaceable->ToggleSelectionHighlight();
+			m_apSelectedCarryPlaceables.RemoveSingle(pPlaceable);			
+		}
+
+		auto *pPlayer{ GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
+		pPlayer->NotifyBuildingSelectionChanged(m_apSelectedCarryPlaceables.Num(), m_CarryOverBuildingCountMax);
+	}
+
+
+}
+
 void ACanyonGM::DebugAddChargesForCategory(const FString& Category, int32 Num) const
 {
 	auto *pPlayer{ GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
@@ -189,6 +231,57 @@ void ACanyonGM::EnterNextLevel()
 	pGI->BeginLevelSwitch(m_aNextLevelsPool[GetRandomIndexSeeded(m_aNextLevelsPool.Num())]);
 
 
+}
+
+void ACanyonGM::EnterPlaceableSelectionMode()
+{
+	auto *pPlayer{ GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
+
+	pPlayer->NotifyBuildingSelectionChanged(0, m_CarryOverBuildingCountMax);
+	pPlayer->SwitchToPlaceableSelectionMode();
+
+	m_bIsInPlaceableSelectionMode = true;
+
+
+}
+
+void ACanyonGM::AbortPlaceableSelectionMode()
+{
+	m_bIsInPlaceableSelectionMode = false;
+	
+	auto *pPlayer{ GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
+
+	pPlayer->SwitchToPlaceablePlacementMode();
+
+
+}
+
+bool ACanyonGM::TryCommitPlaceableSelection()
+{
+	//if selected amount == needed
+	if(m_apSelectedCarryPlaceables.Num() == m_CarryOverBuildingCountMax)
+	{		
+		//commit selection and return true
+		auto *pGI{ Cast<UCanyonGI>(GetGameInstance()) };
+		pGI->BuildCarryOverChargesFormSelection(m_apSelectedCarryPlaceables);
+
+		return true;
+
+
+	}
+	//else less -> return false
+	return false;
+
+
+}
+
+void ACanyonGM::ForceCommitPlaceableSelection()
+{
+	//commit selection
+	auto *pGI{ Cast<UCanyonGI>(GetGameInstance()) };
+	pGI->BuildCarryOverChargesFormSelection(m_apSelectedCarryPlaceables);
+
+	
 }
 
 float ACanyonGM::GetPlaceableDependencyRadius(const FString& CategoryName) const

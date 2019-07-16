@@ -62,7 +62,7 @@ public:
 
 	void IncreaseDeckGeneration();
 
-	void AddDeckDataToIssued(const FDeckData &DeckData);
+	void AddCarryOverChargesToIssued(const FCarryOverCharges &ChargeData);
 	
 
 protected:

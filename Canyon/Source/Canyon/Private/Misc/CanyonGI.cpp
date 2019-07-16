@@ -70,7 +70,10 @@ void UCanyonGI::Init()
 		}
 		
 	}
-		UE_LOG(LogCanyonCommon, Warning, TEXT("End pre loading placeable assets"));
+	UE_LOG(LogCanyonCommon, Warning, TEXT("End pre loading placeable assets"));
+
+	FWorldDelegates::OnWorldCleanup.AddUObject(this, &UCanyonGI::CleanupWorld);
+
 
 }
 
@@ -105,22 +108,13 @@ void UCanyonGI::StartupGame(bool bContinueGame)
 	   
 }
 
-void UCanyonGI::AddCarryOverCharge(const FString& CategoryName)
+void UCanyonGI::BuildCarryOverChargesFormSelection(const TArray<APlaceableBase*> &apSelected)
 {
-	auto &Entry{ m_CarryOverCharges.m_ChargeMapping.FindOrAdd(CategoryName) };
-
-	++Entry;
-
-
-}
-
-void UCanyonGI::RemoveCarryOverCharge(const FString& CategoryName)
-{
-	auto &Entry{ m_CarryOverCharges.m_ChargeMapping.FindOrAdd(CategoryName) };
-
-	if(Entry >= 0)
+	for(const auto *pPlaceable : apSelected)
 	{
-		--Entry;
+		auto &InstanceClassData{ m_CarryOverCharges.m_Charges.FindOrAdd(pPlaceable->GetPlaceableCategory()) };
+		InstanceClassData.Data.Add(pPlaceable->GetClass());
+
 	}
 
 
@@ -151,16 +145,28 @@ void UCanyonGI::SetupCarryOverDataInNewLevel(UWorld* pWorld) const
 	check(pWorld);
 
 	auto *pGM{ Cast<ACanyonGM>(pWorld->GetAuthGameMode()) };
+
 	if(!pGM)
 	{
 		return;
-
-
 	}
 
+	auto *pPlayer{ GetFirstPlayerPawn<ARTSPlayerEye>(pWorld) };
+	checkf(pPlayer, TEXT("Could not setup carry data in new level bc player was invalid"));
+	
 	pGM->InitPointState(m_CarryOverScore);
-	pGM->AddDeckDataToIssuedCharges(m_CarryOverCharges);
+	pGM->AddCarryOverChargesToIssued(m_CarryOverCharges);
+	pPlayer->AddCarryOverChargesToDeck(m_CarryOverCharges);
 
+
+}
+
+void UCanyonGI::CleanupWorld(UWorld* pWorld, bool bSessionEnded, bool bCleanupResources)
+{
+	if(bCleanupResources)
+	{
+		AActorDeferredPlay::BroadcastEndGame();
+	}
 
 }
 
@@ -174,8 +180,6 @@ void UCanyonGI::ReceiveOnPreMapLoaded(const FString& MapName)
 
 void UCanyonGI::ReceiveOnPostMapLoaded(UWorld* pLoadedWorld)
 {
-	SetupCarryOverDataInNewLevel(pLoadedWorld);
-
 	auto *pPlayer{ Cast<ARTSPlayerEye>(pLoadedWorld->GetFirstPlayerController()->GetPawn()) };
 	auto *pGM{ Cast<ACanyonGM>(pLoadedWorld->GetAuthGameMode()) };
 	if(pGM && pPlayer)
@@ -186,7 +190,14 @@ void UCanyonGI::ReceiveOnPostMapLoaded(UWorld* pLoadedWorld)
 #endif
 	}
 
-	OnEndLoadingScreen(pLoadedWorld);
+	//game has to have started
+	SetupCarryOverDataInNewLevel(pLoadedWorld);
 
+	//reset carry over data
+	m_CarryOverCharges.m_Charges.Empty();
+
+	OnEndLoadingScreen(pLoadedWorld);
+	
+	
 
 }

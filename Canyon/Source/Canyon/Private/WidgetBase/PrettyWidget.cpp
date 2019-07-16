@@ -12,7 +12,7 @@ void UPrettyWidget::ShowWidget_Implementation()
 
 void UPrettyWidget::HideWidget_Implementation()
 {
-	SetVisibility(ESlateVisibility::Hidden);
+	SetVisibility(ESlateVisibility::Collapsed);
 
 
 }

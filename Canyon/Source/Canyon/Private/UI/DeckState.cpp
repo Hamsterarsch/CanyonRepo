@@ -11,6 +11,7 @@
 //Public-------------------
 
 UDeckState::UDeckState() :
+	m_aPendingSelectableDecks{},
 	m_ChargesAmount{ 0 },
 	m_bAreDecksSelectable{ false }
 {
@@ -27,17 +28,19 @@ void UDeckState::NotifyOnCategoryPlaceablePlaced(const FString& Category)
 
 	m_eOnDeckStateChanged.Broadcast(WidgetClass, *pData);
 
-	//clear old instance
-	ClearCachedPlaceableForCategory(Category);
+	//pop old instance
+	PopPendingPlaceableInstance(Category);
+	
 
 	if(pData->m_ChargeCount <= 0)
 	{
 		m_DataMapping.Remove(WidgetClass);
 	}
-	else
+	else if(GetPendingInstanceNumForCategory(Category) == 0)
 	{
-		//if charges are left, load new placeable instance
-		m_CachedPlaceableClasses.Add(Category, UCanyonBpfLib::GetCategoryPlaceableClass(Category));
+		//if charges are left but there are no pending instances
+		//load a new placeable instance
+		AppendPendingPlaceableInstance(Category);			
 	}
 	
 	
@@ -92,6 +95,43 @@ void UDeckState::DebugAddChargesForCategory(const FString& Category, const int32
 
 }
 
+void UDeckState::AddCarryOverCharges(const FCarryOverCharges& CarryCharges)
+{
+	for(auto &&Entry : CarryCharges.m_Charges)
+	{
+		for(auto &pSubclass : Entry.Value.Data)
+		{
+			AppendPendingPlaceableInstance(Entry.Key, &pSubclass);
+
+		}
+
+		//get widget class
+		auto WidgetClass{ m_pGM->GetPlaceableWidget(Entry.Key) };
+
+		//Find or create data node
+		FCategoryData *pCatData{ m_DataMapping.Find(WidgetClass) };
+		
+		if(!pCatData)
+		{
+			//todo: maybe dont cache the complete deck but only buildings that had placement aborted, if all buildings will be preloaded by the game instance in the future.
+			pCatData = &m_DataMapping.Add(WidgetClass, FCategoryData{ Entry.Key });
+						
+
+		}
+
+		//Update deck data:
+			//Add amount
+		m_ChargesAmount += Entry.Value.Data.Num();
+		pCatData->m_ChargeCount += Entry.Value.Data.Num();
+		
+		//Notify listeners
+		m_eOnDeckStateChanged.Broadcast(WidgetClass, *pCatData);
+
+	}
+
+
+}
+
 void UDeckState::ReceiveOnWidgetClicked(const UWidget* pClickedWidget)
 {
 	auto *pPlayer{ Cast<ARTSPlayerEye>( m_pGM->GetWorld()->GetFirstPlayerController()->GetPawn() ) };
@@ -106,13 +146,14 @@ void UDeckState::ReceiveOnWidgetClicked(const UWidget* pClickedWidget)
 	checkf(pWidgetData, TEXT("A deck widget has lost its data mapping"));
 
 	//find or add entry
-	auto *pClassOf{ m_CachedPlaceableClasses.Find(pWidgetData->m_CategoryName) };
+	
+	auto pClassOf{ PeekPendingPlaceableInstance(pWidgetData->m_CategoryName) };
 
-	if(!pClassOf || !pClassOf->Get())
+	if(!pClassOf || !pClassOf.Get())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("deck state widget clicked, but placeable class not getable"));
 	}
-	pPlayer->CreateNewPlacablePreview(*pClassOf);
+	pPlayer->CreateNewPlacablePreview(pClassOf);
 
 	//if the building placement is aborted no further handling is needed.
 	//for successful placement, see ARTSPlayerEye::TryCommitPreviewBuilding,
@@ -164,11 +205,10 @@ void UDeckState::AddDeck(const FDeckData &Deck)
 			//todo: maybe dont cache the complete deck but only buildings that had placement aborted, if all buildings will be preloaded by the game instance in the future.
 			pCatData = &m_DataMapping.Add(WidgetClass, FCategoryData{ Entry.Key });
 
-			//also pre load an instance of this placeable class and cache it
-			auto &ClassOf{ m_CachedPlaceableClasses.Add(Entry.Key) };
+			//there is no deck data for this cat so there shouldn't be any pending instances either
+			//so load an instance of this placeable class and save it
+			AppendPendingPlaceableInstance(pCatData->m_CategoryName);
 
-			//init
-			ClassOf = UCanyonBpfLib::GetCategoryPlaceableClass(Entry.Key);	
 		}
 
 		//Update deck data:
@@ -189,9 +229,61 @@ void UDeckState::AddDeck(const FDeckData &Deck)
 	
 }
 
-void UDeckState::ClearCachedPlaceableForCategory(const FString& Category)
+void UDeckState::AppendPendingPlaceableInstance(const FString &Category, const TSubclassOf<class APlaceableBase> *ppInstanceClass)
+{	
+	auto &InstanceListWrapper{ m_PendingPlaceableInstances.FindOrAdd(Category) };
+
+	if(ppInstanceClass)
+	{
+		InstanceListWrapper.Data.Add(*ppInstanceClass);		
+	}
+	else
+	{
+		InstanceListWrapper.Data.Add(UCanyonBpfLib::GetCategoryPlaceableClass(Category));
+	}
+
+	
+
+}
+
+TSubclassOf<APlaceableBase> UDeckState::PeekPendingPlaceableInstance(const FString &Category) const
 {
-	m_CachedPlaceableClasses.Remove(Category);
+	auto *pEntry{m_PendingPlaceableInstances.Find(Category) };
+
+	if(!pEntry)
+	{
+		return nullptr;
+	}
+
+	//Existing entries are assumed to have at least one entry	
+	return pEntry->Data[0];
+
+
+}
+
+TSubclassOf<APlaceableBase> UDeckState::PopPendingPlaceableInstance(const FString &Category)
+{
+	auto *pEntry{m_PendingPlaceableInstances.Find(Category) };
+
+	if(!pEntry)
+	{
+		return nullptr;
+	}
+
+	return pEntry->Data.Pop();
+
+
+}
+
+int32 UDeckState::GetPendingInstanceNumForCategory(const FString& Category) const
+{
+	auto *pEntry{  m_PendingPlaceableInstances.Find(Category) };
+	if(!pEntry)
+	{
+		return 0;
+	}
+
+	return pEntry->Data.Num();
 
 
 }

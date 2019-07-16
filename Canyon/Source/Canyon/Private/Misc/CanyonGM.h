@@ -23,7 +23,7 @@ public:
 
 	void InitPointState(int32 CarryOverPoints);
 
-	void AddDeckDataToIssuedCharges(const struct FDeckData &DeckData);
+	void AddCarryOverChargesToIssued(const struct FCarryOverCharges &DeckData);
 
 	int32 GetInfluenceForPlaceable(const FString &FirstInfluenceQualifier, const FString &SecondInfluenceQualifier) const;
 
@@ -43,6 +43,8 @@ public:
 
 	inline class AMeshInstancer *GetMeshInstancer() { return m_pMeshInstancer; }
 
+	void NotifyPlaceableActionSelect(FHitResult &Hit);
+
 	UFUNCTION(Exec)
 		void DebugAddChargesForCategory(const FString &Category, int32 Num) const;
 
@@ -58,8 +60,22 @@ public:
 	UFUNCTION(BlueprintCallable)
 		inline bool GetIsNextLevelAccessible() const { return m_bIsNextLevelAccessible; }
 
+//Level switch interface
 	UFUNCTION(BlueprintCallable)
 		void EnterNextLevel();
+
+	UFUNCTION(BlueprintCallable)
+		void EnterPlaceableSelectionMode();
+
+	UFUNCTION(BlueprintCallable)
+		void AbortPlaceableSelectionMode();
+
+	UFUNCTION(BlueprintCallable)
+		bool TryCommitPlaceableSelection();
+
+	UFUNCTION(BlueprintCallable)
+		void ForceCommitPlaceableSelection();
+//end level switch interface
 
 	UFUNCTION(BlueprintCallable)
 		int32 GetRequiredPointsDeltaForNextLevel() const { return m_NextLevelRequiredPointsDelta; }
@@ -95,7 +111,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level")
 		int32 m_NextLevelRequiredPointsDelta;
-	
+
+	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level", Meta=(ClampMin="1"))
+		int32 m_CarryOverBuildingCountMax;
+
 
 private:
 	void ReceiveOnPointsChanged();
@@ -120,9 +139,12 @@ private:
 	UPROPERTY()
 		class AMeshInstancer *m_pMeshInstancer;
 
+	UPROPERTY()
+		TArray<class APlaceableBase *> m_apSelectedCarryPlaceables;
+
 	int32 m_PointsCurrent;
 	int32 m_PointsRequired;
-	
+	bool m_bIsInPlaceableSelectionMode;
 		
 	
 };

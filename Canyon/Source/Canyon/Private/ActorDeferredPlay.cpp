@@ -2,16 +2,24 @@
 
 FSimpleMulticastDelegate AActorDeferredPlay::s_eBeginGame;
 
-bool AActorDeferredPlay::s_bHasBegunPlay;
+bool AActorDeferredPlay::s_bHasBegunGame;
 
 
 void AActorDeferredPlay::BroadcastBeginGame()
 {
-	if(!s_bHasBegunPlay)
+	if(!s_bHasBegunGame)
 	{
 		s_eBeginGame.Broadcast();
 	}
-	s_bHasBegunPlay = true;
+	s_bHasBegunGame = true;
+
+
+}
+
+void AActorDeferredPlay::BroadcastEndGame()
+{
+	s_bHasBegunGame = false;
+	s_eBeginGame.Clear();
 
 
 }
@@ -28,7 +36,7 @@ void AActorDeferredPlay::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if(s_bHasBegunPlay)
+	if(s_bHasBegunGame)
 	{
 		BeginGame();
 		return;

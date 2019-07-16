@@ -34,6 +34,7 @@ public:
 
 	void DebugAddChargesForCategory(const FString &Categoty, int32 Num);
 
+	void AddCarryOverCharges(const FCarryOverCharges &CarryCharges);
 
 	UFUNCTION()
 		void ReceiveOnWidgetClicked(const class UWidget *pClickedWidget);
@@ -47,9 +48,15 @@ public:
 private:
 	void AddDeck(const FDeckData &Deck);
 
-	void ClearCachedPlaceableForCategory(const FString &Category);
+	//either added an instance class to the instance list for this category
+	//or loads a new instance and adds it (ppInstanceClass == nullptr)
+	void AppendPendingPlaceableInstance(const FString &Category, const TSubclassOf<class APlaceableBase> *ppInstanceClass = nullptr);
 
+	TSubclassOf<class APlaceableBase> PeekPendingPlaceableInstance(const FString &Category) const;
 
+	TSubclassOf<class APlaceableBase> PopPendingPlaceableInstance(const FString &Category);
+
+	int32 GetPendingInstanceNumForCategory(const FString &Category) const;
 
 	UPROPERTY()
 		class ACanyonGM *m_pGM;
@@ -69,7 +76,7 @@ private:
 		TMap<TSubclassOf<class UPlaceableIconWidgetBase>, FCategoryData> m_DataMapping;
 
 	UPROPERTY()
-		TMap<FString, TSubclassOf<class APlaceableBase>> m_CachedPlaceableClasses;
+		TMap<FString, FChargeWrapper> m_PendingPlaceableInstances;
 	
 	int32 m_ChargesAmount;
 

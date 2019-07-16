@@ -36,7 +36,16 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnNextLevelAccessible();
-	
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void SwitchToPlaceableSelectionUI();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void SwitchToPlaceablePlacementUI();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnPlaceableSelectionChanged(int32 CountSelectedCurrent, int32 CountSelectedMax);
+
 	
 };
 

@@ -74,6 +74,10 @@ public:
 
 	void DebugAddChargesForCategory(const FString &Category, int32 Num);
 
+	void AddCarryOverChargesToDeck(const struct FCarryOverCharges &CarryCharges);
+
+	void NotifyBuildingSelectionChanged(int32 CountSelectedCurrent, int32 CountSelectedMax);;
+
 	//Movement
 	void AddForwardMovement(float AxisValue);
 
@@ -100,7 +104,7 @@ public:
 
 	bool TryCommitPlaceablePreview();
 
-	void DiscardCurrentPlaceablePreview(bool bIsIntigatedByPlayer = false);
+	void DiscardCurrentPlaceablePreview();
 
 	inline bool GetIsInPlacement() const { return m_PlacementState.GetIsInPlacement(); }
 
@@ -120,6 +124,9 @@ public:
 
 	void OnNextLevelAccessible();
 
+	void SwitchToPlaceableSelectionMode();
+
+	void SwitchToPlaceablePlacementMode();
 
 	const static FName s_AxisMouseX;
 
@@ -235,6 +242,8 @@ protected:
 	CPlacementStateMachine m_PlacementState;
 	CPlacementRuler m_PlacementRuler;
 
+private:
+	FHitResult TraceForPlaceable();
 
 
 };
