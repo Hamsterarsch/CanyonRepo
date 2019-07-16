@@ -146,15 +146,22 @@ void ACanyonGM::FillUpDeckDataNonEndless(FDeckData& DeckData)
 
 }
 
-void ACanyonGM::NotifyPlaceableActionSelect(FHitResult& Hit)
+void ACanyonGM::NotifyPlaceableActionSelect(FHitResult &Hit)
 {
 	auto *pPlaceable{ Cast<APlaceableBase>(Hit.Actor.Get()) };
+
 
 	if(!pPlaceable)
 	{
 		return;
 
 
+	}
+
+	if(pPlaceable->IsA<APlaceablePreview>())
+	{
+		UE_DEBUG_BREAK();
+		UE_LOG(LogCanyonCommon, Warning, TEXT("Placeable preview was clicked on"));
 	}
 
 	//todo: use data asset
