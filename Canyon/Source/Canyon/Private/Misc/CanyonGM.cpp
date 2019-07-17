@@ -17,6 +17,7 @@
 #include "CanyonGI.h"
 #include "WidgetBlueprintLibrary.h"
 #include "ActorDeferredPlay.h"
+#include "Savegame/SavegameHandler.h"
 
 
 //Public-------------
@@ -162,6 +163,7 @@ void ACanyonGM::NotifyPlaceableActionSelect(FHitResult &Hit)
 	{
 		UE_DEBUG_BREAK();
 		UE_LOG(LogCanyonCommon, Warning, TEXT("Placeable preview was clicked on"));
+		return;
 	}
 
 	//todo: use data asset
@@ -319,8 +321,9 @@ void ACanyonGM::BeginPlay()
 #if UE_EDITOR
 	BeginGame();
 #endif
+	auto *pHandler{ NewObject<USavegameHandler>() };
+	pHandler->SaveGame();
 	
-
 }
 
 //Private----------------------

@@ -12,6 +12,11 @@
 class FCustomArchive : public FBufferArchive
 {
 public:
+	FCustomArchive() :
+		FBufferArchive(true)
+	{		
+	}
+
 	virtual FArchive &operator<<(FSoftObjectPath &Path) override
 	{		
 		Path.SerializePath(*this);
@@ -150,7 +155,7 @@ void UInfluenceDataObject::LoadFromFile()
 		return;
 	}
 
-	FMemoryReader Reader{aBytes};
+	FMemoryReader Reader{aBytes, true};
 	Reader.Seek(0);
 
 	Archive(Reader);
