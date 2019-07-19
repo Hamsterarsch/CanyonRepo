@@ -209,7 +209,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		(
 			aOverlaps,
 			pHullComp,
-			pHullComp->GetComponentLocation(),
+			TerrainHit.ImpactPoint + pHullComp->RelativeLocation,
 			pHullComp->GetComponentQuat(),
 			ComponentQueryParams
 		);
@@ -217,6 +217,14 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		if(aOverlaps.Num() != 0)
 		{
 			UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied because of non zero overlap count:\t%i"), aOverlaps.Num());
+
+			if(IsNewHullPositionValid(TerrainHit.ImpactPoint + pHullComp->RelativeLocation, pHullComp, 0.5, bUseComplex))
+			{
+				out_NewPos = TerrainHit.ImpactPoint;
+				return true;
+
+			}
+
 
 			out_NewPos = TerrainHit.ImpactPoint;
 			return false;
@@ -237,7 +245,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
 		ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
 		ObjectQueryParams.AddObjectTypesToQuery(GetCCTerrain());
-
+				
 		pHullComp->GetWorld()->ComponentOverlapMulti
 		(
 			aOutOverlaps, 
@@ -252,6 +260,13 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		{			
 			out_NewPos = TerrainHit.ImpactPoint;
 			return true;
+		}
+				
+		if(IsNewHullPositionValid(TerrainHit.ImpactPoint + pHullComp->RelativeLocation, pHullComp, 0.5, bUseComplex))
+		{
+			out_NewPos = TerrainHit.ImpactPoint;
+			return true;
+
 		}
 
 	}
@@ -278,7 +293,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 	FVector AlternateNonMovedHitPos{ 0, 0, 0 };
 	int32 IterationCount{ 0 };
-	while (IterationCount < 12)
+	while (IterationCount < 16)
 	{
 		//sweep hits to find hits
 		TArray<FHitResult> aHits;
@@ -314,8 +329,6 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		});
 	
-		auto FirstHitLocation{ aHits[0].Location + aHits[0].ImpactNormal * aHits[0].PenetrationDepth };
-		AlternateNonMovedHitPos = FirstHitLocation;
 		//always depen the first hit location, otherwise the displacement sweep will always get a pen hit
 		//auto DepenCoeff{ aHits[0].PenetrationDepth >= 0.005f ? aHits[0].PenetrationDepth : 0.0001f };
 		
@@ -323,8 +336,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		
 		
 		
-		FVector2D Perpendicular{ -aHits[0].ImpactNormal.Y, aHits[0].ImpactNormal.X };
-		if (FMath::IsNearlyZero(Perpendicular.X, 0.005f))
+		/*if (FMath::IsNearlyZero(Perpendicular.X, 0.005f))
 		{
 			Perpendicular.X = 0;
 		}
@@ -332,13 +344,39 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		if (FMath::IsNearlyZero(Perpendicular.Y, 0.005f))
 		{
 			Perpendicular.Y = 0;
+		}*/
+		
+		auto DotMovementImpactNormal{ FVector2D::DotProduct(MovementDisp.GetSafeNormal(), FVector2D{aHits[0].ImpactNormal}) };
+		for(int32 HitIndex{ 1 }; DotMovementImpactNormal > 0 && HitIndex < aHits.Num(); ++HitIndex)
+		{
+			DotMovementImpactNormal = FVector2D::DotProduct(MovementDisp.GetSafeNormal(), FVector2D{aHits[HitIndex].ImpactNormal});
+			if(DotMovementImpactNormal < 0)
+			{
+				aHits[0] = aHits[HitIndex];
+			}
+			
+
 		}
 
+		auto FirstHitLocation{ SweepStart };
+		if(DotMovementImpactNormal > 0)
+		{
+			NewHullPos = FirstHitLocation + FVector{ MovementDisp.X, MovementDisp.Y, 0 };
+			break;
+		}
+
+		FVector2D Perpendicular{ -aHits[0].ImpactNormal.Y, aHits[0].ImpactNormal.X };
 		auto Dot{ FVector2D::DotProduct(MovementDisp, Perpendicular) };
+		FirstHitLocation = aHits[0].Location + aHits[0].ImpactNormal * aHits[0].PenetrationDepth;
+
+		if(IterationCount == 0)
+		{
+			AlternateNonMovedHitPos = FirstHitLocation;			
+		}
 
 		if (FMath::IsNearlyZero(FVector2D::DotProduct(MovementDisp.GetSafeNormal(), Perpendicular), .05f))
 		{			
-			//if(aHits.Num() == 1)
+			if(aHits.Num() == 1)
 			{
 				NewHullPos = FirstHitLocation;
 				break;
@@ -385,14 +423,16 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 			*/
 
 		}
-		else if (Dot > 0)
+		else if (Dot > 0 && DotMovementImpactNormal <= 0)
 		{
 			MovementDisp = Perpendicular * Dot;
 		}
-		else   //Dot < 0
+		else if(DotMovementImpactNormal <= 0)  //Dot < 0
 		{
 			MovementDisp = -Perpendicular * -Dot;
 		}
+
+		
 
 		TArray<FHitResult> aDisplacementHits;
 		pHullComp->GetWorld()->ComponentSweepMulti
@@ -412,9 +452,9 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		});
 
-		aDisplacementHits.RemoveAll([HandledNormal = aHits[0].ImpactNormal](const decltype(aHits)::ElementType &Elem)
+		aDisplacementHits.RemoveAll([HandledNormal = aHits[0].ImpactNormal, MovementDir = MovementDisp.GetSafeNormal()](const decltype(aHits)::ElementType &Elem)
 		{
-			return (Elem.ImpactNormal - HandledNormal).IsNearlyZero(0.05f) || Elem.Distance <= 0.001f;
+			return (Elem.ImpactNormal - HandledNormal).IsNearlyZero(0.05f) || Elem.Distance <= 0.01f || FVector2D::DotProduct(FVector2D{Elem.ImpactNormal}, MovementDir) > 0;
 
 
 		});
@@ -448,17 +488,28 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 			
 
 		}
+		else
+		{
+			NewHullPos = FirstHitLocation + FVector{ MovementDisp.X, MovementDisp.Y, 0 };
+			break;
+
+		}
 
 		SweepStart = FirstHitLocation + FVector{ MovementDisp.X, MovementDisp.Y, 0 };
 		LastHitPos = FirstHitLocation;
 		LastMovementDisp = MovementDisp;
 
 		++IterationCount;
+		if(IterationCount == 12)
+		{
+			UE_LOG(LogCanyonPlacement, Warning, TEXT("Building movement ran out of iterations"));
+		}
+
 	}
 
 
 	out_NewPos = NewHullPos + pHullComp->RelativeLocation;
-	auto Result{ IsNewHullPositionValid(out_NewPos, pHullComp, 1, bUseComplex) };
+	auto Result{ IsNewHullPositionValid(out_NewPos, pHullComp, 0.5, bUseComplex) };
 
 	if(!Result)
 	{
@@ -557,6 +608,8 @@ bool IsNewHullPositionValid(const FVector& HullPos, UCanyonMeshCollisionComp* pH
 			ComponentQueryParams,
 			ObjectQueryParams
 		);
+
+		DrawDebugPoint(pHullComp->GetWorld(), HullPos + aDisplacements[DisplacementIndex], 10, FColor::White, false, 5, 2);
 
 		switch(DisplacementIndex)
 		{
