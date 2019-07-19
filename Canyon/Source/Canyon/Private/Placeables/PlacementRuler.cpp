@@ -609,7 +609,7 @@ bool IsNewHullPositionValid(const FVector& HullPos, UCanyonMeshCollisionComp* pH
 			ObjectQueryParams
 		);
 
-		DrawDebugPoint(pHullComp->GetWorld(), HullPos + aDisplacements[DisplacementIndex], 10, FColor::White, false, 5, 2);
+		//DrawDebugPoint(pHullComp->GetWorld(), HullPos + aDisplacements[DisplacementIndex], 10, FColor::White, false, 5, 2);
 
 		switch(DisplacementIndex)
 		{
