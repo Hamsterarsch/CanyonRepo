@@ -15,6 +15,9 @@ class UCanyonBpfLib : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable, Category="Audiokinetic")
+		static int32 PostEventPure(class UAkAudioEvent *AkEvent, class UGameInstance *GI);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		static TSubclassOf<class APlaceableBase> GetCategoryPlaceableClass(FString Category);
 

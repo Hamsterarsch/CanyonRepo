@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "CanyonBpfLib.h"
 #include "CanyonHelpers.h"
 #include "Placeables/PlaceableBase.h"
@@ -10,6 +9,15 @@
 #include "Misc/CanyonLogs.h"
 #include "Paths.h"
 #include "SlateBrush.h"
+#include "AkAudio/Classes/AkGameplayStatics.h"
+#include "CanyonGI.h"
+
+int32 UCanyonBpfLib::PostEventPure(class UAkAudioEvent *AkEvent, class UGameInstance *GI)
+{
+	return UAkGameplayStatics::PostEventPure(AkEvent, GI);
+
+
+}
 
 TSubclassOf<APlaceableBase> UCanyonBpfLib::GetCategoryPlaceableClass(FString Category)
 {

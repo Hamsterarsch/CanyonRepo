@@ -33,6 +33,8 @@ class AKAUDIO_API UAkGameplayStatics : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, Category = "Audiokinetic")
 	static bool IsGame(UObject* WorldContextObject);
 
+	//UFUNCTION(BlueprintCallable, Category ="Audiokinetic")
+	static int32 PostEventPure(class UAkAudioEvent* AkEvent, class UGameInstance *GI);
 
 	/** Posts a Wwise Event attached to and following the specified component.
 	 * @param AkEvent - Wwise Event to post.

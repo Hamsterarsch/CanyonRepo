@@ -10,6 +10,7 @@
 #include "AkAudioBank.h"
 #include "AkComponent.h"
 #include "AkAmbientSound.h"
+#include "AK/SoundEngine/Common/AkSoundEngine.h"
 #include "EngineUtils.h"
 #include "Model.h"
 #include "UObject/UObjectIterator.h"
@@ -71,6 +72,16 @@ bool UAkGameplayStatics::IsGame(UObject* WorldContextObject)
 	}
 
 	return WorldType == EWorldType::Game || WorldType == EWorldType::GamePreview || WorldType == EWorldType::PIE;
+}
+
+int32 UAkGameplayStatics::PostEventPure(UAkAudioEvent* AkEvent, UGameInstance *GI)
+{
+	auto AkID{ reinterpret_cast<AkGameObjectID>(GI) };
+	AK::SoundEngine::RegisterGameObj(AkID);
+
+	return AK::SoundEngine::PostEvent(TCHAR_TO_AK(*AkEvent->GetName()), AkID);
+
+
 }
 
 struct AkDeviceAndWorld

@@ -1,5 +1,6 @@
 Event	ID	Name			Wwise Object Path	Notes
 	1205645828	musicPlay			\Default Work Unit\musicPlay	
+	3282698780	PlayMusicAmbient			\Default Work Unit\PlayMusicAmbient	
 
 Switch Group	ID	Name			Wwise Object Path	Notes
 	412724365	BGM			\Default Work Unit\BGM	
@@ -16,9 +17,11 @@ Effect plug-ins	ID	Name	Type				Notes
 	868111412	Wwise_Pitch_Shifter_(Custom)	Wwise Pitch Shifter			
 
 In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
-	69091249	outro	C:\Repos\Canyon_WwiseProject\.cache\Windows\SFX\SFX\outro_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\outro\outro\outro		1163340
-	89344007	intro	C:\Repos\Canyon_WwiseProject\.cache\Windows\SFX\SFX\intro_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\intro\intro\intro		3140880
-	153822789	loop1	C:\Repos\Canyon_WwiseProject\.cache\Windows\SFX\SFX\loop1_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\loop\loop1\loop1		3136220
-	838187309	loop0	C:\Repos\Canyon_WwiseProject\.cache\Windows\SFX\SFX\loop0_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\loop\loop\loop0		3136220
-	910200512	loop2	C:\Repos\Canyon_WwiseProject\.cache\Windows\SFX\SFX\loop2_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\loop\loop2\loop2		3136220
+	69091249	outro	D:\Canyon_WwiseProject\.cache\Windows\SFX\SFX\outro_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\outro\outro\outro		1163340
+	89344007	intro	D:\Canyon_WwiseProject\.cache\Windows\SFX\SFX\intro_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\intro\intro\intro		3140880
+	153822789	loop1	D:\Canyon_WwiseProject\.cache\Windows\SFX\SFX\loop1_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\loop\loop1\loop1		3136220
+	654604831	Steam Powered Flying Machine (No_ 2)	D:\Canyon_WwiseProject\.cache\Windows\SFX\Steam Powered Flying Machine (No. 2)_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\MusicAmbient\Steam Powered Flying Machine (No_ 2)\Steam Powered Flying Machine (No_ 2)		25233472
+	693951589	Featherweight (No_ 1)	D:\Canyon_WwiseProject\.cache\Windows\SFX\Featherweight (No. 1)_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\MusicAmbient\Featherweight (No_ 1)\Featherweight (No_ 1)		32468032
+	838187309	loop0	D:\Canyon_WwiseProject\.cache\Windows\SFX\SFX\loop0_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\loop\loop\loop0		3136220
+	910200512	loop2	D:\Canyon_WwiseProject\.cache\Windows\SFX\SFX\loop2_D79FB2B7.wem		\Interactive Music Hierarchy\Default Work Unit\bgm\loop\loop2\loop2		3136220
 
