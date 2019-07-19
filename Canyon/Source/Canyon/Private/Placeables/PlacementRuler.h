@@ -26,9 +26,11 @@ private:
 	bool m_bLastRet{ false };
 	FVector m_LastTerrainTracePos;
 	FVector m_LastPlaceablePosition;
+	FVector m_LastPlaceablePositionValid;
 
 
 };
 
 bool TraceForTerrainUnderCursor(FHitResult &OutHit, const UWorld *pWorld);
 
+bool IsNewHullPositionValid(const FVector &HullPos, class UCanyonMeshCollisionComp *pHullComp, float Threshold, bool bUseComplex);
