@@ -74,12 +74,31 @@ bool UAkGameplayStatics::IsGame(UObject* WorldContextObject)
 	return WorldType == EWorldType::Game || WorldType == EWorldType::GamePreview || WorldType == EWorldType::PIE;
 }
 
-int32 UAkGameplayStatics::PostEventPure(UAkAudioEvent* AkEvent, UGameInstance *GI)
+int32 UAkGameplayStatics::PostEventPersistent(UAkAudioEvent* AkEvent, UGameInstance *GI)
 {
 	auto AkID{ reinterpret_cast<AkGameObjectID>(GI) };
 	AK::SoundEngine::RegisterGameObj(AkID);
 
 	return AK::SoundEngine::PostEvent(TCHAR_TO_AK(*AkEvent->GetName()), AkID);
+
+
+}
+
+int32 UAkGameplayStatics::LoadBankPersistent(UAkAudioBank* Bank)
+{
+	if(!Bank)
+	{
+		return AK_Fail;
+	}
+
+	FAkAudioDevice * AudioDevice = FAkAudioDevice::Get();
+	if( AudioDevice )
+	{		
+		AkUInt32 bankID;
+		return AudioDevice->LoadBankPersistent(Bank->GetName(), AK_DEFAULT_POOL_ID, bankID);
+	}
+
+	return AK_Fail;
 
 
 }

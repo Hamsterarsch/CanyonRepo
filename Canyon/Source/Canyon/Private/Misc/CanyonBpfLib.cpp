@@ -12,9 +12,16 @@
 #include "AkAudio/Classes/AkGameplayStatics.h"
 #include "CanyonGI.h"
 
-int32 UCanyonBpfLib::PostEventPure(class UAkAudioEvent *AkEvent, class UGameInstance *GI)
+int32 UCanyonBpfLib::PostEventPersistent(class UAkAudioEvent *AkEvent, class UGameInstance *GI)
 {
-	return UAkGameplayStatics::PostEventPure(AkEvent, GI);
+	return UAkGameplayStatics::PostEventPersistent(AkEvent, GI);
+
+
+}
+
+int32 UCanyonBpfLib::LoadBankPersistent(UAkAudioBank* Bank)
+{
+	return UAkGameplayStatics::LoadBankPersistent(Bank);
 
 
 }

@@ -671,6 +671,7 @@ AKRESULT FAkAudioDevice::ClearBanks()
 {
 	if (m_bSoundEngineInitialized)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Clearing all soundbanks"));
 		AKRESULT eResult = AK::SoundEngine::ClearBanks();
 		if (eResult == AK_Success && AkBankManager != NULL)
 		{
@@ -729,6 +730,24 @@ AKRESULT FAkAudioDevice::LoadBank(
 		eResult = AK::SoundEngine::LoadBank(TCHAR_TO_AK(*in_BankName), in_memPoolId, out_bankID );
 	}
 	return eResult;
+}
+
+AKRESULT FAkAudioDevice::LoadBankPersistent(const FString& in_BankName, AkMemPoolId in_memPoolId, AkBankID& out_bankID)
+{
+	AKRESULT eResult = AK_Fail;
+	if( EnsureInitialized() ) // ensure audiolib is initialized
+	{
+		eResult = AK::SoundEngine::LoadBank(TCHAR_TO_AK(*in_BankName), in_memPoolId, out_bankID );
+	}
+		
+	if(eResult != AK_Fail && !m_PersistentBankNameSet.Contains(in_BankName))
+	{
+		m_PersistentBankNameSet.Add(in_BankName);
+		UE_LOG(LogTemp, Warning, TEXT("Added Bank %s as persisitent"), *in_BankName);
+	}
+
+	return eResult;
+
 }
 
 /**
@@ -822,6 +841,14 @@ AKRESULT FAkAudioDevice::UnloadBank(
 {
 	if (!in_Bank)
 		return AK_Fail;
+
+	if(m_PersistentBankNameSet.Contains(in_Bank->GetName()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Persistent Bank %s not unloaded"), *in_Bank->GetName());
+		return AK_Fail;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("UnloadingBank %s"), *in_Bank->GetName());
 
 	AKRESULT eResult = UnloadBank(in_Bank->GetName(), out_pMemPoolId);
 	if( eResult == AK_Success && AkBankManager != NULL)

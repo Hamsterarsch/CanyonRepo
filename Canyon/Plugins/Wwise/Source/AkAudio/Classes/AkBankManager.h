@@ -128,4 +128,5 @@ public:
 private:
 	static FAkBankManager* Instance;
 	TSet< class UAkAudioBank * > m_LoadedBanks;
+	TSet<class UAkAudioBank *> m_PersistentBanks;
 };

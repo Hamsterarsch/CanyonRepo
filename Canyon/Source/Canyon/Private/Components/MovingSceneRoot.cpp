@@ -1,7 +1,7 @@
 #include "Components/MovingSceneRoot.h"
 #include "Components/ArrowComponent.h"
 #include "Curves/CurveFloat.h"
-
+/*
 UMovingSceneRoot::UMovingSceneRoot() :
 	m_OnePosition{ 0, 1, 0 },
 	m_OneMinusPosition{ 0, -1, 0 },
@@ -64,7 +64,7 @@ void UMovingSceneRoot::PostEditChangeProperty(FPropertyChangedEvent& PropertyCha
 
 }
 #endif
-	
+	*/
 
 void SpanArrowComponent(const FVector &From, const FVector &To, UArrowComponent *pArrow)
 {

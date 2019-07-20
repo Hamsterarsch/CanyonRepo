@@ -22,6 +22,8 @@ private:
 
 	void HandlePenetratingHits(APlaceableBase *pPlaceable) const;
 
+	bool AreAllCornersGrounded( const FVector &OutPosition, UCanyonMeshCollisionComp *pHull) const;
+
 	bool m_bInResnapRecovery;
 	bool m_bLastRet{ false };
 	FVector m_LastTerrainTracePos;

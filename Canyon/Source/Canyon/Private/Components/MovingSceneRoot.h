@@ -1,9 +1,9 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
-#include "MovingSceneRoot.generated.h"
+//#include "MovingSceneRoot.generated.h"
 
-
+/*
 UCLASS(ClassGroup=(Movement, Canyon), Meta=(BlueprintSpawnableComponent), HideCategories=(Velocity))
 class UMovingSceneRoot : public USceneComponent
 {
@@ -52,3 +52,4 @@ private:
 
 void SpanArrowComponent(const FVector &From, const FVector &To, class UArrowComponent *pArrow);
 
+*/

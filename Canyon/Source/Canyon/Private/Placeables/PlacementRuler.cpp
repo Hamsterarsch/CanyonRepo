@@ -84,99 +84,17 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 	m_LastTerrainTracePos = TerrainHit.ImpactPoint;
 
 
-//trivial (+ todo: also 'fixes' false positive sweep result, bc sweep with no delta doesnt hit --> use overlap
-	/*auto MovementDelta{FVector::Dist(m_LastPlaceablePosition, TerrainHit.ImpactPoint) };	
-	if(FMath::IsNearlyZero(MovementDelta, 0.0001f ))
-	{
-		UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Postponing placement evaluation due to no changed mouse pos: %f"), MovementDelta);
-
-		out_NewPos = m_LastPlaceablePosition;
-		return m_bLastRet;
-	}*/
-	/*
-					//Normal constraint
-					constexpr float NormalTolerance{ 10e-6 };
-					auto ImpactNormalZ{ Hit.ImpactNormal.GetUnsafeNormal().Z };
-					if
-					(
-						(ImpactNormalZ + NormalTolerance) <= pPlaceable->GetPlaceableNormalZMin() 
-						|| (ImpactNormalZ - NormalTolerance) >= pPlaceable->GetPlaceableNormalZMax() 
-					)
-					{
-						out_NewPos = TerrainHit.ImpactPoint;
-
-						UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc the terrain normals are invalid"));
-						return false;
-
-
-					}
-	*/
-
-
 	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
-	pHullComp->SetUseCCD(true);
-
-	//collider corner based queries
-	{
-		constexpr float CornerTraceDepth{ 2 };
-		auto *pVertexBuffer{ &pHullComp->GetStaticMesh()->RenderData->LODResources[0].VertexBuffers.PositionVertexBuffer };
-		bool bIsPlaceable{ true };
-		if(pVertexBuffer)
-		{
-			int32 Counter{ 0 };
-			for(uint32 VertIndex{ 0 }; VertIndex < pVertexBuffer->GetNumVertices(); ++VertIndex)
-			{
-				const auto &VertexPos{ pVertexBuffer->VertexPosition(VertIndex) };
-				if( FMath::IsNearlyZero(VertexPos.Z, .5f) )
-				{
-					++Counter;
-					auto Transformed{ pHullComp->GetComponentTransform().TransformPosition(VertexPos) };
-
-				//Edge check (all relevant points have to be close to the ground/ not floating
-					FHitResult Hit;
-
-					if
-					(
-						!pHullComp->GetWorld()->LineTraceSingleByChannel
-						(
-							Hit, 
-							Transformed,
-							Transformed - FVector{0,0,CornerTraceDepth},
-							GetCCTerrain()
-						)
-					)
-					{
-						UE_LOG(LogTemp, Log, TEXT("Discard bc of edge"));
-						out_NewPos = TerrainHit.ImpactPoint;
-						return false;
-
-
-					}
-
-				//Surface type constraint
-					if (auto *pPhyMat{ Hit.PhysMaterial.Get() })
-					{
-						auto SurfaceType{ UPhysicalMaterial::DetermineSurfaceType(pPhyMat) };
-						if
-						(
-							SurfaceType != pPlaceable->GetPlacableSurfaceType()
-							&& SurfaceType != EPhysicalSurface::SurfaceType_Default
-						)
-						{
-							UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied bc of invalid terrain type"));
-							out_NewPos = TerrainHit.ImpactPoint;
-							return false;
-
-
-						}
-					}
-				}
-
-			}
-			UE_LOG(LogTemp, Log, TEXT("Relevant vert count: %i"), Counter);
-		}
-	}
 	
+
+	//check that the terrain normal is upright
+	if(!FMath::IsNearlyZero(FVector::DotProduct(TerrainHit.ImpactNormal, FVector::LeftVector), 0.05f))
+	{
+		out_NewPos = TerrainHit.ImpactPoint;
+		UE_LOG(LogCanyonPlacement, Log, TEXT("Denying placement bc the terrain hit is no upward normal"));
+		return false;
+	}
+
 
 //Mouse distance override
 	FVector2D CursorRootScreenPos;
@@ -192,6 +110,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		m_bInResnapRecovery = true;
 		out_NewPos = TerrainHit.ImpactPoint;
+		
 		return false;
 	}
 
@@ -216,17 +135,25 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		
 		if(aOverlaps.Num() != 0)
 		{
-			UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied because of non zero overlap count:\t%i"), aOverlaps.Num());
-
-			if(IsNewHullPositionValid(TerrainHit.ImpactPoint + pHullComp->RelativeLocation, pHullComp, 0.5, bUseComplex))
+			if(IsNewHullPositionValid(TerrainHit.ImpactPoint + pHullComp->RelativeLocation, pHullComp, 5, bUseComplex))
 			{
 				out_NewPos = TerrainHit.ImpactPoint;
+				if(!AreAllCornersGrounded(TerrainHit.ImpactPoint, pHullComp))
+				{
+					UE_LOG(LogCanyonPlacement, Log, TEXT("Outputting last valid pos bc not all edges were grounded after resnap graced overlap check"));
+					return false;
+					
+				}
+
+				UE_LOG(LogCanyonPlacement, Log, TEXT("Granting pos after resanp using graced overlap"));
 				return true;
 
 			}
 
+			UE_LOG(LogCanyonPlacementRuler, Log, TEXT("Building placement denied because of non zero overlap count:\t%i"), aOverlaps.Num());
 
 			out_NewPos = TerrainHit.ImpactPoint;
+			
 			return false;
 
 
@@ -256,30 +183,38 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 			ObjectQueryParams
 		);
 
-		if(aOutOverlaps.Num() == 0)
+		out_NewPos = TerrainHit.ImpactPoint;
+		if(aOutOverlaps.Num() == 0 || IsNewHullPositionValid(out_NewPos - pHullComp->RelativeLocation, pHullComp, 5, bUseComplex))
 		{			
-			out_NewPos = TerrainHit.ImpactPoint;
-			return true;
-		}
+			if(!AreAllCornersGrounded(out_NewPos, pHullComp))
+			{
+				UE_LOG(LogCanyonPlacement, Log, TEXT("Outputting last valid pos bc not all edges were grounded after graceful overlap check"));
+				return false;
 				
-		if(IsNewHullPositionValid(TerrainHit.ImpactPoint + pHullComp->RelativeLocation, pHullComp, 0.5, bUseComplex))
-		{
-			out_NewPos = TerrainHit.ImpactPoint;
+			}
+
+			UE_LOG(LogCanyonPlacement, Log, TEXT("Granting building placement bc the advanced obstruction is clear"));
 			return true;
 
-		}
 
+		}
 	}
 
-	
+	if(!FMath::IsNearlyZero(m_LastPlaceablePositionValid.Z - TerrainHit.ImpactPoint.Z, 0.5f))
+	{
+		out_NewPos = TerrainHit.ImpactPoint;
+		UE_LOG(LogCanyonPlacement, Log, TEXT("Prevented sweeping bc the height of the hit changed"));
+		return false;
+	}
 
-	FVector SweepStart{ pPlaceable->GetActorLocation() - pHullComp->RelativeLocation };
+	FVector SweepStart{ m_LastPlaceablePositionValid/*pPlaceable->GetActorLocation() - pHullComp->RelativeLocation*/ };
 	FVector2D MovementDisp{ TerrainHit.ImpactPoint - SweepStart };
 	FVector SweepEnd{ SweepStart + FVector{ MovementDisp.X, MovementDisp.Y, 0} };
 
-	if(MovementDisp.IsZero())
+	if(MovementDisp.IsNearlyZero(0.05))
 	{
 		out_NewPos = m_LastPlaceablePosition;
+		UE_LOG(LogCanyonPlacement, Log, TEXT("Skipping placement evaluation bc the movement displacement is zero"));
 		return m_bLastRet;
 	}
 
@@ -291,8 +226,10 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 	FVector LastHitPos{ m_LastPlaceablePosition };
 	FVector2D LastMovementDisp{ MovementDisp };
 
-	FVector AlternateNonMovedHitPos{ 0, 0, 0 };
+	//todo: alternate pos is not always set
+	FVector AlternateNonMovedHitPos{ pHullComp->GetComponentLocation() };
 	int32 IterationCount{ 0 };
+	UE_LOG(LogCanyonPlacement, Log, TEXT("BeginningSweeps"));
 	while (IterationCount < 16)
 	{
 		//sweep hits to find hits
@@ -315,6 +252,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		if(aHits.Num() == 0)
 		{			
 			NewHullPos = SweepEnd;
+			UE_LOG(LogCanyonPlacement, Log, TEXT("\tGranting displacement bc there were no first hits"));
 			break;
 		}
 
@@ -329,22 +267,13 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		});
 	
-		//always depen the first hit location, otherwise the displacement sweep will always get a pen hit
-		//auto DepenCoeff{ aHits[0].PenetrationDepth >= 0.005f ? aHits[0].PenetrationDepth : 0.0001f };
-		
-		//aHits[0].Location += aHits[0].ImpactNormal * DepenCoeff;			
-		
-		
-		
-		/*if (FMath::IsNearlyZero(Perpendicular.X, 0.005f))
+		//terrain height changes catch
+		if(FMath::IsNearlyZero(1 - FVector::DotProduct(aHits[0].ImpactNormal, FVector::UpVector), 0.05f))
 		{
-			Perpendicular.X = 0;
+			NewHullPos = SweepStart;
+			UE_LOG(LogCanyonPlacement, Log, TEXT("\tDeny sweep movement bc the first hit has a upward normal"));
+			break;
 		}
-
-		if (FMath::IsNearlyZero(Perpendicular.Y, 0.005f))
-		{
-			Perpendicular.Y = 0;
-		}*/
 		
 		auto DotMovementImpactNormal{ FVector2D::DotProduct(MovementDisp.GetSafeNormal(), FVector2D{aHits[0].ImpactNormal}) };
 		for(int32 HitIndex{ 1 }; DotMovementImpactNormal > 0 && HitIndex < aHits.Num(); ++HitIndex)
@@ -362,6 +291,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		if(DotMovementImpactNormal > 0)
 		{
 			NewHullPos = FirstHitLocation + FVector{ MovementDisp.X, MovementDisp.Y, 0 };
+			UE_LOG(LogCanyonPlacement, Log, TEXT("\tGranting displacement bc there was no first hit with a normal opposing the displacement"));
 			break;
 		}
 
@@ -379,48 +309,10 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 			if(aHits.Num() == 1)
 			{
 				NewHullPos = FirstHitLocation;
+				UE_LOG(LogCanyonPlacement, Log, TEXT("\tOutputting first hit location bc the first hit tangent and the movement dir are perpendicular"));
 				break;
 			}
 
-			/*
-			//smaller check
-			auto Scale{ FVector{ 1, 1, 1 } - aHits[0].ImpactNormal.GetAbs() * 0.0625 };
-			Scale.Z = 1;
-
-			auto OldScale{ pHullComp->RelativeScale3D };
-			pHullComp->SetWorldScale3D(Scale);
-
-			TArray<FHitResult> aDisplacementHits{};
-			pHullComp->GetWorld()->ComponentSweepMulti
-			(
-				aDisplacementHits,
-				pHullComp,
-				SweepStart,
-				SweepEnd,
-				pHullComp->GetComponentQuat(),
-				ComponentQueryParams
-			);
-
-			pHullComp->SetRelativeScale3D(OldScale);
-
-			if(aDisplacementHits.Num() == 0)
-			{
-				NewHullPos = FirstHitLocation;
-				break;
-			}
-
-			aDisplacementHits.Sort([](const decltype(aHits)::ElementType &Left, const decltype(aHits)::ElementType &Right)
-			{
-				return Left.Time < Right.Time;
-
-
-			});
-
-			
-
-			NewHullPos = aDisplacementHits[0].Location + aDisplacementHits[0].ImpactNormal * aDisplacementHits[0].PenetrationDepth;
-			break;
-			*/
 
 		}
 		else if (Dot > 0 && DotMovementImpactNormal <= 0)
@@ -475,6 +367,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 			if(FMath::IsNearlyZero(FVector::DotProduct(aDisplacementHits[0].ImpactNormal, aHits[0].ImpactNormal), .05f))
 			{
 				NewHullPos = FirstHitLocation + FVector{ MovementDisp.X, MovementDisp.Y, 0 };
+				UE_LOG(LogCanyonPlacement, Log, TEXT("\tGranting movement ? - todo"));
 				break;
 			}
 
@@ -482,6 +375,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 			if(MovementDisp.IsNearlyZero(0.0001))
 			{
 				NewHullPos = FirstHitLocation;
+				UE_LOG(LogCanyonPlacement, Log, TEXT("\tOutputting first hit bc the movement disp became zero"));
 				break;
 			}
 			
@@ -491,6 +385,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		else
 		{
 			NewHullPos = FirstHitLocation + FVector{ MovementDisp.X, MovementDisp.Y, 0 };
+			UE_LOG(LogCanyonPlacement, Log, TEXT("\tGranting movement disp bc there were no disp hits"));
 			break;
 
 		}
@@ -502,21 +397,29 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		++IterationCount;
 		if(IterationCount == 12)
 		{
-			UE_LOG(LogCanyonPlacement, Warning, TEXT("Building movement ran out of iterations"));
+			UE_LOG(LogCanyonPlacement, Warning, TEXT("\tBuilding movement ran out of iterations"));
 		}
 
 	}
 
 
 	out_NewPos = NewHullPos + pHullComp->RelativeLocation;
-	auto Result{ IsNewHullPositionValid(out_NewPos, pHullComp, 0.5, bUseComplex) };
-
-	if(!Result)
+	if(!AreAllCornersGrounded(out_NewPos, pHullComp))
 	{
-		out_NewPos =   AlternateNonMovedHitPos;
+		out_NewPos = m_LastPlaceablePositionValid;
+		UE_LOG(LogCanyonPlacement, Log, TEXT("\tOutputting last valid pos after sweep bc the corners of the new pos were not grounded"));
 		return true;
 	}
 
+	auto Result{ IsNewHullPositionValid(out_NewPos, pHullComp, 0.5, bUseComplex) };
+	if(!Result)
+	{
+		out_NewPos = m_LastPlaceablePositionValid;
+		UE_LOG(LogCanyonPlacement, Log, TEXT("\tOutputting old valid pos bc the position was occluded"));
+
+	}
+
+	UE_LOG(LogCanyonPlacement, Log, TEXT("\tCompletedSweeping"));
 	return true;
 
 
@@ -536,6 +439,62 @@ FVector CPlacementRuler::ComputeTerrainDepenetration(const FHitResult &ForHit, c
 void CPlacementRuler::HandlePenetratingHits(APlaceableBase *pPlaceable) const
 {
 	
+	
+
+}
+
+bool CPlacementRuler::AreAllCornersGrounded(const FVector& OutPosition, UCanyonMeshCollisionComp *pHull) const
+{	
+	auto ObjectQueryParam{FCollisionObjectQueryParams::DefaultObjectQueryParam};
+		ObjectQueryParam.AddObjectTypesToQuery(GetCCTerrain());
+
+	constexpr float CornerTraceDepth{ 2 };
+	auto *pVertexBuffer{ &pHull->GetStaticMesh()->RenderData->LODResources[0].VertexBuffers.PositionVertexBuffer };
+
+	if(pVertexBuffer)
+	{
+		for(uint32 VertIndex{ 0 }; VertIndex < pVertexBuffer->GetNumVertices(); ++VertIndex)
+		{
+			const auto &VertexPos{ pVertexBuffer->VertexPosition(VertIndex) };
+			//Only use ground near vertices
+			if( FMath::IsNearlyZero(VertexPos.Z, .5f) )
+			{
+				//++Counter;
+				auto Transformed{ pHull->GetComponentTransform().TransformPosition(VertexPos) };
+
+				//Edge check (all relevant points have to be close to the ground/ not floating
+				FHitResult Hit;
+				DrawDebugLine(pHull->GetWorld(), Transformed, Transformed - FVector{0,0,CornerTraceDepth}, FColor::White, false, 1);
+
+				if
+				(
+					!pHull->GetWorld()->LineTraceSingleByObjectType
+					(
+						Hit, 
+						Transformed,
+						Transformed - FVector{0,0,CornerTraceDepth},
+						ObjectQueryParam						
+					)
+				)
+				{
+					if(auto *p = Hit.Actor.Get())
+					{
+						if(p->IsA<APlaceableBase>())
+						{
+							UE_DEBUG_BREAK();
+						}
+					}
+
+					return false;
+
+
+				}
+			}
+
+		}
+	}
+	return true;
+
 
 }
 
@@ -585,6 +544,7 @@ bool IsNewHullPositionValid(const FVector& HullPos, UCanyonMeshCollisionComp* pH
 
 	auto ObjectQueryParams{ FCollisionObjectQueryParams::DefaultObjectQueryParam };
 	ObjectQueryParams.AddObjectTypesToQuery(GetCCPlaceables());
+	ObjectQueryParams.AddObjectTypesToQuery(GetCCTerrain());
 
 	TArray<FOverlapResult> aAllFoundOverlaps{};
 
