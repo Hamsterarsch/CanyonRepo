@@ -14,7 +14,8 @@ CPlacementRuler::CPlacementRuler() :
 	m_bInResnapRecovery{ false },
 	m_LastTerrainTracePos{ EForceInit::ForceInitToZero },
 	m_LastPlaceablePosition{ EForceInit::ForceInitToZero },
-	m_LastPlaceablePositionValid{ EForceInit::ForceInitToZero }
+	m_LastPlaceablePositionValid{ EForceInit::ForceInitToZero },
+	m_LastTerrainTraceZ{ 0 }
 {
 }
 
@@ -28,6 +29,7 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase* pPlaceable, FVector& o
 		m_LastPlaceablePositionValid = out_NewPos;
 	}
 
+	UE_LOG(LogCanyonPlacementRuler, Log, TEXT("-"));
 	return m_bLastRet;
 
 
@@ -81,19 +83,28 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 	}
 	//depen
 	TerrainHit.ImpactPoint.Z += 1;
-	m_LastTerrainTracePos = TerrainHit.ImpactPoint;
-
+	
 
 	auto *pHullComp{ Cast<UCanyonMeshCollisionComp>(pPlaceable->GetCanyonMeshCollision()) };
 	
 
 	//check that the terrain normal is upright
-	if(!FMath::IsNearlyZero(FVector::DotProduct(TerrainHit.ImpactNormal, FVector::LeftVector), 0.05f))
+	if(!FMath::IsNearlyZero(FVector::DotProduct(TerrainHit.ImpactNormal, FVector::LeftVector), 0.5f))
 	{
 		out_NewPos = TerrainHit.ImpactPoint;
 		UE_LOG(LogCanyonPlacement, Log, TEXT("Denying placement bc the terrain hit is no upward normal"));
 		return false;
 	}
+
+	if(!FMath::IsNearlyZero(m_LastTerrainTracePos.Z - TerrainHit.ImpactPoint.Z, 0.5f))
+	{
+		out_NewPos = TerrainHit.ImpactPoint;
+		m_LastTerrainTracePos = TerrainHit.ImpactPoint;
+
+		UE_LOG(LogCanyonPlacement, Log, TEXT("Denying placement bc the height of the hit changed"));
+		return false;
+	}
+	m_LastTerrainTracePos = TerrainHit.ImpactPoint;
 
 
 //Mouse distance override
@@ -200,13 +211,6 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		}
 	}
 
-	if(!FMath::IsNearlyZero(m_LastPlaceablePositionValid.Z - TerrainHit.ImpactPoint.Z, 0.5f))
-	{
-		out_NewPos = TerrainHit.ImpactPoint;
-		UE_LOG(LogCanyonPlacement, Log, TEXT("Prevented sweeping bc the height of the hit changed"));
-		return false;
-	}
-
 	FVector SweepStart{ m_LastPlaceablePositionValid/*pPlaceable->GetActorLocation() - pHullComp->RelativeLocation*/ };
 	FVector2D MovementDisp{ TerrainHit.ImpactPoint - SweepStart };
 	FVector SweepEnd{ SweepStart + FVector{ MovementDisp.X, MovementDisp.Y, 0} };
@@ -267,7 +271,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 		});
 	
-		//terrain height changes catch
+		
 		if(FMath::IsNearlyZero(1 - FVector::DotProduct(aHits[0].ImpactNormal, FVector::UpVector), 0.05f))
 		{
 			NewHullPos = SweepStart;
@@ -401,9 +405,13 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		}
 
 	}
+	UE_LOG(LogCanyonPlacement, Log, TEXT("\tCompletedSweeping"));
 
 
 	out_NewPos = NewHullPos + pHullComp->RelativeLocation;
+	//sweeping must never change the height
+	out_NewPos.Z = TerrainHit.ImpactPoint.Z;
+
 	if(!AreAllCornersGrounded(out_NewPos, pHullComp))
 	{
 		out_NewPos = m_LastPlaceablePositionValid;
@@ -419,7 +427,6 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 	}
 
-	UE_LOG(LogCanyonPlacement, Log, TEXT("\tCompletedSweeping"));
 	return true;
 
 
@@ -493,6 +500,12 @@ bool CPlacementRuler::AreAllCornersGrounded(const FVector& OutPosition, UCanyonM
 
 		}
 	}
+	else
+	{
+		return false;
+
+	}
+
 	return true;
 
 

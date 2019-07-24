@@ -29,6 +29,7 @@ private:
 	FVector m_LastTerrainTracePos;
 	FVector m_LastPlaceablePosition;
 	FVector m_LastPlaceablePositionValid;
+	float m_LastTerrainTraceZ;
 
 
 };
