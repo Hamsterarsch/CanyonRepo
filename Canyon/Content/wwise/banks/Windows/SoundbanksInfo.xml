@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <SoundBanksInfo Platform="Windows" BasePlatform="Windows" SchemaVersion="11" SoundbankVersion="134">
 	<RootPaths>
-		<ProjectRoot>D:\Canyon_WwiseProject\</ProjectRoot>
-		<SourceFilesRoot>D:\Canyon_WwiseProject\.cache\Windows\</SourceFilesRoot>
-		<SoundBanksRoot>C:\Repo\CanyonRepo\Canyon\Content\wwise\banks\Windows\</SoundBanksRoot>
+		<ProjectRoot>C:\Repos\Canyon_WwiseProject\</ProjectRoot>
+		<SourceFilesRoot>C:\Repos\Canyon_WwiseProject\.cache\Windows\</SourceFilesRoot>
+		<SoundBanksRoot>C:\Repos\CanyonRepo\Canyon\Content\wwise\banks\Windows\</SoundBanksRoot>
 		<ExternalSourcesInputFile></ExternalSourcesInputFile>
-		<ExternalSourcesOutputRoot>D:\Canyon_WwiseProject\GeneratedSoundBanks\Windows</ExternalSourcesOutputRoot>
+		<ExternalSourcesOutputRoot>C:\Repos\Canyon_WwiseProject\GeneratedSoundBanks\Windows</ExternalSourcesOutputRoot>
 	</RootPaths>
 	<DialogueEvents/>
 	<StreamedFiles/>
