@@ -244,6 +244,8 @@ void ARTSPlayerEye::ZoomOut()
 	{
 		++m_ZoomIndex;
 		m_MovementSpeedMultCurrent += m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
+
+		OnZoomChanged();
 	}
 
 
@@ -255,6 +257,8 @@ void ARTSPlayerEye::ZoomIn()
 	{
 		m_MovementSpeedMultCurrent -= m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
 		--m_ZoomIndex;
+
+		OnZoomChanged();
 	}
 
 
@@ -310,6 +314,8 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 
 	if(m_bIsPlaceablePlaceable)
 	{
+		m_PlacementRuler.NotifyBuildingPlaced();
+
 		//fetch preview data and destroy
 		auto *pBuildingClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
 		const auto PreviewedInfluence{ m_pPlaceablePreviewCurrent->GetCurrentInfluence() };
@@ -569,6 +575,27 @@ void ARTSPlayerEye::DecreaseBuildingRot()
 }
 #pragma endregion
 
+float ARTSPlayerEye::GetMinZoomDist() const
+{	
+	return m_aZoomNodes.Num() > 0 ? m_aZoomNodes[0].m_Distance : 0;
+	
+	
+}
+
+float ARTSPlayerEye::GetMaxZoomDist() const
+{
+	return m_aZoomNodes.Num() > 0 ? m_aZoomNodes[m_aZoomNodes.Num() - 1].m_Distance : 0;
+
+
+}
+
+float ARTSPlayerEye::GetZoomDist() const
+{
+	return m_aZoomNodes[m_ZoomIndex].m_Distance;
+
+
+}
+
 FHitResult ARTSPlayerEye::TraceForPlaceable()
 {
 	FHitResult OutHit{};
@@ -589,3 +616,5 @@ FHitResult ARTSPlayerEye::TraceForPlaceable()
 
 
 }
+
+

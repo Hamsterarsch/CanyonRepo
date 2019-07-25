@@ -163,6 +163,18 @@ protected:
 
 	void DecreaseBuildingRot();
 	//End Input
+
+	UFUNCTION(BlueprintCallable)
+		float GetMinZoomDist() const;
+
+	UFUNCTION(BlueprintCallable)
+		float GetMaxZoomDist() const;
+
+	UFUNCTION(BlueprintCallable)
+		float GetZoomDist() const;
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnZoomChanged();
 	
 	UPROPERTY(VisibleAnywhere)
 		class USpringArmComponent *m_pCameraSpringArm;

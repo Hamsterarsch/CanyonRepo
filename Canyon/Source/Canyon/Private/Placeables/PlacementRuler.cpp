@@ -15,7 +15,8 @@ CPlacementRuler::CPlacementRuler() :
 	m_LastTerrainTracePos{ EForceInit::ForceInitToZero },
 	m_LastPlaceablePosition{ EForceInit::ForceInitToZero },
 	m_LastPlaceablePositionValid{ EForceInit::ForceInitToZero },
-	m_LastTerrainTraceZ{ 0 }
+	m_LastTerrainTraceZ{ 0 },
+	m_bIsLastPlaceablePositionValidInvalid{ false }
 {
 }
 
@@ -157,6 +158,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 				}
 
 				UE_LOG(LogCanyonPlacement, Log, TEXT("Granting pos after resanp using graced overlap"));
+				m_bIsLastPlaceablePositionValidInvalid = false;
 				return true;
 
 			}
@@ -205,11 +207,24 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 			}
 
 			UE_LOG(LogCanyonPlacement, Log, TEXT("Granting building placement bc the advanced obstruction is clear"));
+			m_bIsLastPlaceablePositionValidInvalid = false;
 			return true;
 
 
 		}
 	}
+
+	//we have to catch invalid last valid placeable positions
+	//otherwise buildings can be placed inside the last placed building if they start invalid
+	if(m_bIsLastPlaceablePositionValidInvalid)
+	{
+		UE_LOG(LogCanyonPlacement, Log, TEXT("Denying placement bc the last placeabme position for this building is invalid"));
+		out_NewPos = TerrainHit.ImpactPoint;
+		return false;
+
+
+	}
+
 
 	FVector SweepStart{ m_LastPlaceablePositionValid/*pPlaceable->GetActorLocation() - pHullComp->RelativeLocation*/ };
 	FVector2D MovementDisp{ TerrainHit.ImpactPoint - SweepStart };
@@ -471,7 +486,7 @@ bool CPlacementRuler::AreAllCornersGrounded(const FVector& OutPosition, UCanyonM
 
 				//Edge check (all relevant points have to be close to the ground/ not floating
 				FHitResult Hit;
-				DrawDebugLine(pHull->GetWorld(), Transformed, Transformed - FVector{0,0,CornerTraceDepth}, FColor::White, false, 1);
+				//DrawDebugLine(pHull->GetWorld(), Transformed, Transformed - FVector{0,0,CornerTraceDepth}, FColor::White, false, 1);
 
 				if
 				(

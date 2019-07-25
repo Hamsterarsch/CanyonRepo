@@ -13,7 +13,9 @@
 #include "Misc/CanyonLogs.h"
 #include "Components/CanyonMeshCollisionComp.h"
 #include "ConstructorHelpers.h"
+#include "WidgetBase/InfluenceDisplayWidgetBase.h"
 #include "Misc/CanyonGM.h"
+#include "Engine/StaticMesh.h"
 
 
 APlaceablePreview::APlaceablePreview() :
@@ -116,7 +118,8 @@ UClass *APlaceablePreview::GetPreviewedClass() const
 void APlaceablePreview::NotifyPlaceable()
 {
 	UE_LOG(LogCanyonPlacement, Log, TEXT("Notfiy building placeable."));
-	SetMaterialForAllMeshes(m_pMaterialPlaceable);
+	ResetMaterialForAllMeshes();
+	//SetMaterialForAllMeshes(m_pMaterialPlaceable);
 
 
 }
@@ -187,5 +190,23 @@ void APlaceablePreview::SetMaterialForAllMeshes(UMaterialInterface* pMaterial)
 		}
 
 	}
+
+
+}
+
+void APlaceablePreview::ResetMaterialForAllMeshes()
+{
+	for (auto *pComponent : GetComponentsByClass(UStaticMeshCanyonComp::StaticClass()))
+	{
+		auto *pAsMeshComp{ Cast<UStaticMeshCanyonComp>(pComponent) };
+						
+		for (int32 MaterialIndex{ 0 }; MaterialIndex < pAsMeshComp->GetNumMaterials(); ++MaterialIndex)
+		{
+			pAsMeshComp->SetMaterial(MaterialIndex, pAsMeshComp->GetStaticMesh()->GetMaterial(MaterialIndex));
+
+		}
+
+	}
+
 
 }
