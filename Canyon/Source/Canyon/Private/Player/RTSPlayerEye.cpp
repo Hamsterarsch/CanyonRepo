@@ -108,6 +108,7 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 		return;
 	}
 
+	OnBeginPreviewBuilding();
 
 	m_pPlaceablePreviewCurrent = pNewPlaceable;
 	m_pPlaceablePreviewCurrent->AttachToComponent(m_pCursorRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
@@ -335,6 +336,7 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 		//Update gm
 		auto *pGm{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
 		pGm->AddPointsCurrent(PreviewedInfluence);
+		OnCommitPreviewBuilding(PreviewedInfluence);
 								
 		return true;
 
@@ -345,7 +347,7 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 	
 }
 
-void ARTSPlayerEye::DiscardCurrentPlaceablePreview()
+void ARTSPlayerEye::DiscardCurrentPlaceablePreview(bool bIsPlayerInstigated)
 {
 	if(m_pPlaceablePreviewCurrent)
 	{
@@ -353,6 +355,11 @@ void ARTSPlayerEye::DiscardCurrentPlaceablePreview()
 		m_pPlaceablePreviewCurrent->Destroy();
 	}
 	m_bIsPlaceablePlaceable = false;
+
+	if(bIsPlayerInstigated)
+	{
+		OnAbortPreviewBuilding();
+	}
 
 
 }

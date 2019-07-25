@@ -104,7 +104,7 @@ public:
 
 	bool TryCommitPlaceablePreview();
 
-	void DiscardCurrentPlaceablePreview();
+	void DiscardCurrentPlaceablePreview(bool bIsPlayerInstigated = false);
 
 	inline bool GetIsInPlacement() const { return m_PlacementState.GetIsInPlacement(); }
 
@@ -175,6 +175,15 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnZoomChanged();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnBeginPreviewBuilding();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnCommitPreviewBuilding(int32 PointDelta);
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnAbortPreviewBuilding();
 	
 	UPROPERTY(VisibleAnywhere)
 		class USpringArmComponent *m_pCameraSpringArm;

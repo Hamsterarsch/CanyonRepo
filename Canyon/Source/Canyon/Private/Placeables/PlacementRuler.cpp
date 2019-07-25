@@ -147,7 +147,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		
 		if(aOverlaps.Num() != 0)
 		{
-			if(IsNewHullPositionValid(TerrainHit.ImpactPoint + pHullComp->RelativeLocation, pHullComp, 5, bUseComplex))
+			if(IsNewHullPositionValid(TerrainHit.ImpactPoint + pHullComp->RelativeLocation, pHullComp, 1, bUseComplex))
 			{
 				out_NewPos = TerrainHit.ImpactPoint;
 				if(!AreAllCornersGrounded(TerrainHit.ImpactPoint, pHullComp))
@@ -197,7 +197,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		);
 
 		out_NewPos = TerrainHit.ImpactPoint;
-		if(aOutOverlaps.Num() == 0 || IsNewHullPositionValid(out_NewPos - pHullComp->RelativeLocation, pHullComp, 5, bUseComplex))
+		if(aOutOverlaps.Num() == 0 || IsNewHullPositionValid(out_NewPos - pHullComp->RelativeLocation, pHullComp, 1, bUseComplex))
 		{			
 			if(!AreAllCornersGrounded(out_NewPos, pHullComp))
 			{
@@ -434,7 +434,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		return true;
 	}
 
-	auto Result{ IsNewHullPositionValid(out_NewPos, pHullComp, 0.5, bUseComplex) };
+	auto Result{ IsNewHullPositionValid(out_NewPos, pHullComp, 1, bUseComplex) };
 	if(!Result)
 	{
 		out_NewPos = m_LastPlaceablePositionValid;
