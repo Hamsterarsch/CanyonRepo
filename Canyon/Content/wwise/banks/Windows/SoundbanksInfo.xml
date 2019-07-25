@@ -16,6 +16,7 @@
 			<ShortName>default</ShortName>
 			<Path>default.bnk</Path>
 			<IncludedEvents>
+				<Event Id="3908375313" Name="ActivateWindZoom" ObjectPath="\Events\Default Work Unit\ActivateWindZoom"/>
 				<Event Id="1205645828" Name="musicPlay" ObjectPath="\Events\Default Work Unit\musicPlay"/>
 				<Event Id="3282698780" Name="PlayMusicAmbient" ObjectPath="\Events\Default Work Unit\PlayMusicAmbient"/>
 			</IncludedEvents>
@@ -32,13 +33,21 @@
 					<ShortName>SFX\loop1.wav</ShortName>
 					<Path>SFX\SFX\loop1_D79FB2B7.wem</Path>
 				</File>
-				<File Id="654604831" Language="SFX">
-					<ShortName>Steam Powered Flying Machine (No. 2).wav</ShortName>
-					<Path>SFX\Steam Powered Flying Machine (No. 2)_D79FB2B7.wem</Path>
+				<File Id="462595730" Language="SFX">
+					<ShortName>WIND_LOOP.wav</ShortName>
+					<Path>SFX\WIND_LOOP_D79FB2B7.wem</Path>
 				</File>
-				<File Id="693951589" Language="SFX">
-					<ShortName>Featherweight (No. 1).wav</ShortName>
-					<Path>SFX\Featherweight (No. 1)_D79FB2B7.wem</Path>
+				<File Id="584368103" Language="SFX">
+					<ShortName>01_Featherweight.wav</ShortName>
+					<Path>SFX\01_Featherweight_D79FB2B7.wem</Path>
+				</File>
+				<File Id="607098219" Language="SFX">
+					<ShortName>02_Steam_Powered_Flying Machine.wav</ShortName>
+					<Path>SFX\02_Steam_Powered_Flying Machine_D79FB2B7.wem</Path>
+				</File>
+				<File Id="787825759" Language="SFX">
+					<ShortName>04_Guiding_Light.wav</ShortName>
+					<Path>SFX\04_Guiding_Light_D79FB2B7.wem</Path>
 				</File>
 				<File Id="838187309" Language="SFX">
 					<ShortName>SFX\loop0.wav</ShortName>
@@ -47,6 +56,10 @@
 				<File Id="910200512" Language="SFX">
 					<ShortName>SFX\loop2.wav</ShortName>
 					<Path>SFX\SFX\loop2_D79FB2B7.wem</Path>
+				</File>
+				<File Id="983660376" Language="SFX">
+					<ShortName>03_City_Above_The_Sky.wav</ShortName>
+					<Path>SFX\03_City_Above_The_Sky_D79FB2B7.wem</Path>
 				</File>
 			</IncludedMemoryFiles>
 		</SoundBank>

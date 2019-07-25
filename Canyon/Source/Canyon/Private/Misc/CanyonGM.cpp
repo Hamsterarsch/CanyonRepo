@@ -17,6 +17,8 @@
 #include "CanyonGI.h"
 #include "WidgetBlueprintLibrary.h"
 #include "ActorDeferredPlay.h"
+#include "Placeables/PlaceablePreview.h"
+#include "MeshInstancer.h"
 #include "Savegame/SavegameHandler.h"
 
 

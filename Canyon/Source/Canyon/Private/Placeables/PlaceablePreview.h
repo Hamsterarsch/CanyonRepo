@@ -45,6 +45,8 @@ private:
 
 	void SetMaterialForAllMeshes(UMaterialInterface *pMaterial);
 
+	void ResetMaterialForAllMeshes();
+
 
 	UPROPERTY()
 		class USphereComponent *m_pInfluenceSphere;

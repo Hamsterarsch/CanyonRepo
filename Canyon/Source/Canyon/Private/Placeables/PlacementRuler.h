@@ -14,6 +14,9 @@ public:
 	//also enforces surface types and other constraints
 	FVector ComputeTerrainDepenetration(const FHitResult &ForHit, const APlaceableBase *pPlaceable);
 
+
+	inline void NotifyBuildingPlaced() { m_bIsLastPlaceablePositionValidInvalid = true; }
+
 	//reqs
 	//max accepted normal angle for placement
 
@@ -30,6 +33,7 @@ private:
 	FVector m_LastPlaceablePosition;
 	FVector m_LastPlaceablePositionValid;
 	float m_LastTerrainTraceZ;
+	bool m_bIsLastPlaceablePositionValidInvalid;
 
 
 };
