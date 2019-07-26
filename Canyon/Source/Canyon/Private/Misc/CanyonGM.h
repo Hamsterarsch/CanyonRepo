@@ -93,6 +93,15 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnPointsChanged();
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void NotifyOnLoose();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void NotifyOnNewDeckAvailable();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void NotifyNextLevelAvailable();
+
 
 	UPROPERTY(EditDefaultsOnly, Category="Canyon|UI")
 		class UCategoryStringMappingDAL *m_pPrettyCategoryNameSource;
@@ -120,9 +129,6 @@ private:
 	void ReceiveOnPointsChanged();
 
 	void SetPointsRequired(int32 Points);
-
-	void OnLoose();
-
 
 	UPROPERTY()
 		class UDeckSelector *m_pDeckSelector;
