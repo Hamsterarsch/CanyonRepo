@@ -564,6 +564,7 @@ void ARTSPlayerEye::IncreaseBuildingRot()
 		const auto RotStep{ 360.f / m_BuildingRotationSteps };
 	   
 		m_pCursorRoot->AddWorldRotation( {0, RotStep, 0} );
+		m_PlacementRuler.NotifyBuildingRotated();
 	}
 		
 
@@ -576,6 +577,7 @@ void ARTSPlayerEye::DecreaseBuildingRot()
 		const auto RotStep{ 360.f / m_BuildingRotationSteps };
 
 		m_pCursorRoot->AddWorldRotation( {0, -RotStep, 0} );
+		m_PlacementRuler.NotifyBuildingRotated();
 	}
 
 

@@ -16,7 +16,8 @@ CPlacementRuler::CPlacementRuler() :
 	m_LastPlaceablePosition{ EForceInit::ForceInitToZero },
 	m_LastPlaceablePositionValid{ EForceInit::ForceInitToZero },
 	m_LastTerrainTraceZ{ 0 },
-	m_bIsLastPlaceablePositionValidInvalid{ false }
+	m_bIsLastPlaceablePositionValidInvalid{ false },
+	m_bWasBuildingRotated{ false }
 {
 }
 
@@ -147,7 +148,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		
 		if(aOverlaps.Num() != 0)
 		{
-			if(IsNewHullPositionValid(TerrainHit.ImpactPoint + pHullComp->RelativeLocation, pHullComp, 1, bUseComplex))
+			if(IsNewHullPositionValid(TerrainHit.ImpactPoint + pHullComp->RelativeLocation, pHullComp, 2, bUseComplex))
 			{
 				out_NewPos = TerrainHit.ImpactPoint;
 				if(!AreAllCornersGrounded(TerrainHit.ImpactPoint, pHullComp))
@@ -159,6 +160,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 				UE_LOG(LogCanyonPlacement, Log, TEXT("Granting pos after resanp using graced overlap"));
 				m_bIsLastPlaceablePositionValidInvalid = false;
+				m_bWasBuildingRotated = false;
 				return true;
 
 			}
@@ -197,7 +199,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		);
 
 		out_NewPos = TerrainHit.ImpactPoint;
-		if(aOutOverlaps.Num() == 0 || IsNewHullPositionValid(out_NewPos - pHullComp->RelativeLocation, pHullComp, 1, bUseComplex))
+		if(aOutOverlaps.Num() == 0 || IsNewHullPositionValid(out_NewPos - pHullComp->RelativeLocation, pHullComp, 2, bUseComplex))
 		{			
 			if(!AreAllCornersGrounded(out_NewPos, pHullComp))
 			{
@@ -208,6 +210,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 			UE_LOG(LogCanyonPlacement, Log, TEXT("Granting building placement bc the advanced obstruction is clear"));
 			m_bIsLastPlaceablePositionValidInvalid = false;
+			m_bWasBuildingRotated = false;
 			return true;
 
 
@@ -218,13 +221,22 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 	//otherwise buildings can be placed inside the last placed building if they start invalid
 	if(m_bIsLastPlaceablePositionValidInvalid)
 	{
-		UE_LOG(LogCanyonPlacement, Log, TEXT("Denying placement bc the last placeabme position for this building is invalid"));
+		UE_LOG(LogCanyonPlacement, Log, TEXT("Denying sweeping bc the last placeable position for this building is invalid"));
 		out_NewPos = TerrainHit.ImpactPoint;
 		return false;
 
 
 	}
 
+	//after rotations have been executed we can only depend on clean/graved overlaps, not sweeping, bc it does not detect the change in rotation
+	if(m_bWasBuildingRotated)
+	{
+		UE_LOG(LogCanyonPlacement, Log, TEXT("Denying sweeping bc the building was rotated."));
+		out_NewPos = TerrainHit.ImpactPoint;
+		return false;
+
+
+	}
 
 	FVector SweepStart{ m_LastPlaceablePositionValid/*pPlaceable->GetActorLocation() - pHullComp->RelativeLocation*/ };
 	FVector2D MovementDisp{ TerrainHit.ImpactPoint - SweepStart };
@@ -434,7 +446,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		return true;
 	}
 
-	auto Result{ IsNewHullPositionValid(out_NewPos, pHullComp, 1, bUseComplex) };
+	auto Result{ IsNewHullPositionValid(out_NewPos, pHullComp, 2, bUseComplex) };
 	if(!Result)
 	{
 		out_NewPos = m_LastPlaceablePositionValid;

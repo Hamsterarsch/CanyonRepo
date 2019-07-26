@@ -16,6 +16,7 @@ public:
 
 
 	inline void NotifyBuildingPlaced() { m_bIsLastPlaceablePositionValidInvalid = true; }
+	inline void NotifyBuildingRotated() { m_bWasBuildingRotated = true; }
 
 	//reqs
 	//max accepted normal angle for placement
@@ -34,7 +35,7 @@ private:
 	FVector m_LastPlaceablePositionValid;
 	float m_LastTerrainTraceZ;
 	bool m_bIsLastPlaceablePositionValidInvalid;
-
+	bool m_bWasBuildingRotated;
 
 };
 
