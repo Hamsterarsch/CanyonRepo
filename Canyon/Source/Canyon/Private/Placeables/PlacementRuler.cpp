@@ -446,7 +446,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		return true;
 	}
 
-	auto Result{ IsNewHullPositionValid(out_NewPos, pHullComp, 2, bUseComplex) };
+	auto Result{ IsNewHullPositionValid(out_NewPos, pHullComp, 0.5f, bUseComplex) };
 	if(!Result)
 	{
 		out_NewPos = m_LastPlaceablePositionValid;

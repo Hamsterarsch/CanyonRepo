@@ -110,7 +110,7 @@ public:
 
 	int32 GetCurrentChargesForPlaceables() const;
 
-	void NotifyOnDisplayNewDecks();
+	void NotifyOnNewDeckAvailable();
 
 	bool GetAreDecksSelectable() const;
 

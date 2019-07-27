@@ -43,10 +43,17 @@ void ACanyonGM::BeginGame()
 	GetWorld()->GetFirstPlayerController()->SetInputMode(InputMode);
 
 	UWidgetBlueprintLibrary::SetFocusToGameViewport();
+	
+	//has to be init now	
+	auto *pPlayer{GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
+	pPlayer->BeginGame();
+
+	auto RequiredPointsDelta{ FMath::RoundToInt(m_pRequiredPointsSource->GetFloatValue(m_pDeckSelector->GetDeckGeneration())) };
+	SetPointsRequired(m_PointsCurrent + RequiredPointsDelta);
 
 	AActorDeferredPlay::BroadcastBeginGame();
-
-
+	
+	   	 
 }
 
 void ACanyonGM::InitPointState(int32 CarryOverPoints)
@@ -109,10 +116,6 @@ void ACanyonGM::AddPointsCurrent(const int32 Points)
 void ACanyonGM::IncreaseDeckGeneration()
 {
 	m_pDeckSelector->IncreaseDeckGeneration();
-
-	auto RequiredPointsDelta{ FMath::RoundToInt(m_pRequiredPointsSource->GetFloatValue(m_pDeckSelector->GetDeckGeneration())) };
-
-	SetPointsRequired(m_PointsCurrent + RequiredPointsDelta);
 
 	
 
@@ -203,6 +206,13 @@ void ACanyonGM::DebugAddChargesForCategory(const FString& Category, int32 Num) c
 	{
 		pPlayer->DebugAddChargesForCategory(Category, Num);
 	}
+
+
+}
+
+bool ACanyonGM::IsInEndlessMode() const
+{
+	return m_pDeckSelector->UsesEndlessFillers();
 
 
 }
@@ -328,8 +338,18 @@ void ACanyonGM::ReceiveOnPointsChanged()
 	pPlayer->OnPointsCurrentChanged(m_PointsCurrent);
 	if(m_PointsCurrent >= m_PointsRequired)
 	{
-		pPlayer->NotifyOnDisplayNewDecks();
+		for(int32 GenerationOffset{ 1 }; m_PointsCurrent >= m_PointsRequired; ++GenerationOffset)
+		{
+			auto RequiredPointsDelta{ FMath::RoundToInt(m_pRequiredPointsSource->GetFloatValue(m_pDeckSelector->GetDeckGeneration() + GenerationOffset)) };
+			m_PointsRequired += RequiredPointsDelta;
+			pPlayer->NotifyOnNewDeckAvailable();	
+		}
+
+		//cant call this bc it would recurse SetPointsRequired(m_PointsCurrent + RequiredPointsDelta);	
+		
+		pPlayer->OnPointsRequiredChanged(m_PointsRequired);		
 		NotifyOnNewDeckAvailable();
+		
 	}
 	
 	//loose condition

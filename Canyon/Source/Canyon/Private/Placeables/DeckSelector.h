@@ -63,7 +63,9 @@ public:
 	void IncreaseDeckGeneration();
 
 	void AddCarryOverChargesToIssued(const FCarryOverCharges &ChargeData);
-	
+
+	inline bool UsesEndlessFillers() const { return m_aDecksValid.Num() == 0; }
+
 
 protected:
 	UPROPERTY(EditAnywhere)
@@ -127,6 +129,8 @@ private:
 	
 	UPROPERTY()
 		int32 m_DeckGeneration;
+
+	bool m_bWereEndlessFillersInvoked;
 
 	//cache
 	TArray<FString> m_aEndlessFillerCats;

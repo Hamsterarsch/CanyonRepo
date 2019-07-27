@@ -40,13 +40,16 @@ public:
 	FDeckData GetEndlessDeckData();
 
 	void FillUpDeckDataNonEndless(FDeckData &DeckData);
-
+	
 	inline class AMeshInstancer *GetMeshInstancer() { return m_pMeshInstancer; }
 
 	void NotifyPlaceableActionSelect(FHitResult &Hit);
 
 	UFUNCTION(Exec)
 		void DebugAddChargesForCategory(const FString &Category, int32 Num) const;
+
+	UFUNCTION(BlueprintCallable)
+		bool IsInEndlessMode() const;
 
 	UFUNCTION(BlueprintCallable)
 		FString GetPrettyNameForCategory(const FString &CategoryName);

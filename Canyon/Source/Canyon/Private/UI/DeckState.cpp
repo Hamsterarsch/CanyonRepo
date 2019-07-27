@@ -13,7 +13,7 @@
 UDeckState::UDeckState() :
 	m_aPendingSelectableDecks{},
 	m_ChargesAmount{ 0 },
-	m_bAreDecksSelectable{ false }
+	m_DeckChargeCount{ 0 }
 {
 }
 
@@ -46,9 +46,28 @@ void UDeckState::NotifyOnCategoryPlaceablePlaced(const FString& Category)
 	
 }
 
-void UDeckState::NotifyOnDisplayNewDecks()
+void UDeckState::AddDeckCharge()
 {
-	m_bAreDecksSelectable = true;
+	++m_DeckChargeCount;
+	m_eOnDeckChargeAdded.Broadcast();
+
+
+}
+
+void UDeckState::NotifyAddDeckButtonClicked()
+{
+	if(m_pGM->IsInEndlessMode())
+	{
+		
+	}
+
+	if(m_aPendingSelectableDecks.Num() >= m_DesiredDeckAmount)
+	{
+		return;
+
+
+	}
+
 	const auto NewDeckAmount{ m_DesiredDeckAmount - m_aPendingSelectableDecks.Num() };
 
 	m_aPendingSelectableDecks.Append(m_pGM->GetDeckData(NewDeckAmount));
@@ -76,7 +95,9 @@ void UDeckState::NotifyOnDisplayNewDecks()
 
 void UDeckState::NotifyOnDeckWidgetClicked(int32 Index)
 {
-	m_bAreDecksSelectable = false;
+	--m_DeckChargeCount;
+	check(m_DeckChargeCount >= 0);
+
 	m_pGM->FillUpDeckDataNonEndless(m_aPendingSelectableDecks[Index]);
 
 	AddDeck(m_aPendingSelectableDecks[Index]);

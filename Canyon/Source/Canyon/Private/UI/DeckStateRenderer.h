@@ -37,7 +37,12 @@ public:
 	static UDeckStateRenderer *Construct(class ACanyonGM *pGM, class UDeckState *pDeckState, class UMainHudWidgetBase *pTargetWidget);
 
 
+
 private:
+	UFUNCTION()
+		void OnDeckChargeAdded();
+
+
 	UPROPERTY()
 		class ACanyonGM *m_pGM;
 

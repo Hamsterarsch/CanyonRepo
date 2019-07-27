@@ -10,6 +10,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDeckStateChangedDelegate, TSubclassOf<UPlaceableIconWidgetBase>, WidgetClassOfChanged, const FCategoryData &, NewData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeckStateNewDecksSetDelegate, const TArray<TSubclassOf<class UPrettyWidget>> &, aWidgetClasses);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDeckChargeAddedDelegate);
 
 /**
  * 
@@ -26,9 +27,12 @@ public:
 	
 	inline int32 GetChargesCurrent() const { return m_ChargesAmount; }
 
-	inline bool GetAreDecksSelectable() const { return m_bAreDecksSelectable; }
+	inline bool GetAreDecksSelectable() const { return m_DeckChargeCount > 0; }
 
-	void NotifyOnDisplayNewDecks();
+	void AddDeckCharge();
+
+	UFUNCTION()
+		void NotifyAddDeckButtonClicked();
 
 	void NotifyOnDeckWidgetClicked(int32 Index);
 
@@ -43,6 +47,10 @@ public:
 		UWidget *GetTooltipWidgetForDeckWidget(const UWidget *pInstigator);
 
 	static UDeckState *Construct(class ACanyonGM *pGM);			
+
+	UPROPERTY()
+		FDeckChargeAddedDelegate m_eOnDeckChargeAdded;
+	
 
 
 private:
@@ -80,7 +88,7 @@ private:
 	
 	int32 m_ChargesAmount;
 
-	bool m_bAreDecksSelectable;
+	int32 m_DeckChargeCount;
 
 
 public:

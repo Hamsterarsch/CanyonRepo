@@ -72,12 +72,13 @@ void ARTSPlayerEye::BeginGame()
 {
 	auto *pGM{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
 
+	m_pMainHudWidget = CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get());
 	m_pMainHudWidget->AddToViewport();
 		
 	m_pDeckState = UDeckState::Construct(pGM);
 	m_pDeckStateRenderer = UDeckStateRenderer::Construct(pGM, m_pDeckState, m_pMainHudWidget);
 
-	NotifyOnDisplayNewDecks();
+	NotifyOnNewDeckAvailable();
 		
 
 }
@@ -369,9 +370,9 @@ int32 ARTSPlayerEye::GetCurrentChargesForPlaceables() const
 
 }
 
-void ARTSPlayerEye::NotifyOnDisplayNewDecks()
+void ARTSPlayerEye::NotifyOnNewDeckAvailable()
 {
-	m_pDeckState->NotifyOnDisplayNewDecks();
+	m_pDeckState->AddDeckCharge();
 
 
 }
@@ -386,6 +387,11 @@ bool ARTSPlayerEye::GetAreDecksSelectable() const
 
 void ARTSPlayerEye::OnPointsRequiredChanged(const int32 NewPoints)
 {
+	if(!m_pMainHudWidget)
+	{
+		m_pMainHudWidget = CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get());
+	}
+
 	m_pMainHudWidget->OnPointsRequiredChanged(NewPoints);
 
 
@@ -448,12 +454,7 @@ void ARTSPlayerEye::Tick(float DeltaTime)
 void ARTSPlayerEye::BeginPlay()
 {
 	Super::BeginPlay();
-	m_pMainHudWidget = CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get());
 
-	
-#if UE_EDITOR
-	BeginGame();
-#endif
 
 }
 

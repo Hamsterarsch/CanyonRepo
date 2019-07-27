@@ -46,6 +46,12 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnPlaceableSelectionChanged(int32 CountSelectedCurrent, int32 CountSelectedMax);
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnDeckChargeAdded();
+
+	UPROPERTY(EditAnywhere, Meta=(BindWidget))
+		class UButton *m_pAddDeckButton;
+
 	
 };
 
