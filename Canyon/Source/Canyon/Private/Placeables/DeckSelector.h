@@ -64,7 +64,7 @@ public:
 
 	void AddCarryOverChargesToIssued(const FCarryOverCharges &ChargeData);
 
-	inline bool UsesEndlessFillers() const { return m_aDecksValid.Num() == 0; }
+	bool UsesEndlessFillers() const; 
 
 
 protected:

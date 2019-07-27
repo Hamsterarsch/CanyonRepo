@@ -387,11 +387,6 @@ bool ARTSPlayerEye::GetAreDecksSelectable() const
 
 void ARTSPlayerEye::OnPointsRequiredChanged(const int32 NewPoints)
 {
-	if(!m_pMainHudWidget)
-	{
-		m_pMainHudWidget = CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get());
-	}
-
 	m_pMainHudWidget->OnPointsRequiredChanged(NewPoints);
 
 

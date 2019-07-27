@@ -176,6 +176,13 @@ void UDeckSelector::AddCarryOverChargesToIssued(const FCarryOverCharges &ChargeD
 
 }
 
+bool UDeckSelector::UsesEndlessFillers() const
+{
+	return m_aDecksValid.Num() == 0;
+
+
+}
+
 void UDeckSelector::AddFillerChargesToDeckData(const int32 FillerChargeCount, FDeckData &DeckData, UDeckDatabaseNative *pDeckTemplate)
 {	
 	//trivial case

@@ -43,10 +43,12 @@ void ACanyonGM::BeginGame()
 	GetWorld()->GetFirstPlayerController()->SetInputMode(InputMode);
 
 	UWidgetBlueprintLibrary::SetFocusToGameViewport();
-	
-	//has to be init now	
+
+#if UE_EDITOR
+	//has to be init now if not done by GI
 	auto *pPlayer{GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
 	pPlayer->BeginGame();
+#endif
 
 	auto RequiredPointsDelta{ FMath::RoundToInt(m_pRequiredPointsSource->GetFloatValue(m_pDeckSelector->GetDeckGeneration())) };
 	SetPointsRequired(m_PointsCurrent + RequiredPointsDelta);

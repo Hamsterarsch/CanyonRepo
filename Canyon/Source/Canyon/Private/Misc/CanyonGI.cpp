@@ -184,9 +184,10 @@ void UCanyonGI::ReceiveOnPostMapLoaded(UWorld* pLoadedWorld)
 	auto *pGM{ Cast<ACanyonGM>(pLoadedWorld->GetAuthGameMode()) };
 	if(pGM && pPlayer)
 	{
-#if !UE_EDITOR
+#if UE_EDITOR < 1
 		pPlayer->BeginGame();
 		pGM->BeginGame();
+		UE_LOG(LogCanyonCommon, Warning, TEXT("Entering conditional section after post map load"));
 #endif
 	}
 
