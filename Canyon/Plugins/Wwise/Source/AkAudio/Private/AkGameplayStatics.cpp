@@ -74,6 +74,34 @@ bool UAkGameplayStatics::IsGame(UObject* WorldContextObject)
 	return WorldType == EWorldType::Game || WorldType == EWorldType::GamePreview || WorldType == EWorldType::PIE;
 }
 
+void UAkGameplayStatics::RegisterDefaultListener(AActor* ListenerActor)
+{
+	auto ID{ reinterpret_cast<AkGameObjectID>(ListenerActor) };
+	AK::SoundEngine::RegisterGameObj(ID, "Default Listener");
+	AK::SoundEngine::SetDefaultListeners(&ID, 1);
+
+	
+
+
+}
+
+void UAkGameplayStatics::SetObjectTransform(AActor *ForActor, const FVector &Position, const FVector &Front, const FVector &Up)
+{
+	AkSoundPosition AkPos{};	
+	
+	AkPos.Set
+	(
+		AkVector{ Position.X, Position.Y, Position.Z },
+		AkVector{ Front.X, Front.Y, Front.Z },
+		AkVector{ Up.X, Up.Y, Up.Z }
+	);	
+
+	AK::SoundEngine::SetPosition(reinterpret_cast<AkGameObjectID>(ForActor), AkPos);
+
+
+}
+
+
 int32 UAkGameplayStatics::PostEventPersistent(UAkAudioEvent* AkEvent, UGameInstance *GI)
 {
 	auto AkID{ reinterpret_cast<AkGameObjectID>(GI) };

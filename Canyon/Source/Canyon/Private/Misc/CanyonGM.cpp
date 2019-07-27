@@ -65,8 +65,11 @@ void ACanyonGM::InitPointState(int32 CarryOverPoints)
 	m_PointsOnLevelOpen = CarryOverPoints;
 
 	auto *pPlayer{GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
-	
-	pPlayer->OnPointsRequiredChanged(m_PointsRequired);
+
+
+	auto RequiredPointsDelta{ FMath::RoundToInt(m_pRequiredPointsSource->GetFloatValue(m_pDeckSelector->GetDeckGeneration())) };
+
+	pPlayer->OnPointsRequiredChanged(m_PointsRequired + RequiredPointsDelta);
 	pPlayer->OnPointsCurrentChanged(m_PointsCurrent);
 
 	//don't use the regular OnPointsChanged here

@@ -327,7 +327,8 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 
 		const auto Transform{ m_pCursorRoot->GetComponentTransform() };
 		auto *pSpawned{ GetWorld()->SpawnActor<APlaceableBase>(pBuildingClass, Transform) };
-		
+		pSpawned->OnPlaced();
+
 		//Update deck state (has to be done before gm notify)
 		const auto PlaceableCategory{ pSpawned->GetPlaceableCategory() };
 		m_pDeckState->NotifyOnCategoryPlaceablePlaced(PlaceableCategory);
@@ -449,6 +450,8 @@ void ARTSPlayerEye::Tick(float DeltaTime)
 void ARTSPlayerEye::BeginPlay()
 {
 	Super::BeginPlay();
+
+	
 
 
 }

@@ -42,6 +42,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		UUserDefinedEnum *GetInfluenceEnumClass() const;
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnPlaced();
+
 	void ToggleSelectionHighlight();
 	
 
