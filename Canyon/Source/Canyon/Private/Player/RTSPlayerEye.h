@@ -116,8 +116,6 @@ public:
 
 	inline float GetPlacementAbortSuccessTime() const { return m_PlacementAbortSuccessTime; }
 
-	void OnLoose();
-
 	void OnPointsRequiredChanged(int32 NewPoints);
 
 	void OnPointsCurrentChanged(int32 NewPoints);
@@ -184,6 +182,11 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnAbortPreviewBuilding();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnUnitTransferEnabled();
+
+
 	
 	UPROPERTY(VisibleAnywhere)
 		class USpringArmComponent *m_pCameraSpringArm;
@@ -208,9 +211,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, DisplayName = "Min Camera Pitch", Category="Controls")
 		float m_CameraMinPitch;
-
-	UPROPERTY(EditDefaultsOnly, Category="Canyon|UI")
-		TSubclassOf<class UPrettyWidget> m_LooseWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="Canyon|UI")
 		TSubclassOf<class UInfluenceDisplayWidgetBase> m_PreviewInfluenceDisplayWidget;
@@ -243,9 +243,6 @@ protected:
 
 	UPROPERTY()
 		class UDeckStateRenderer *m_pDeckStateRenderer;
-
-	UPROPERTY()
-		class UPrettyWidget *m_pLooseWidget;
 
 	UPROPERTY()
 		class UMainHudWidgetBase *m_pMainHudWidget;

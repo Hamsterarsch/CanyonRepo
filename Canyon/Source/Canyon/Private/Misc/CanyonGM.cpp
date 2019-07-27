@@ -226,15 +226,6 @@ void ACanyonGM::SetPointsRequired(const int32 Points)
 
 }
 
-void ACanyonGM::OnLoose()
-{
-	auto *pPlayer{GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
-	pPlayer->OnLoose();
-
-
-}
-
-
 void ACanyonGM::EnterNextLevel()
 {
 	auto *pGI{ Cast<UCanyonGI>(GetGameInstance()) };
@@ -337,7 +328,8 @@ void ACanyonGM::ReceiveOnPointsChanged()
 	pPlayer->OnPointsCurrentChanged(m_PointsCurrent);
 	if(m_PointsCurrent >= m_PointsRequired)
 	{
-		pPlayer->NotifyOnDisplayNewDecks();		
+		pPlayer->NotifyOnDisplayNewDecks();
+		NotifyOnNewDeckAvailable();
 	}
 	
 	//loose condition
@@ -345,10 +337,11 @@ void ACanyonGM::ReceiveOnPointsChanged()
 	(
 		m_PointsCurrent < m_PointsRequired
 		&& pPlayer->GetCurrentChargesForPlaceables() <= 0 
-		&& !pPlayer->GetAreDecksSelectable() 
+		&& !pPlayer->GetAreDecksSelectable()
+		&& !m_bIsNextLevelAccessible
 	)
 	{
-		OnLoose();
+		NotifyOnLoose();
 	}
 
 	//next level accessible
@@ -356,6 +349,7 @@ void ACanyonGM::ReceiveOnPointsChanged()
 	{
 		m_bIsNextLevelAccessible = true;		
 		pPlayer->OnNextLevelAccessible();
+		NotifyNextLevelAvailable();
 	}
 
 

@@ -74,8 +74,6 @@ void ARTSPlayerEye::BeginGame()
 
 	m_pMainHudWidget->AddToViewport();
 		
-	m_pLooseWidget->AddToViewport();
-
 	m_pDeckState = UDeckState::Construct(pGM);
 	m_pDeckStateRenderer = UDeckStateRenderer::Construct(pGM, m_pDeckState, m_pMainHudWidget);
 
@@ -385,13 +383,6 @@ bool ARTSPlayerEye::GetAreDecksSelectable() const
 
 }
 
-void ARTSPlayerEye::OnLoose()
-{
-	m_pLooseWidget->ShowWidget();
-	m_pLooseWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-
-
-}
 
 void ARTSPlayerEye::OnPointsRequiredChanged(const int32 NewPoints)
 {
@@ -457,10 +448,6 @@ void ARTSPlayerEye::Tick(float DeltaTime)
 void ARTSPlayerEye::BeginPlay()
 {
 	Super::BeginPlay();
-
-	m_pLooseWidget = CreateWidget<UPrettyWidget>(GetWorld(), m_LooseWidgetClass.Get());
-	m_pLooseWidget->HideWidget();
-
 	m_pMainHudWidget = CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get());
 
 	
