@@ -68,6 +68,21 @@ ARTSPlayerEye::ARTSPlayerEye() :
 
 }
 
+void ARTSPlayerEye::BeginGame()
+{
+	auto *pGM{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
+
+	m_pMainHudWidget = CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get());
+	m_pMainHudWidget->AddToViewport();
+		
+	m_pDeckState = UDeckState::Construct(pGM);
+	m_pDeckStateRenderer = UDeckStateRenderer::Construct(pGM, m_pDeckState, m_pMainHudWidget);
+
+	NotifyOnNewDeckAvailable();
+		
+
+}
+
 void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlaceableClass)
 {
 	auto *pClass{ NewPlaceableClass.Get() };
@@ -85,13 +100,14 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 		m_pCursorRoot->SetWorldLocation(Hit.ImpactPoint);
 	}
 	
-	auto *pNewPlaceable{ APlaceablePreview::SpawnPlaceablePreview(GetWorld(), FTransform::Identity, NewPlaceableClass) };
+	auto *pNewPlaceable{ APlaceablePreview::SpawnPlaceablePreview(GetWorld(), FTransform::Identity, NewPlaceableClass, m_PreviewInfluenceDisplayWidget) };
 	if(!pNewPlaceable)
 	{
 		UE_LOG(LogCanyonPlacement, Error, TEXT("Could not spawn new placeable from class."))
 		return;
 	}
 
+	OnBeginPreviewBuilding();
 
 	m_pPlaceablePreviewCurrent = pNewPlaceable;
 	m_pPlaceablePreviewCurrent->AttachToComponent(m_pCursorRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
@@ -102,6 +118,30 @@ void ARTSPlayerEye::CreateNewPlacablePreview(TSubclassOf<APlaceableBase> NewPlac
 
 	m_PlacementState.HandleInput(EAbstractInputEvent::PlaceBuilding_Start);
 	
+
+}
+
+void ARTSPlayerEye::DebugAddChargesForCategory(const FString& Category, int32 Num)
+{
+	if(m_pDeckState)
+	{
+		m_pDeckState->DebugAddChargesForCategory(Category, Num);
+	}
+
+
+}
+
+void ARTSPlayerEye::AddCarryOverChargesToDeck(const FCarryOverCharges& CarryCharges)
+{
+	m_pDeckState->AddCarryOverCharges(CarryCharges);
+
+
+}
+
+void ARTSPlayerEye::NotifyBuildingSelectionChanged(int32 CountSelectedCurrent, int32 CountSelectedMax)
+{
+	m_pMainHudWidget->OnPlaceableSelectionChanged(CountSelectedCurrent, CountSelectedMax);
+
 
 }
 
@@ -204,6 +244,8 @@ void ARTSPlayerEye::ZoomOut()
 	{
 		++m_ZoomIndex;
 		m_MovementSpeedMultCurrent += m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
+
+		OnZoomChanged();
 	}
 
 
@@ -215,6 +257,8 @@ void ARTSPlayerEye::ZoomIn()
 	{
 		m_MovementSpeedMultCurrent -= m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
 		--m_ZoomIndex;
+
+		OnZoomChanged();
 	}
 
 
@@ -270,6 +314,8 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 
 	if(m_bIsPlaceablePlaceable)
 	{
+		m_PlacementRuler.NotifyBuildingPlaced();
+
 		//fetch preview data and destroy
 		auto *pBuildingClass{ m_pPlaceablePreviewCurrent->GetPreviewedClass() };
 		const auto PreviewedInfluence{ m_pPlaceablePreviewCurrent->GetCurrentInfluence() };
@@ -281,15 +327,16 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 
 		const auto Transform{ m_pCursorRoot->GetComponentTransform() };
 		auto *pSpawned{ GetWorld()->SpawnActor<APlaceableBase>(pBuildingClass, Transform) };
-		
+		pSpawned->OnPlaced();
+
 		//Update deck state (has to be done before gm notify)
 		const auto PlaceableCategory{ pSpawned->GetPlaceableCategory() };
-		m_pDeckState->ClearCachedPlaceableForCategory(PlaceableCategory);
-		m_pDeckState->ChargeCountDecrementFor(PlaceableCategory);
+		m_pDeckState->NotifyOnCategoryPlaceablePlaced(PlaceableCategory);
 
 		//Update gm
 		auto *pGm{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
 		pGm->AddPointsCurrent(PreviewedInfluence);
+		OnCommitPreviewBuilding(PreviewedInfluence);
 								
 		return true;
 
@@ -300,7 +347,7 @@ bool ARTSPlayerEye::TryCommitPlaceablePreview()
 	
 }
 
-void ARTSPlayerEye::DiscardCurrentPlaceablePreview(const bool bIsInstigatedByPlayer)
+void ARTSPlayerEye::DiscardCurrentPlaceablePreview(bool bIsPlayerInstigated)
 {
 	if(m_pPlaceablePreviewCurrent)
 	{
@@ -308,6 +355,11 @@ void ARTSPlayerEye::DiscardCurrentPlaceablePreview(const bool bIsInstigatedByPla
 		m_pPlaceablePreviewCurrent->Destroy();
 	}
 	m_bIsPlaceablePlaceable = false;
+
+	if(bIsPlayerInstigated)
+	{
+		OnAbortPreviewBuilding();
+	}
 
 
 }
@@ -319,9 +371,9 @@ int32 ARTSPlayerEye::GetCurrentChargesForPlaceables() const
 
 }
 
-void ARTSPlayerEye::NotifyOnDisplayNewDecks()
+void ARTSPlayerEye::NotifyOnNewDeckAvailable()
 {
-	m_pDeckState->NotifyOnDisplayNewDecks();
+	m_pDeckState->AddDeckCharge();
 
 
 }
@@ -329,6 +381,44 @@ void ARTSPlayerEye::NotifyOnDisplayNewDecks()
 bool ARTSPlayerEye::GetAreDecksSelectable() const
 {
 	return m_pDeckState->GetAreDecksSelectable();
+
+
+}
+
+
+void ARTSPlayerEye::OnPointsRequiredChanged(const int32 NewPoints)
+{
+	m_pMainHudWidget->OnPointsRequiredChanged(NewPoints);
+
+
+}
+
+void ARTSPlayerEye::OnPointsCurrentChanged(const int32 NewPoints)
+{
+	m_pMainHudWidget->OnPointsCurrentChanged(NewPoints);
+
+
+}
+
+void ARTSPlayerEye::OnNextLevelAccessible()
+{
+	m_pMainHudWidget->OnNextLevelAccessible();
+
+
+}
+
+void ARTSPlayerEye::SwitchToPlaceableSelectionMode()
+{
+	DiscardCurrentPlaceablePreview();
+		
+	m_pMainHudWidget->SwitchToPlaceableSelectionUI();
+
+
+}
+
+void ARTSPlayerEye::SwitchToPlaceablePlacementMode()
+{
+	m_pMainHudWidget->SwitchToPlaceablePlacementUI();
 
 
 }
@@ -361,17 +451,9 @@ void ARTSPlayerEye::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//
-	auto *pGM{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) };
-
-	auto *pWidget{ CreateWidget<UMainHudWidgetBase>(GetWorld(), m_MainHudClass.Get()) };
-	pWidget->AddToViewport();
-
-	m_pDeckState = UDeckState::Construct(pGM);
-	m_pDeckStateRenderer = UDeckStateRenderer::Construct(pGM, m_pDeckState, pWidget);
-
-	NotifyOnDisplayNewDecks();
 	
+
+
 }
 
 
@@ -410,6 +492,17 @@ void ARTSPlayerEye::ActionSelectStart()
 {
 	m_CameraState.HandleInput(EAbstractInputEvent::ActionSelect_Start);
 	m_PlacementState.HandleInput(EAbstractInputEvent::ActionSelect_Start);
+
+	auto Hit{ TraceForPlaceable() };
+	if(Hit.IsValidBlockingHit())
+	{
+		if(auto *pGM{ Cast<ACanyonGM>(GetWorld()->GetAuthGameMode()) })
+		{
+			pGM->NotifyPlaceableActionSelect(Hit);
+
+		}
+	}
+
 
 }
 
@@ -457,6 +550,7 @@ void ARTSPlayerEye::IncreaseBuildingRot()
 		const auto RotStep{ 360.f / m_BuildingRotationSteps };
 	   
 		m_pCursorRoot->AddWorldRotation( {0, RotStep, 0} );
+		m_PlacementRuler.NotifyBuildingRotated();
 	}
 		
 
@@ -469,9 +563,53 @@ void ARTSPlayerEye::DecreaseBuildingRot()
 		const auto RotStep{ 360.f / m_BuildingRotationSteps };
 
 		m_pCursorRoot->AddWorldRotation( {0, -RotStep, 0} );
+		m_PlacementRuler.NotifyBuildingRotated();
 	}
 
 
 }
 #pragma endregion
+
+float ARTSPlayerEye::GetMinZoomDist() const
+{	
+	return m_aZoomNodes.Num() > 0 ? m_aZoomNodes[0].m_Distance : 0;
+	
+	
+}
+
+float ARTSPlayerEye::GetMaxZoomDist() const
+{
+	return m_aZoomNodes.Num() > 0 ? m_aZoomNodes[m_aZoomNodes.Num() - 1].m_Distance : 0;
+
+
+}
+
+float ARTSPlayerEye::GetZoomDist() const
+{
+	return m_aZoomNodes[m_ZoomIndex].m_Distance;
+
+
+}
+
+FHitResult ARTSPlayerEye::TraceForPlaceable()
+{
+	FHitResult OutHit{};
+	Cast<APlayerController>(GetController())->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, OutHit);
+
+	if(OutHit.IsValidBlockingHit())
+	{
+		if(auto *pHitActor{ OutHit.Actor.Get() })
+		{
+			if(pHitActor->IsA<APlaceableBase>())
+			{
+				return OutHit;
+			}
+		}
+	}
+
+	return {};
+
+
+}
+
 

@@ -96,6 +96,10 @@ class AKAUDIO_API FAkAudioDevice
 	: public AK::SoundFrame::IClient
 #endif
 {
+private:
+	TSet<FString> m_PersistentBankNameSet;
+
+
 public:
 	//virtual bool Exec( const TCHAR* Cmd, FOutputDevice& Ar )
 	//{
@@ -168,6 +172,12 @@ public:
 	 * @return Result from ak sound engine 
 	 */
 	AKRESULT LoadBank(
+		const FString&	in_BankName,
+		AkMemPoolId		in_memPoolId,
+		AkBankID &      out_bankID
+		);
+
+	AKRESULT LoadBankPersistent(
 		const FString&	in_BankName,
 		AkMemPoolId		in_memPoolId,
 		AkBankID &      out_bankID

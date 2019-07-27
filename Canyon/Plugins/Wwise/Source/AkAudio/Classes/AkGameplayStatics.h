@@ -33,6 +33,20 @@ class AKAUDIO_API UAkGameplayStatics : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, Category = "Audiokinetic")
 	static bool IsGame(UObject* WorldContextObject);
 
+	UFUNCTION(BlueprintCallable, Category = "Audiokinetic")
+	static void RegisterDefaultListener(AActor *ListenerActor);
+
+	UFUNCTION(BlueprintCallable, Category = "Audiokinetic")
+	static void SetObjectTransform(AActor *ForActor, const FVector &Position, const FVector &Front, const FVector &Up);
+
+
+	//UFUNCTION(BlueprintCallable, Category ="Audiokinetic")
+	static int32 PostEventPersistent(class UAkAudioEvent* AkEvent, class UGameInstance *GI);
+
+	static int32 LoadBankPersistent
+	(
+		class UAkAudioBank *Bank
+	);
 
 	/** Posts a Wwise Event attached to and following the specified component.
 	 * @param AkEvent - Wwise Event to post.

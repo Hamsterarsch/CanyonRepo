@@ -8,6 +8,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDeckWidgetClickedDelegate, const class UWidget *, pClickedWidget);
+DECLARE_DYNAMIC_DELEGATE_RetVal_OneParam(UWidget *, FGetDeckWidget, const class UWidget *, pInstigator);
 
 /**
  * 
@@ -30,11 +31,18 @@ public:
 	UFUNCTION()
 		void NotifyOnDeckClicked(class UPrettyWidget *pClickedWidget);
 
+	UFUNCTION()
+		UWidget *NotifyOnTooltipInvoked(const UWidget *pInstigator);
 
 	static UDeckStateRenderer *Construct(class ACanyonGM *pGM, class UDeckState *pDeckState, class UMainHudWidgetBase *pTargetWidget);
 
 
+
 private:
+	UFUNCTION()
+		void OnDeckChargeAdded();
+
+
 	UPROPERTY()
 		class ACanyonGM *m_pGM;
 
@@ -50,7 +58,11 @@ private:
 	UPROPERTY()
 		TArray<class UPrettyWidget *> m_aPendingSelectableDeckWidgets;
 
-	FDeckWidgetClickedDelegate m_eOnIconClicked;
+	UPROPERTY()
+		FDeckWidgetClickedDelegate m_eOnIconClicked;
+
+	UPROPERTY()
+		FGetDeckWidget m_dOnTooltipInvoked;
 
 
 public:
@@ -59,6 +71,10 @@ public:
 	void AddEventToOnClicked(t_OnIconClickedDelegate &Callback);
 
 	void RemoveEventFromOnClicked(t_OnIconClickedDelegate &Callback);
-	
+
+	void SetDelegateOnTooltipInvoked(const FGetDeckWidget &Callback);
+
+	void ClearDelegateOnTooltipInvoked();
+
 
 };

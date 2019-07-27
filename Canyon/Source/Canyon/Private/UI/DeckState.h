@@ -10,6 +10,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDeckStateChangedDelegate, TSubclassOf<UPlaceableIconWidgetBase>, WidgetClassOfChanged, const FCategoryData &, NewData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeckStateNewDecksSetDelegate, const TArray<TSubclassOf<class UPrettyWidget>> &, aWidgetClasses);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDeckChargeAddedDelegate);
 
 /**
  * 
@@ -22,29 +23,48 @@ class UDeckState : public UObject
 public:
 	UDeckState();
 
-	void ChargeCountDecrementFor(const FString &Category);
-
-	void ClearCachedPlaceableForCategory(const FString &Category);
-
+	void NotifyOnCategoryPlaceablePlaced(const FString &Category);
+	
 	inline int32 GetChargesCurrent() const { return m_ChargesAmount; }
 
-	inline bool GetAreDecksSelectable() const { return m_bAreDecksSelectable; }
+	inline bool GetAreDecksSelectable() const { return m_DeckChargeCount > 0; }
 
-	void NotifyOnDisplayNewDecks();
+	void AddDeckCharge();
+
+	UFUNCTION()
+		void NotifyAddDeckButtonClicked();
 
 	void NotifyOnDeckWidgetClicked(int32 Index);
 
+	void DebugAddChargesForCategory(const FString &Categoty, int32 Num);
+
+	void AddCarryOverCharges(const FCarryOverCharges &CarryCharges);
 
 	UFUNCTION()
 		void ReceiveOnWidgetClicked(const class UWidget *pClickedWidget);
 
+	UFUNCTION()
+		UWidget *GetTooltipWidgetForDeckWidget(const UWidget *pInstigator);
 
 	static UDeckState *Construct(class ACanyonGM *pGM);			
+
+	UPROPERTY()
+		FDeckChargeAddedDelegate m_eOnDeckChargeAdded;
+	
 
 
 private:
 	void AddDeck(const FDeckData &Deck);
 
+	//either added an instance class to the instance list for this category
+	//or loads a new instance and adds it (ppInstanceClass == nullptr)
+	void AppendPendingPlaceableInstance(const FString &Category, const TSubclassOf<class APlaceableBase> *ppInstanceClass = nullptr);
+
+	TSubclassOf<class APlaceableBase> PeekPendingPlaceableInstance(const FString &Category) const;
+
+	TSubclassOf<class APlaceableBase> PopPendingPlaceableInstance(const FString &Category);
+
+	int32 GetPendingInstanceNumForCategory(const FString &Category) const;
 
 	UPROPERTY()
 		class ACanyonGM *m_pGM;
@@ -59,16 +79,16 @@ private:
 
 	UPROPERTY()
 		FOnDeckStateNewDecksSetDelegate m_eOnDeckStateNewDecksSet;
-
+	
 	UPROPERTY()
 		TMap<TSubclassOf<class UPlaceableIconWidgetBase>, FCategoryData> m_DataMapping;
 
 	UPROPERTY()
-		TMap<FString, TSubclassOf<class APlaceableBase>> m_CachedPlaceableClasses;
+		TMap<FString, FChargeWrapper> m_PendingPlaceableInstances;
 	
 	int32 m_ChargesAmount;
 
-	bool m_bAreDecksSelectable;
+	int32 m_DeckChargeCount;
 
 
 public:

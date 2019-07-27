@@ -16,7 +16,9 @@
 			<ShortName>default</ShortName>
 			<Path>default.bnk</Path>
 			<IncludedEvents>
+				<Event Id="3908375313" Name="ActivateWindZoom" ObjectPath="\Events\Default Work Unit\ActivateWindZoom"/>
 				<Event Id="1205645828" Name="musicPlay" ObjectPath="\Events\Default Work Unit\musicPlay"/>
+				<Event Id="3282698780" Name="PlayMusicAmbient" ObjectPath="\Events\Default Work Unit\PlayMusicAmbient"/>
 			</IncludedEvents>
 			<IncludedMemoryFiles>
 				<File Id="69091249" Language="SFX">
@@ -31,6 +33,22 @@
 					<ShortName>SFX\loop1.wav</ShortName>
 					<Path>SFX\SFX\loop1_D79FB2B7.wem</Path>
 				</File>
+				<File Id="462595730" Language="SFX">
+					<ShortName>WIND_LOOP.wav</ShortName>
+					<Path>SFX\WIND_LOOP_D79FB2B7.wem</Path>
+				</File>
+				<File Id="584368103" Language="SFX">
+					<ShortName>01_Featherweight.wav</ShortName>
+					<Path>SFX\01_Featherweight_D79FB2B7.wem</Path>
+				</File>
+				<File Id="607098219" Language="SFX">
+					<ShortName>02_Steam_Powered_Flying Machine.wav</ShortName>
+					<Path>SFX\02_Steam_Powered_Flying Machine_D79FB2B7.wem</Path>
+				</File>
+				<File Id="787825759" Language="SFX">
+					<ShortName>04_Guiding_Light.wav</ShortName>
+					<Path>SFX\04_Guiding_Light_D79FB2B7.wem</Path>
+				</File>
 				<File Id="838187309" Language="SFX">
 					<ShortName>SFX\loop0.wav</ShortName>
 					<Path>SFX\SFX\loop0_D79FB2B7.wem</Path>
@@ -39,27 +57,9 @@
 					<ShortName>SFX\loop2.wav</ShortName>
 					<Path>SFX\SFX\loop2_D79FB2B7.wem</Path>
 				</File>
-			</IncludedMemoryFiles>
-		</SoundBank>
-		<SoundBank Id="984691642" Language="SFX">
-			<ObjectPath>\SoundBanks\Default Work Unit\ingame</ObjectPath>
-			<ShortName>ingame</ShortName>
-			<Path>ingame.bnk</Path>
-			<IncludedEvents>
-				<Event Id="1566564139" Name="swordhit" ObjectPath="\Events\Default Work Unit\swordhit"/>
-			</IncludedEvents>
-			<IncludedMemoryFiles>
-				<File Id="202495991" Language="SFX">
-					<ShortName>SFX\sword_000.wav</ShortName>
-					<Path>SFX\SFX\sword_000_10C4C929.wem</Path>
-				</File>
-				<File Id="210550766" Language="SFX">
-					<ShortName>SFX\sword_001.wav</ShortName>
-					<Path>SFX\SFX\sword_001_10C4C929.wem</Path>
-				</File>
-				<File Id="886573483" Language="SFX">
-					<ShortName>SFX\sword_002.wav</ShortName>
-					<Path>SFX\SFX\sword_002_10C4C929.wem</Path>
+				<File Id="983660376" Language="SFX">
+					<ShortName>03_City_Above_The_Sky.wav</ShortName>
+					<Path>SFX\03_City_Above_The_Sky_D79FB2B7.wem</Path>
 				</File>
 			</IncludedMemoryFiles>
 		</SoundBank>

@@ -7,10 +7,19 @@ State	ID	Name	State Group			Notes
 	1125500713	intro	BGM			
 	4184794294	outro	BGM			
 
+Game Parameter	ID	Name			Wwise Object Path	Notes
+	1265109519	MusicAmbientLowpass			\Default Work Unit\MusicAmbientLowpass	
+	1608475463	VolumeCoeffMusic			\Default Work Unit\VolumeCoeffMusic	
+	2750197712	VolumeCoeffVoice			\Default Work Unit\VolumeCoeffVoice	
+	2795848192	VolumeCoeffEffects			\Default Work Unit\VolumeCoeffEffects	
+	3569852348	VolumeCoeffMaster			\Default Work Unit\VolumeCoeffMaster	
+
 Audio Bus	ID	Name			Wwise Object Path	Notes
 	393239870	SFX			\Default Work Unit\SFX	
+	1942696649	Effects			\Default Work Unit\Master Audio Bus\Effects	
+	3170124113	Voice			\Default Work Unit\Master Audio Bus\Voice	
 	3803692087	Master Audio Bus			\Default Work Unit\Master Audio Bus	
-	3991942870	Music			\Default Work Unit\Music	
+	3991942870	Music			\Default Work Unit\Master Audio Bus\Music	
 
 Audio Devices	ID	Name	Type				Notes
 	2317455096	No_Output	No Output			

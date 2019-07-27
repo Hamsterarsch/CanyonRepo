@@ -1,0 +1,2 @@
+#include "Components/StaticInstancedMeshCanyonComp.h"
+

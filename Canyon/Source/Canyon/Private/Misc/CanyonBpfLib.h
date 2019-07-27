@@ -15,6 +15,13 @@ class UCanyonBpfLib : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable, Category="Audiokinetic")
+		static int32 PostEventPersistent(class UAkAudioEvent *AkEvent, class UGameInstance *GI);
+
+	UFUNCTION(BlueprintCallable, Category="Audiokinetic")
+		static int32 LoadBankPersistent(class UAkAudioBank *Bank);
+
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		static TSubclassOf<class APlaceableBase> GetCategoryPlaceableClass(FString Category);
 
@@ -23,5 +30,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		static uint8 EnumStringToEnumByte(const class UUserDefinedEnum *pEnum, const FString &EnumIdentifier);
 
+	UFUNCTION(BlueprintCallable)
+		static void SetBrushImage(UPARAM(ref) struct FSlateBrush &Target, UObject *pObject);
 	
+
 };

@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "CanyonBpfLib.h"
 #include "CanyonHelpers.h"
 #include "Placeables/PlaceableBase.h"
@@ -9,6 +8,23 @@
 #include <set>
 #include "Misc/CanyonLogs.h"
 #include "Paths.h"
+#include "SlateBrush.h"
+#include "AkAudio/Classes/AkGameplayStatics.h"
+#include "CanyonGI.h"
+
+int32 UCanyonBpfLib::PostEventPersistent(class UAkAudioEvent *AkEvent, class UGameInstance *GI)
+{
+	return UAkGameplayStatics::PostEventPersistent(AkEvent, GI);
+
+
+}
+
+int32 UCanyonBpfLib::LoadBankPersistent(UAkAudioBank* Bank)
+{
+	return UAkGameplayStatics::LoadBankPersistent(Bank);
+
+
+}
 
 TSubclassOf<APlaceableBase> UCanyonBpfLib::GetCategoryPlaceableClass(FString Category)
 {
@@ -156,6 +172,13 @@ uint8 UCanyonBpfLib::EnumStringToEnumByte(const UUserDefinedEnum* pEnum, const F
 	}
 
 	return pEnum->GetIndexByNameString(EnumIdentifier);
+
+
+}
+
+void UCanyonBpfLib::SetBrushImage(FSlateBrush &Target, UObject* pObject)
+{
+	Target.SetResourceObject(pObject);
 
 
 }

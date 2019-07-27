@@ -21,7 +21,8 @@ public:
 	(
 		class UWorld *pWorld,
 		const FTransform &Transform, 
-		TSubclassOf<APlaceableBase> PreviewedPlaceableClass
+		const TSubclassOf<APlaceableBase> &PreviewedPlaceableClass,
+		const TSubclassOf<class UInfluenceDisplayWidgetBase> &InfluenceWidgetClass
 	);
 
 	UClass *GetPreviewedClass() const;
@@ -43,6 +44,8 @@ private:
 	void SetInfluenceRadius(float Radius);
 
 	void SetMaterialForAllMeshes(UMaterialInterface *pMaterial);
+
+	void ResetMaterialForAllMeshes();
 
 
 	UPROPERTY()

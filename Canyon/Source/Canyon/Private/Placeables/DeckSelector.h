@@ -1,26 +1,9 @@
 #pragma once
 #include "CoreMinimal.h"
 #include <set>
-#include "WidgetBase/PrettyWidget.h"
+#include "Placeables/DeckData.h"
 #include "DeckSelector.generated.h"
 
-USTRUCT()
-struct FDeckData
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY()
-		TMap<FString, int32> m_ChargeMapping;
-
-	UPROPERTY()
-		TSubclassOf<UPrettyWidget> m_DeckWidgetClass;
-
-	UPROPERTY()
-		FSoftObjectPath m_DeckAssetPath;
-
-
-};
 
 USTRUCT()
 struct FDeckPathWithMetadata
@@ -78,7 +61,11 @@ public:
 	inline int32 GetDeckGeneration() const { return m_DeckGeneration; }
 
 	void IncreaseDeckGeneration();
-	
+
+	void AddCarryOverChargesToIssued(const FCarryOverCharges &ChargeData);
+
+	bool UsesEndlessFillers() const; 
+
 
 protected:
 	UPROPERTY(EditAnywhere)
@@ -142,6 +129,8 @@ private:
 	
 	UPROPERTY()
 		int32 m_DeckGeneration;
+
+	bool m_bWereEndlessFillersInvoked;
 
 	//cache
 	TArray<FString> m_aEndlessFillerCats;

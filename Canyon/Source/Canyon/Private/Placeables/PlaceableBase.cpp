@@ -10,7 +10,8 @@
 #include "Components/CanyonMeshCollisionComp.h"
 
 
-APlaceableBase::APlaceableBase()
+APlaceableBase::APlaceableBase() :
+	m_bIsHighlighted{ false }
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -112,6 +113,14 @@ int32 APlaceableBase::EndInfluenceVis()
 FString APlaceableBase::GetPlaceableCategory() const
 {
 	return GetInfluenceEnumClass()->GetDisplayNameTextByIndex(GetInfluenceEnumValue()).ToString();
+
+
+}
+
+void APlaceableBase::ToggleSelectionHighlight()
+{
+	m_bIsHighlighted = !m_bIsHighlighted;
+	OnToggleSelectionHighlight();
 
 
 }

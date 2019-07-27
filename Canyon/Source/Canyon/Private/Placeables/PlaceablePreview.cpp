@@ -13,7 +13,9 @@
 #include "Misc/CanyonLogs.h"
 #include "Components/CanyonMeshCollisionComp.h"
 #include "ConstructorHelpers.h"
+#include "WidgetBase/InfluenceDisplayWidgetBase.h"
 #include "Misc/CanyonGM.h"
+#include "Engine/StaticMesh.h"
 
 
 APlaceablePreview::APlaceablePreview() :
@@ -47,7 +49,8 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 (
 	UWorld *pWorld,	
 	const FTransform &Transform, 
-	TSubclassOf<APlaceableBase> PreviewedPlaceableClass
+	const TSubclassOf<APlaceableBase> &PreviewedPlaceableClass,
+	const TSubclassOf<class UInfluenceDisplayWidgetBase> &InfluenceWidgetClass
 )
 {
 	auto *pPreviewedPlaceableClass{ PreviewedPlaceableClass.Get() };
@@ -65,6 +68,8 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 	for(auto &&pNode : apNodes)
 	{
 		auto *pMeshComp{ NewObject<UStaticMeshCanyonComp>(pPreview, UStaticMeshCanyonComp::StaticClass(), NAME_None, RF_NoFlags, pNode->ComponentTemplate) };
+
+		//attach to previews root
 		pMeshComp->AttachToComponent(pPreview->GetRootComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 
 		auto *pAsSceneComp{ Cast<USceneComponent>(pNode->ComponentTemplate) };
@@ -94,7 +99,7 @@ APlaceablePreview *APlaceablePreview::SpawnPlaceablePreview
 	pPreview->SetInfluenceRadius(DependencyRadius);
 
 	pPreview->m_InfluenceCurrentGain = pGm->GetInfluenceBasisForCategory(CategoryName);
-	pPreview->InitInfluenceDisplayWidget(pCdo->GetInfluenceWidgetClass());
+	pPreview->InitInfluenceDisplayWidget(InfluenceWidgetClass.Get());
 	pPreview->SetInfluenceDisplayed(pPreview->m_InfluenceCurrentGain);
 
 	UGameplayStatics::FinishSpawningActor(pPreview, Transform);
@@ -113,7 +118,8 @@ UClass *APlaceablePreview::GetPreviewedClass() const
 void APlaceablePreview::NotifyPlaceable()
 {
 	UE_LOG(LogCanyonPlacement, Log, TEXT("Notfiy building placeable."));
-	SetMaterialForAllMeshes(m_pMaterialPlaceable);
+	ResetMaterialForAllMeshes();
+	//SetMaterialForAllMeshes(m_pMaterialPlaceable);
 
 
 }
@@ -184,5 +190,23 @@ void APlaceablePreview::SetMaterialForAllMeshes(UMaterialInterface* pMaterial)
 		}
 
 	}
+
+
+}
+
+void APlaceablePreview::ResetMaterialForAllMeshes()
+{
+	for (auto *pComponent : GetComponentsByClass(UStaticMeshCanyonComp::StaticClass()))
+	{
+		auto *pAsMeshComp{ Cast<UStaticMeshCanyonComp>(pComponent) };
+						
+		for (int32 MaterialIndex{ 0 }; MaterialIndex < pAsMeshComp->GetNumMaterials(); ++MaterialIndex)
+		{
+			pAsMeshComp->SetMaterial(MaterialIndex, pAsMeshComp->GetStaticMesh()->GetMaterial(MaterialIndex));
+
+		}
+
+	}
+
 
 }

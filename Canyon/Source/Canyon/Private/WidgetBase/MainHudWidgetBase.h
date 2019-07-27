@@ -28,6 +28,30 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnDeckSelected(int32 Index);
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnPointsCurrentChanged(int32 NewCurrentPoints);
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnPointsRequiredChanged(int32 NewPointsRequired);
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnNextLevelAccessible();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void SwitchToPlaceableSelectionUI();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void SwitchToPlaceablePlacementUI();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnPlaceableSelectionChanged(int32 CountSelectedCurrent, int32 CountSelectedMax);
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnDeckChargeAdded();
+
+	UPROPERTY(EditAnywhere, Meta=(BindWidget))
+		class UButton *m_pAddDeckButton;
+
+	
 };
 

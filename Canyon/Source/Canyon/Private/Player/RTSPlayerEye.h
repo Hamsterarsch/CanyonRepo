@@ -67,8 +67,16 @@ class CANYON_API ARTSPlayerEye : public ASpectatorPawn
 public:
 	ARTSPlayerEye();
 
+	void BeginGame();
+
 	UFUNCTION(BlueprintCallable)
 		void CreateNewPlacablePreview(TSubclassOf<class APlaceableBase> NewPlaceableClass);
+
+	void DebugAddChargesForCategory(const FString &Category, int32 Num);
+
+	void AddCarryOverChargesToDeck(const struct FCarryOverCharges &CarryCharges);
+
+	void NotifyBuildingSelectionChanged(int32 CountSelectedCurrent, int32 CountSelectedMax);;
 
 	//Movement
 	void AddForwardMovement(float AxisValue);
@@ -96,18 +104,27 @@ public:
 
 	bool TryCommitPlaceablePreview();
 
-	void DiscardCurrentPlaceablePreview(bool bIsIntigatedByPlayer = false);
+	void DiscardCurrentPlaceablePreview(bool bIsPlayerInstigated = false);
 
 	inline bool GetIsInPlacement() const { return m_PlacementState.GetIsInPlacement(); }
 
 	int32 GetCurrentChargesForPlaceables() const;
 
-	void NotifyOnDisplayNewDecks();
+	void NotifyOnNewDeckAvailable();
 
 	bool GetAreDecksSelectable() const;
 
 	inline float GetPlacementAbortSuccessTime() const { return m_PlacementAbortSuccessTime; }
 
+	void OnPointsRequiredChanged(int32 NewPoints);
+
+	void OnPointsCurrentChanged(int32 NewPoints);
+
+	void OnNextLevelAccessible();
+
+	void SwitchToPlaceableSelectionMode();
+
+	void SwitchToPlaceablePlacementMode();
 
 	const static FName s_AxisMouseX;
 
@@ -144,6 +161,32 @@ protected:
 
 	void DecreaseBuildingRot();
 	//End Input
+
+	UFUNCTION(BlueprintCallable)
+		float GetMinZoomDist() const;
+
+	UFUNCTION(BlueprintCallable)
+		float GetMaxZoomDist() const;
+
+	UFUNCTION(BlueprintCallable)
+		float GetZoomDist() const;
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnZoomChanged();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnBeginPreviewBuilding();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnCommitPreviewBuilding(int32 PointDelta);
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnAbortPreviewBuilding();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnUnitTransferEnabled();
+
+
 	
 	UPROPERTY(VisibleAnywhere)
 		class USpringArmComponent *m_pCameraSpringArm;
@@ -168,6 +211,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, DisplayName = "Min Camera Pitch", Category="Controls")
 		float m_CameraMinPitch;
+
+	UPROPERTY(EditDefaultsOnly, Category="Canyon|UI")
+		TSubclassOf<class UInfluenceDisplayWidgetBase> m_PreviewInfluenceDisplayWidget;
 
 	UPROPERTY(EditDefaultsOnly)
 		//the maximum hold time (in seconds) of the placement abort button
@@ -198,6 +244,9 @@ protected:
 	UPROPERTY()
 		class UDeckStateRenderer *m_pDeckStateRenderer;
 
+	UPROPERTY()
+		class UMainHudWidgetBase *m_pMainHudWidget;
+	
 
 	bool m_bIsPlaceablePlaceable;
 	FVector2D m_MouseShufflePreMousePos;
@@ -211,6 +260,8 @@ protected:
 	CPlacementStateMachine m_PlacementState;
 	CPlacementRuler m_PlacementRuler;
 
+private:
+	FHitResult TraceForPlaceable();
 
 
 };

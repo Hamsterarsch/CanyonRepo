@@ -14,6 +14,10 @@ public:
 	//also enforces surface types and other constraints
 	FVector ComputeTerrainDepenetration(const FHitResult &ForHit, const APlaceableBase *pPlaceable);
 
+
+	inline void NotifyBuildingPlaced() { m_bIsLastPlaceablePositionValidInvalid = true; }
+	inline void NotifyBuildingRotated() { m_bWasBuildingRotated = true; }
+
 	//reqs
 	//max accepted normal angle for placement
 
@@ -22,13 +26,19 @@ private:
 
 	void HandlePenetratingHits(APlaceableBase *pPlaceable) const;
 
+	bool AreAllCornersGrounded( const FVector &OutPosition, UCanyonMeshCollisionComp *pHull) const;
+
 	bool m_bInResnapRecovery;
 	bool m_bLastRet{ false };
 	FVector m_LastTerrainTracePos;
 	FVector m_LastPlaceablePosition;
-
+	FVector m_LastPlaceablePositionValid;
+	float m_LastTerrainTraceZ;
+	bool m_bIsLastPlaceablePositionValidInvalid;
+	bool m_bWasBuildingRotated;
 
 };
 
 bool TraceForTerrainUnderCursor(FHitResult &OutHit, const UWorld *pWorld);
 
+bool IsNewHullPositionValid(const FVector &HullPos, class UCanyonMeshCollisionComp *pHullComp, float Threshold, bool bUseComplex);

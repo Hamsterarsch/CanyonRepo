@@ -17,7 +17,7 @@ UPlaceableIconWidgetBase::UPlaceableIconWidgetBase(const FObjectInitializer& Obj
 	static ConstructorHelpers::FObjectFinder<UFont> RobotoFontObj(*UWidget::GetDefaultFontName());
 	m_ChargesFontStyle = FSlateFontInfo(RobotoFontObj.Object, 24, FName("Bold"));
 	m_ChargesFontStyle.OutlineSettings.OutlineSize = 1;
-
+	
 
 }
 
@@ -51,7 +51,10 @@ bool UPlaceableIconWidgetBase::Initialize()
 			pSlot->SetAutoSize(true);
 		}
 		WidgetTree->RootWidget = pCanvasPanel;
-		
+
+		//tooltip binding
+		ToolTipWidgetDelegate.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UPlaceableIconWidgetBase, ReceiveOnTooltipInvoked));
+
 	}
 	
 	return SuperRet;
@@ -70,6 +73,19 @@ void UPlaceableIconWidgetBase::RemoveEventFromOnClicked(t_ClickDelegate &Callbac
 {
 	m_eOnClicked.Remove(Callback);
 
+
+}
+
+void UPlaceableIconWidgetBase::SetDelegateOnTooltipInvoked(const FGetDeckWidget &Callback)
+{	
+	m_dOnInvokeTooltip = Callback;
+
+
+}
+
+void UPlaceableIconWidgetBase::ClearDelegateOnTooltipInvoked()
+{
+	m_dOnInvokeTooltip.Clear();
 
 }
 
@@ -101,6 +117,15 @@ FReply UPlaceableIconWidgetBase::NativeOnMouseButtonDown(const FGeometry& InGeom
 	m_eOnClicked.Broadcast(this);
 		
 	return FReply::Handled();
+
+
+}
+
+//Private------------------------------
+
+UWidget* UPlaceableIconWidgetBase::ReceiveOnTooltipInvoked()
+{
+	return m_dOnInvokeTooltip.Execute(this);
 
 
 }

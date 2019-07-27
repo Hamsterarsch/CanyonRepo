@@ -12,7 +12,7 @@ void UPrettyWidget::ShowWidget_Implementation()
 
 void UPrettyWidget::HideWidget_Implementation()
 {
-	SetVisibility(ESlateVisibility::Hidden);
+	SetVisibility(ESlateVisibility::Collapsed);
 
 
 }
@@ -20,6 +20,7 @@ void UPrettyWidget::HideWidget_Implementation()
 FReply UPrettyWidget::NativeOnMouseButtonDown(const FGeometry &InGeometry, const FPointerEvent &InMouseEvent)
 {
 	m_eOnMouseButtonDown.Broadcast(this);
+	
 	
 	return FReply::Handled();
 

@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "ActorAutoCollectedInstancedMeshes.h"
 #include "Engine/UserDefinedEnum.h"
 #include "PlaceableBase.generated.h"
 
 
 UCLASS()
-class APlaceableBase : public AActor
+class APlaceableBase : public AActorDeferredPlay
 {
 	GENERATED_BODY()
 	
@@ -34,12 +34,19 @@ public:
 
 	FString GetPlaceableCategory() const;
 
+	inline bool IsHightlighted() const { return m_bIsHighlighted; }
+
 	UFUNCTION(BlueprintImplementableEvent)
 		int32 GetInfluenceEnumValue() const;
 
 	UFUNCTION(BlueprintImplementableEvent)
 		UUserDefinedEnum *GetInfluenceEnumClass() const;
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnPlaced();
+
+	void ToggleSelectionHighlight();
+	
 
 protected:
 	void SetInfluenceDisplayed(int32 Influence);
@@ -47,6 +54,10 @@ protected:
 	void InitInfluenceDisplayWidget(UClass *pClass);
 	
 	virtual void BeginPlay() override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+		//Returns wheter the building is now selected (true) or not
+		bool OnToggleSelectionHighlight();
 		
 
 	UPROPERTY(EditDefaultsOnly)
@@ -67,9 +78,14 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly)
 		class UCanyonMeshCollisionComp *m_pMeshCollisionComp;
 
+	UPROPERTY(BlueprintReadOnly)
+		bool m_bIsHighlighted;
+
 
 private:
 	static FString GetInfluenceQualifier(const TSubclassOf<APlaceableBase>& ForClass);
+
+
 
 
 };

@@ -162,6 +162,27 @@ void UDeckSelector::IncreaseDeckGeneration()
 
 }
 
+void UDeckSelector::AddCarryOverChargesToIssued(const FCarryOverCharges &ChargeData)
+{
+	for(auto &&Entry : ChargeData.m_Charges)
+	{
+		auto &IssuedChargeCount{ m_IssuedChargesMap.FindOrAdd(Entry.Key) };
+		IssuedChargeCount += Entry.Value.Data.Num();
+		
+	}
+
+
+
+
+}
+
+bool UDeckSelector::UsesEndlessFillers() const
+{
+	return m_aDecksValid.Num() == 0;
+
+
+}
+
 void UDeckSelector::AddFillerChargesToDeckData(const int32 FillerChargeCount, FDeckData &DeckData, UDeckDatabaseNative *pDeckTemplate)
 {	
 	//trivial case
