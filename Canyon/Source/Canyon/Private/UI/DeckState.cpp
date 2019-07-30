@@ -6,6 +6,7 @@
 #include "Player/RTSPlayerEye.h"
 #include "WidgetBase/PlaceableIconWidgetBase.h"
 #include "Misc/CanyonBpfLib.h"
+#include "Misc/CanyonLogs.h"
 #include "WidgetBase/InfluenceTooltipWidgetBase.h"
 
 //Public-------------------
@@ -58,7 +59,11 @@ void UDeckState::NotifyAddDeckButtonClicked()
 {
 	if(m_pGM->IsInEndlessMode())
 	{
-		
+		UE_LOG(LogCanyonCommon, Log, TEXT("Using endless filler deck"));
+		AddDeck(m_pGM->GetEndlessDeckData());
+		return;
+
+
 	}
 
 	if(m_aPendingSelectableDecks.Num() >= m_DesiredDeckAmount)
@@ -71,15 +76,6 @@ void UDeckState::NotifyAddDeckButtonClicked()
 	const auto NewDeckAmount{ m_DesiredDeckAmount - m_aPendingSelectableDecks.Num() };
 
 	m_aPendingSelectableDecks.Append(m_pGM->GetDeckData(NewDeckAmount));
-
-	//no valid deck exist, assume endless mode
-	if(m_aPendingSelectableDecks.Num() == 0)
-	{
-		AddDeck(m_pGM->GetEndlessDeckData());
-		return;
-
-
-	}
 	
 	TArray<TSubclassOf<UPrettyWidget>> aDeckWidgetClasses{};
 	for(auto &&DeckData : m_aPendingSelectableDecks)
