@@ -31,8 +31,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Appearance", DisplayName="Charge Display Font Style")
 		FSlateFontInfo m_ChargesFontStyle;
 
-	UPROPERTY(BlueprintReadOnly, Meta = (BindWidgetOptional))
-		class UTextBlock *m_pChargesTextBlock;
+	UPROPERTY(BlueprintReadOnly)
+		class UPointCircleWidgetBase *m_pPointCounter;
 
 
 private:
@@ -44,6 +44,9 @@ private:
 
 	UPROPERTY()
 		FGetDeckWidget m_dOnInvokeTooltip;
+
+	UPROPERTY()
+		TSubclassOf<class UPointCircleWidgetBase> m_pPointCounterClass;
 
 	
 public:
