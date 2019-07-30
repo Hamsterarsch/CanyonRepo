@@ -188,10 +188,10 @@ protected:
 
 
 	
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere)
 		class USpringArmComponent *m_pCameraSpringArm;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere)
 		class UCameraComponent *m_pCamera;
 	
 	UPROPERTY(EditDefaultsOnly, DisplayName="Mouse Shuffle Speed", Category="Controls")
