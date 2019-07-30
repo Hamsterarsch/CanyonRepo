@@ -11,6 +11,7 @@
 #include "SlateBrush.h"
 #include "AkAudio/Classes/AkGameplayStatics.h"
 #include "CanyonGI.h"
+#include "EnumEditorUtils.h"
 
 int32 UCanyonBpfLib::PostEventPersistent(class UAkAudioEvent *AkEvent, class UGameInstance *GI)
 {
@@ -162,7 +163,14 @@ TArray<UDeckDatabaseNative *> UCanyonBpfLib::GetRandomDecks(const int32 NumDecks
 
 }
 
-uint8 UCanyonBpfLib::EnumStringToEnumByte(const UUserDefinedEnum* pEnum, const FString& EnumIdentifier)
+bool operator==(const FText &Lhs, const FText &Rhs)
+{
+	return Lhs.ToString() == Rhs.ToString();
+
+
+}
+
+uint8 UCanyonBpfLib::EnumStringToEnumByte(UUserDefinedEnum* pEnum, const FString& EnumIdentifier)
 {
 	if(!pEnum)
 	{
@@ -171,7 +179,8 @@ uint8 UCanyonBpfLib::EnumStringToEnumByte(const UUserDefinedEnum* pEnum, const F
 		
 	}
 
-	return pEnum->GetIndexByNameString(EnumIdentifier);
+	auto *pIdentifier{ pEnum->DisplayNameMap.FindKey(FText::FromString(EnumIdentifier)) };
+	return pEnum->GetIndexByNameString(pIdentifier->ToString());
 
 
 }

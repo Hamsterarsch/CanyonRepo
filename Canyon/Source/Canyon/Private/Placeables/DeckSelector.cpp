@@ -335,7 +335,12 @@ void UDeckSelector::AddFillerCharges
 			auto *pIssueMapItem{ m_IssuedChargesMap.Find(FillerCategory) };
 			auto ChargesAlreadyIssued{ pIssueMapItem ? *pIssueMapItem : 0 };
 
-			NumCharges = FMath::Clamp(NumCharges, 0, MaxChargeTypeOnMap - ChargesAlreadyIssued);
+			if(ChargesAlreadyIssued >= MaxChargeTypeOnMap)
+			{
+				continue;
+
+
+			}			
 		}
 		checkf(NumCharges >= 0, TEXT("Deck Selector charges smaller than zero"));
 			   

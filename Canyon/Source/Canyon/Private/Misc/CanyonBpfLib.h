@@ -28,7 +28,7 @@ public:
 	static TArray<class UDeckDatabaseNative *> GetRandomDecks(const int32 NumDecks, FString SubCategory = "");
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		static uint8 EnumStringToEnumByte(const class UUserDefinedEnum *pEnum, const FString &EnumIdentifier);
+		static uint8 EnumStringToEnumByte(class UUserDefinedEnum *pEnum, const FString &EnumIdentifier);
 
 	UFUNCTION(BlueprintCallable)
 		static void SetBrushImage(UPARAM(ref) struct FSlateBrush &Target, UObject *pObject);
