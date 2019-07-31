@@ -93,10 +93,14 @@ UDeckStateRenderer* UDeckStateRenderer::Construct(ACanyonGM* pGM, UDeckState *pD
 	FGetDeckWidget GetTooltipDelegate{};
 	GetTooltipDelegate.BindUFunction(pDeckState, GET_FUNCTION_NAME_CHECKED(UDeckState, GetTooltipWidgetForDeckWidget));
 	pObj->SetDelegateOnTooltipInvoked(GetTooltipDelegate);
-			
+
+	pDeckState->m_eOnDeckCommitted.AddDynamic(pTargetWidget, &UMainHudWidgetBase::OnNewDeckCommitted);
+
 	pTargetWidget->m_pAddDeckButton->OnClicked.AddDynamic(pDeckState, &UDeckState::NotifyAddDeckButtonClicked);
 
 	pDeckState->m_eOnDeckChargeAdded.AddDynamic(pObj, &UDeckStateRenderer::OnDeckChargeAdded);
+
+
 
 	return pObj;
 

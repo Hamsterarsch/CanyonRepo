@@ -114,7 +114,7 @@ void UPlaceableIconWidgetBase::NativeConstruct()
 }
 
 FReply UPlaceableIconWidgetBase::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
-{
+{	
 	m_eOnClicked.Broadcast(this);
 		
 	return FReply::Handled();
