@@ -11,6 +11,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDeckStateChangedDelegate, TSubclassOf<UPlaceableIconWidgetBase>, WidgetClassOfChanged, const FCategoryData &, NewData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeckStateNewDecksSetDelegate, const TArray<TSubclassOf<class UPrettyWidget>> &, aWidgetClasses);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDeckChargeAddedDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeckCommitted, const FDeckData &, CommitedDeck);
 
 /**
  * 
@@ -52,7 +53,9 @@ public:
 
 	UPROPERTY()
 		FDeckChargeAddedDelegate m_eOnDeckChargeAdded;
-	
+
+	UPROPERTY()
+		FOnDeckCommitted m_eOnDeckCommitted;
 
 
 private:

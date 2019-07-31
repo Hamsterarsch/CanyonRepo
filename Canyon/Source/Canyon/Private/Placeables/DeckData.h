@@ -3,19 +3,19 @@
 #include "DeckData.generated.h"
 
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FDeckData
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		TMap<FString, int32> m_ChargeMapping;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		TSubclassOf<class UPrettyWidget> m_DeckWidgetClass;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		FSoftObjectPath m_DeckAssetPath;
 
 
