@@ -362,7 +362,7 @@ void ACanyonGM::ReceiveOnPointsChanged()
 	(
 		m_PointsCurrent < m_PointsRequired
 		&& pPlayer->GetCurrentChargesForPlaceables() <= 0 
-		&& !pPlayer->GetAreDecksSelectable()
+		&& pPlayer->GetDeckChargesCurrent() == 0
 		&& !m_bIsNextLevelAccessible
 	)
 	{

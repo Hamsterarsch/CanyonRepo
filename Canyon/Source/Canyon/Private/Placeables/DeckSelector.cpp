@@ -60,6 +60,7 @@ TArray<FDeckData> UDeckSelector::GetDeckData(int32 ForAmount)
 	}
 
 	TArray<FDeckData> aOutData{};
+	RegenerateValidDeckData();
 
 	//track decks to remove from valid
 	std::list<int32> UsedIndicesList{};

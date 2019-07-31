@@ -27,7 +27,9 @@ public:
 	
 	inline int32 GetChargesCurrent() const { return m_ChargesAmount; }
 
-	inline bool GetAreDecksSelectable() const { return m_DeckChargeCount > 0; }
+	inline int32 GetDeckChargesCurrent() const { return m_DeckChargeCount; }
+
+	inline bool GetAreDecksSelectable() const { return m_aPendingSelectableDecks.Num() > 0; }
 
 	void AddDeckCharge();
 

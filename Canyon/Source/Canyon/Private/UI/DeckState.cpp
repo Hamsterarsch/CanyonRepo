@@ -57,7 +57,7 @@ void UDeckState::AddDeckCharge()
 
 void UDeckState::NotifyAddDeckButtonClicked()
 {
-	if(m_pGM->IsInEndlessMode())
+	if(m_pGM->IsInEndlessMode() && m_aPendingSelectableDecks.Num() == 0)
 	{
 		UE_LOG(LogCanyonCommon, Log, TEXT("Using endless filler deck"));
 		AddDeck(m_pGM->GetEndlessDeckData());

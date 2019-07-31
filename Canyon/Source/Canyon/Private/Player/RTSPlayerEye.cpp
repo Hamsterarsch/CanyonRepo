@@ -423,6 +423,14 @@ void ARTSPlayerEye::SwitchToPlaceablePlacementMode()
 
 }
 
+int32 ARTSPlayerEye::GetDeckChargesCurrent() const
+{
+	return m_pDeckState->GetDeckChargesCurrent();
+
+
+}
+
+
 //Protected------------------
 
 void ARTSPlayerEye::PostInitializeComponents()

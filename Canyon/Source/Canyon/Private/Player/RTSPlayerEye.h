@@ -112,7 +112,8 @@ public:
 
 	void NotifyOnNewDeckAvailable();
 
-	bool GetAreDecksSelectable() const;
+	UFUNCTION(BlueprintCallable)
+		bool GetAreDecksSelectable() const;
 
 	inline float GetPlacementAbortSuccessTime() const { return m_PlacementAbortSuccessTime; }
 
@@ -125,6 +126,9 @@ public:
 	void SwitchToPlaceableSelectionMode();
 
 	void SwitchToPlaceablePlacementMode();
+
+	int32 GetDeckChargesCurrent() const;
+
 
 	const static FName s_AxisMouseX;
 
