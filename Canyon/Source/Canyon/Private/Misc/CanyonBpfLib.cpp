@@ -11,7 +11,6 @@
 #include "SlateBrush.h"
 #include "AkAudio/Classes/AkGameplayStatics.h"
 #include "CanyonGI.h"
-#include "EnumEditorUtils.h"
 
 int32 UCanyonBpfLib::PostEventPersistent(class UAkAudioEvent *AkEvent, class UGameInstance *GI)
 {
