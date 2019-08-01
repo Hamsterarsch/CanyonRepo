@@ -60,7 +60,10 @@ void UDeckState::NotifyAddDeckButtonClicked()
 	if(m_pGM->IsInEndlessMode() && m_aPendingSelectableDecks.Num() == 0)
 	{
 		UE_LOG(LogCanyonCommon, Log, TEXT("Using endless filler deck"));
-		AddDeck(m_pGM->GetEndlessDeckData());
+
+		auto EndlessDeckData{ m_pGM->GetEndlessDeckData() };
+		m_eOnDeckCommitted.Broadcast(EndlessDeckData);
+		AddDeck(EndlessDeckData);
 		return;
 
 
@@ -97,6 +100,7 @@ void UDeckState::NotifyOnDeckWidgetClicked(int32 Index)
 	m_pGM->FillUpDeckDataNonEndless(m_aPendingSelectableDecks[Index]);
 
 	AddDeck(m_aPendingSelectableDecks[Index]);
+	m_eOnDeckCommitted.Broadcast(m_aPendingSelectableDecks[Index]);
 	m_aPendingSelectableDecks.RemoveAt(Index);
 
 
