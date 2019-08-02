@@ -9,14 +9,20 @@
 #include "CanyonGM.h"
 #include "Player/RTSPlayerEye.h"
 #include "ModuleManager.h"
+#include "Engine/GameViewportClient.h"
 #include "AssetRegistryModule.h"
+#include "UMG/Public/Slate/SObjectWidget.h"
+#include "UMG/Public/Blueprint/UserWidget.h"
+#include "TimerManager.h"
 
 
 UCanyonGI::UCanyonGI() :
 	m_bLoadAllPlaceablesOnStartup{ true },
+	m_LoadingScreenTransitionTime{ 0.25f },
 	m_CarryOverCharges{},
 	m_CarryOverScore{ 0 },
-	m_Seed{ 0 }
+	m_Seed{ 0 },
+	m_bHasLoadingScreenBegun{ false }
 {
 }
 
@@ -26,6 +32,7 @@ void UCanyonGI::Init()
 	
 	FCoreUObjectDelegates::PreLoadMap.AddUObject(this, &UCanyonGI::ReceiveOnPreMapLoaded);
 	FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UCanyonGI::ReceiveOnPostMapLoaded);
+	FWorldDelegates::OnWorldCleanup.AddUObject(this, &UCanyonGI::CleanupWorld);
 
 	//dummy so we dont play in editor without seed
 	m_Seed = FMath::Rand();
@@ -33,12 +40,98 @@ void UCanyonGI::Init()
 
 	UE_LOG(LogCanyonCommon, Warning, TEXT("----INIT WITH SEED: %i ----"), m_Seed);
 
+
+
+
+}
+
+void UCanyonGI::Shutdown()
+{
+	Super::Shutdown();
+
+	m_pLoadingScreenSlate.Reset();
+	m_pLoadingScreenGC.Reset();
+
+
+}
+
+void UCanyonGI::BeginSwitchToNextLevel(const TSoftObjectPtr<UWorld>& NewLevel)
+{
+	m_pTargetWorld = SafeLoadObjectPtr(NewLevel);
+
+	FTimerHandle Handle{};
+	FTimerDelegate TimerDelegate{};
+	TimerDelegate.BindUObject(this, &UCanyonGI::OnLoadingScreenTransitionTimeExpired);
+
+	m_bHasLoadingScreenBegun = true;	
+	auto *pLoadingScreen{ OnBeginLoadingScreen(*m_pTargetWorld->GetMapName()) };
+	if(!m_pLoadingScreenGC.IsValid() || !m_pLoadingScreenSlate.IsValid())
+	{
+		SetupLoadingScreenReferences(pLoadingScreen);
+		GetGameViewportClient()->AddViewportWidgetContent(m_pLoadingScreenSlate.ToSharedRef(), -1);
+	}
+
+	TimerManager->SetTimer(Handle, TimerDelegate, m_LoadingScreenTransitionTime, false);
+
+
+}
+
+void UCanyonGI::StartupGame(bool bContinueGame)
+{
+	if(m_aFirstLevelsPool.Num() <= 0)
+	{
+		return;
+
+
+	}
+
+	m_Seed = FMath::Rand();
+	FMath::SRandInit(m_Seed);
+
+	auto &LevelPath{ m_aFirstLevelsPool[GetRandomIndexSeeded(m_aFirstLevelsPool.Num())] };
+	m_pTargetWorld = SafeLoadObjectPtr(LevelPath);
+	
+	UE_LOG(LogCanyonCommon, Warning, TEXT("----STARTING UP GAME WITH SEED: %i ----"), m_Seed);
+
+	auto *pLoadingScreenWidget{ OnBeginLoadingScreen(*m_pTargetWorld->GetMapName()) };
+	m_bHasLoadingScreenBegun = true;
+
+	SetupLoadingScreenReferences(pLoadingScreenWidget);
+	GetGameViewportClient()->AddViewportWidgetContent(m_pLoadingScreenSlate.ToSharedRef(), -1);
+
+	FTimerHandle Handle{};
+	FTimerDelegate TimerDelegate{};
+	TimerDelegate.BindUObject(this, &UCanyonGI::OnLoadingScreenTransitionTimeExpired);
+
+	TimerManager->SetTimer(Handle, TimerDelegate, m_LoadingScreenTransitionTime, false);
+		
+	   
+}
+
+void UCanyonGI::BuildCarryOverChargesFormSelection(const TArray<APlaceableBase*> &apSelected)
+{
+	for(const auto *pPlaceable : apSelected)
+	{
+		auto &InstanceClassData{ m_CarryOverCharges.m_Charges.FindOrAdd(pPlaceable->GetPlaceableCategory()) };
+		InstanceClassData.Data.Add(pPlaceable->GetClass());
+
+	}
+
+
+}
+
+
+//Private---------------------
+
+void UCanyonGI::LoadPlaceables()
+{
 	if(!m_bLoadAllPlaceablesOnStartup)
 	{
 		return;
 
 
 	}
+
 	UE_LOG(LogCanyonCommon, Warning, TEXT("Begin pre loading placeable assets"));
 
 	auto &Registry{ FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")) };
@@ -72,56 +165,22 @@ void UCanyonGI::Init()
 	}
 	UE_LOG(LogCanyonCommon, Warning, TEXT("End pre loading placeable assets"));
 
-	FWorldDelegates::OnWorldCleanup.AddUObject(this, &UCanyonGI::CleanupWorld);
-
 
 }
 
-void UCanyonGI::BeginLevelSwitch(const TSoftObjectPtr<UWorld>& NewLevel)
-{
-	auto *pTargetWorld{ SafeLoadObjectPtr(NewLevel) };
-
-	UGameplayStatics::OpenLevel(GetWorld(), *pTargetWorld->GetMapName());
-
-
-}
-
-void UCanyonGI::StartupGame(bool bContinueGame)
-{
-	if(m_aFirstLevelsPool.Num() <= 0)
-	{
-		return;
-
-
-	}
-
-	m_Seed = FMath::Rand();
-	FMath::SRandInit(m_Seed);
-
-	auto &LevelPath{ m_aFirstLevelsPool[GetRandomIndexSeeded(m_aFirstLevelsPool.Num())] };
-	auto *pTargetWorld{ SafeLoadObjectPtr(LevelPath) };
+void UCanyonGI::SetupLoadingScreenReferences(UUserWidget *pLoadingScreen)
+{	
+	m_pLoadingScreenGC =
+		pLoadingScreen->TakeDerivedWidget<SObjectWidget>([]( UUserWidget* Widget, TSharedRef<SWidget> Content ) -> TSharedPtr<SObjectWidget> {
+		       return SNew( SObjectWidget, Widget )[ Content ];
+		});
 	
-	UE_LOG(LogCanyonCommon, Warning, TEXT("----STARTING UP GAME WITH SEED: %i ----"), m_Seed);
 	
-	UGameplayStatics::OpenLevel(GetWorld(), *pTargetWorld->GetMapName());
-	
-	   
-}
-
-void UCanyonGI::BuildCarryOverChargesFormSelection(const TArray<APlaceableBase*> &apSelected)
-{
-	for(const auto *pPlaceable : apSelected)
-	{
-		auto &InstanceClassData{ m_CarryOverCharges.m_Charges.FindOrAdd(pPlaceable->GetPlaceableCategory()) };
-		InstanceClassData.Data.Add(pPlaceable->GetClass());
-
-	}
+	auto LoadingScreenSlateRef{ pLoadingScreen->TakeWidget() };
+	m_pLoadingScreenSlate = LoadingScreenSlateRef;
 
 
 }
-
-
-//Private---------------------
 
 void UCanyonGI::FetchCarryOverDataFromOldLevel(const UWorld* pWorld)
 {
@@ -170,9 +229,19 @@ void UCanyonGI::CleanupWorld(UWorld* pWorld, bool bSessionEnded, bool bCleanupRe
 
 }
 
+void UCanyonGI::OnLoadingScreenTransitionTimeExpired()
+{
+	UGameplayStatics::OpenLevel(GetWorld(), *m_pTargetWorld->GetMapName());
+
+
+}
+
 void UCanyonGI::ReceiveOnPreMapLoaded(const FString& MapName)
 {
-	OnBeginLoadingScreen(MapName);
+	if(!m_bHasLoadingScreenBegun)
+	{
+		OnBeginLoadingScreen(MapName);		
+	}
 	FetchCarryOverDataFromOldLevel(GetWorld());
 
 
@@ -197,8 +266,10 @@ void UCanyonGI::ReceiveOnPostMapLoaded(UWorld* pLoadedWorld)
 	//reset carry over data
 	m_CarryOverCharges.m_Charges.Empty();
 
-	OnEndLoadingScreen(pLoadedWorld);
-	
-	
+	if(m_bHasLoadingScreenBegun)
+	{
+		OnEndLoadingScreen(pLoadedWorld);		
+	}
+		
 
 }

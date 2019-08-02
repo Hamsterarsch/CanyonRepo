@@ -245,7 +245,7 @@ void ACanyonGM::EnterNextLevel()
 {
 	auto *pGI{ Cast<UCanyonGI>(GetGameInstance()) };
 	
-	pGI->BeginLevelSwitch(m_aNextLevelsPool[GetRandomIndexSeeded(m_aNextLevelsPool.Num())]);
+	pGI->BeginSwitchToNextLevel(m_aNextLevelsPool[GetRandomIndexSeeded(m_aNextLevelsPool.Num())]);
 
 
 }

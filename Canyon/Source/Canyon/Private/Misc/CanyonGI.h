@@ -20,9 +20,10 @@ public:
 
 	virtual void Init() override;
 
+	virtual void Shutdown() override;
 
 	//should commit any analytics data, save the game and init the level switch
-	void BeginLevelSwitch(const TSoftObjectPtr<UWorld> &NewLevel);
+	void BeginSwitchToNextLevel(const TSoftObjectPtr<UWorld> &NewLevel);
 
 
 	UFUNCTION(BlueprintCallable)
@@ -37,7 +38,7 @@ public:
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
-		void OnBeginLoadingScreen(const FString &MapName);
+		class UUserWidget *OnBeginLoadingScreen(const FString &MapName);
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnEndLoadingScreen(UWorld *pLoadedWorld);
@@ -49,14 +50,24 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 		bool m_bLoadAllPlaceablesOnStartup;
 
+	UPROPERTY(EditDefaultsOnly)
+		float m_LoadingScreenTransitionTime;
+
 
 private:
+	void LoadPlaceables();
+
+	void SetupLoadingScreenReferences(class UUserWidget *pLoadingScreen);
+
 	void FetchCarryOverDataFromOldLevel(const UWorld *pWorld);
 
 	void SetupCarryOverDataInNewLevel(UWorld *pWorld) const;
 
 	void CleanupWorld(UWorld *pWorld, bool bSessionEnded, bool bCleanupResources);
 
+
+	UFUNCTION()
+		void OnLoadingScreenTransitionTimeExpired();
 
 	UFUNCTION()
 		void ReceiveOnPreMapLoaded(const FString &MapName);
@@ -70,9 +81,18 @@ private:
 	UPROPERTY()
 		TArray<UObject *> m_apPreLoadedPlaceables;
 
+	UPROPERTY()
+		UWorld *m_pTargetWorld;
+
 	int32 m_CarryOverScore;
 
 	int32 m_Seed;
+
+	bool m_bHasLoadingScreenBegun;
+
+	TSharedPtr<class SObjectWidget> m_pLoadingScreenGC;
+
+	TSharedPtr<class SWidget> m_pLoadingScreenSlate;
 
 
 };
