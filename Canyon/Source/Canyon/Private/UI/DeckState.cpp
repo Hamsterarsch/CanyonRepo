@@ -190,8 +190,9 @@ UWidget* UDeckState::GetTooltipWidgetForDeckWidget(const UWidget* pInstigator)
 
 	auto *pTooltipClass{ LoadClass<UInfluenceTooltipWidgetBase>(nullptr, TEXT("WidgetBlueprint'/Game/Widgets/TooltipWidget_BP.TooltipWidget_BP_C'")) };
 	auto *pWidget { CreateWidget<UInfluenceTooltipWidgetBase>(m_pGM->GetWorld(), pTooltipClass) };
-	
+
 	pWidget->SetHeaderName(m_pGM->GetPrettyNameForCategory(pWidgetData->m_CategoryName));
+	pWidget->SetBaseValue(m_pGM->GetInfluenceBasisForCategory(pWidgetData->m_CategoryName));
 	pWidget->SetInfluenceRelationships(m_pGM->GetTempInfluenceMappingForCategory(pWidgetData->m_CategoryName));
 
 	return pWidget;

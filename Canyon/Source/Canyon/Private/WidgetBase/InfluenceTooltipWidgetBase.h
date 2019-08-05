@@ -16,6 +16,9 @@ class UInfluenceTooltipWidgetBase : public UUserWidget
 
 public:
 	UFUNCTION(BlueprintImplementableEvent)
+		void SetBaseValue(int32 Value);
+
+	UFUNCTION(BlueprintImplementableEvent)
 		void SetHeaderName(const FString &Name);
 
 	UFUNCTION(BlueprintImplementableEvent)
