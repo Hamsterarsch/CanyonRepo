@@ -164,6 +164,8 @@ protected:
 	void IncreaseBuildingRot();
 
 	void DecreaseBuildingRot();
+	
+	void OnExitCurrentMenu();
 	//End Input
 
 	UFUNCTION(BlueprintCallable)
@@ -189,8 +191,6 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnUnitTransferEnabled();
-
-
 	
 	UPROPERTY(EditAnywhere)
 		class USpringArmComponent *m_pCameraSpringArm;

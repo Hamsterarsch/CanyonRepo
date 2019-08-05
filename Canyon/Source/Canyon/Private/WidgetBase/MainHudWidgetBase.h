@@ -52,6 +52,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnDeckChargeAdded();
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnExitCurrentMenu();
+
 	UPROPERTY(EditAnywhere, Meta=(BindWidget))
 		class UButton *m_pAddDeckButton;
 

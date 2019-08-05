@@ -493,6 +493,8 @@ void ARTSPlayerEye::SetupPlayerInputComponent(UInputComponent *pInputComponent)
 	pInputComponent->BindAction(TEXT("IncreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::IncreaseBuildingRot);
 	pInputComponent->BindAction(TEXT("DecreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::DecreaseBuildingRot);
 
+	pInputComponent->BindAction(TEXT("CloseMenu"), IE_Pressed, this, &ARTSPlayerEye::OnExitCurrentMenu);
+
 
 }
 
@@ -572,6 +574,16 @@ void ARTSPlayerEye::DecreaseBuildingRot()
 
 		m_pCursorRoot->AddWorldRotation( {0, -RotStep, 0} );
 		m_PlacementRuler.NotifyBuildingRotated();
+	}
+
+
+}
+
+void ARTSPlayerEye::OnExitCurrentMenu()
+{
+	if(m_pMainHudWidget)
+	{
+		m_pMainHudWidget->OnExitCurrentMenu();
 	}
 
 
