@@ -438,15 +438,6 @@ FDeckData UDeckSelector::GetDeckDataFromValidDeckAt(const int32 Index)
 			auto Category{ pDeckDataAsset->GetDependencyCategoryAtIndex(DataIndex) };
 			auto NumCharges{ pDeckDataAsset->GetMinAmountAtIndex(DataIndex) };
 
-			//constraint charge amount per map
-			auto MaxChargeTypeOnMap{ static_cast<int32>(m_pPlaceableMaxPerMap->GetValueForCategory(Category)) };
-			if(MaxChargeTypeOnMap >= 1)
-			{
-				auto *pIssueMapItem{ m_IssuedChargesMap.Find(Category) };
-				auto ChargesAlreadyIssued{ pIssueMapItem ? *pIssueMapItem : 0 };
-
-				NumCharges = FMath::Clamp(NumCharges, 0, MaxChargeTypeOnMap - ChargesAlreadyIssued);
-			}
 			checkf(NumCharges >= 0, TEXT("Deck Selector charges smaller than zero"));
 
 			//postpone this to endless decks only
