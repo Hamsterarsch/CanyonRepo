@@ -357,6 +357,14 @@ void ACanyonGM::ReceiveOnPointsChanged()
 		
 	}
 	
+	//next level accessible
+	if(	(m_PointsCurrent - m_PointsOnLevelOpen) >= m_NextLevelRequiredPointsDelta && !m_bIsNextLevelAccessible)
+	{
+		m_bIsNextLevelAccessible = true;		
+		pPlayer->OnNextLevelAccessible();
+		NotifyNextLevelAvailable();
+	}
+
 	//loose condition
 	if
 	(
@@ -369,13 +377,5 @@ void ACanyonGM::ReceiveOnPointsChanged()
 		NotifyOnLoose();
 	}
 
-	//next level accessible
-	if(	(m_PointsCurrent - m_PointsOnLevelOpen) >= m_NextLevelRequiredPointsDelta && !m_bIsNextLevelAccessible)
-	{
-		m_bIsNextLevelAccessible = true;		
-		pPlayer->OnNextLevelAccessible();
-		NotifyNextLevelAvailable();
-	}
-
-
+	
 }
