@@ -102,12 +102,11 @@ void UPlaceableIconWidgetBase::NativeConstruct()
 	
 	m_pPointCounter = NewObject<UPointCircleWidgetBase>(this, m_pPointCounterClass.Get());
 	m_pPointCounter->SetCounter(0);		
-	m_pPointCounter->SetClipping(EWidgetClipping::ClipToBoundsWithoutIntersecting);
 
 	auto *pSlot{ Cast<UCanvasPanel>(GetRootWidget())->AddChildToCanvas(m_pPointCounter) };
 	pSlot->SetAnchors(FAnchors{ 1, 0, 1, 0 });	
 	pSlot->SetAutoSize(true);
-	pSlot->SetAlignment(FVector2D{ 0.75f, 0.5f });
+	pSlot->SetAlignment(FVector2D{ 1.25f, 0.f });
 	pSlot->SetOffsets(FMargin{ 0 });
 
 
