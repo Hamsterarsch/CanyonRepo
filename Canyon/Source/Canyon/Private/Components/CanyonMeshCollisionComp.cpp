@@ -12,5 +12,7 @@ UCanyonMeshCollisionComp::UCanyonMeshCollisionComp()
 void UCanyonMeshCollisionComp::BeginPlay()
 {
 	Super::BeginPlay();
+	SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Ignore);
+
 
 }

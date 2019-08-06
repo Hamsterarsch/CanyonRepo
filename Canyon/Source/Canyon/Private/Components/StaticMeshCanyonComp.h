@@ -17,5 +17,6 @@ class UStaticMeshCanyonComp : public UStaticMeshComponent
 public:
 	UStaticMeshCanyonComp();
 
+	virtual void BeginPlay() override;
 
 };

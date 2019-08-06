@@ -6,7 +6,15 @@
 
 UStaticMeshCanyonComp::UStaticMeshCanyonComp()
 {	
-	SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+}
+
+void UStaticMeshCanyonComp::BeginPlay()
+{
+	SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	
+	SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 
 
 }

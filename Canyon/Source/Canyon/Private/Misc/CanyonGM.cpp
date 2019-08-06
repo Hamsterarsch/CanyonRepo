@@ -268,6 +268,13 @@ void ACanyonGM::AbortPlaceableSelectionMode()
 	
 	auto *pPlayer{ GetFirstPlayerPawn<ARTSPlayerEye>(GetWorld()) };
 
+	for(auto *pPlaceable : m_apSelectedCarryPlaceables)
+	{
+		pPlaceable->ToggleSelectionHighlight();
+
+	}
+
+	m_apSelectedCarryPlaceables.Reset();
 	pPlayer->SwitchToPlaceablePlacementMode();
 
 
