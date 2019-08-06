@@ -22,7 +22,7 @@ public:
 	//max accepted normal angle for placement
 
 private:
-	bool HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FVector &out_NewPos);
+	bool HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FVector &out_NewPos, FVector &out_TerrainTracePos);
 
 	void HandlePenetratingHits(APlaceableBase *pPlaceable) const;
 

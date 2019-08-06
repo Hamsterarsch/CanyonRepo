@@ -23,12 +23,14 @@ CPlacementRuler::CPlacementRuler() :
 
 bool CPlacementRuler::HandleBuildingRules(APlaceableBase* pPlaceable, FVector& out_NewPos)
 {
-	m_bLastRet = HandleBuildingRulesInternal(pPlaceable, m_LastPlaceablePosition);
+	FVector TracePos;
+	m_bLastRet = HandleBuildingRulesInternal(pPlaceable, m_LastPlaceablePosition, TracePos);
 	out_NewPos = m_LastPlaceablePosition;
 
 	if(m_bLastRet)
 	{
 		m_LastPlaceablePositionValid = out_NewPos;
+		m_LastTerrainTracePos = TracePos;
 	}
 
 	UE_LOG(LogCanyonPlacementRuler, Log, TEXT("-"));
@@ -38,7 +40,7 @@ bool CPlacementRuler::HandleBuildingRules(APlaceableBase* pPlaceable, FVector& o
 }
 
 //outputs a new position for the cursor root and whether or not the building could be placed there
-bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FVector &out_NewPos)
+bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FVector &out_NewPos, FVector &out_TerrainTracePos)
 {
 	//preconditions
 	//ForHit resulted form a trace against a per se valid placement surface (not surface type valid)
@@ -106,7 +108,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		UE_LOG(LogCanyonPlacement, Log, TEXT("Denying placement bc the height of the hit changed"));
 		return false;
 	}
-	m_LastTerrainTracePos = TerrainHit.ImpactPoint;
+	out_TerrainTracePos = TerrainHit.ImpactPoint;
 
 
 //Mouse distance override
@@ -303,6 +305,8 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		{
 			NewHullPos = SweepStart;
 			UE_LOG(LogCanyonPlacement, Log, TEXT("\tDeny sweep movement bc the first hit has a upward normal"));
+			out_NewPos = TerrainHit.ImpactPoint;
+			return false;
 			break;
 		}
 		
@@ -437,7 +441,14 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 
 	out_NewPos = NewHullPos + pHullComp->RelativeLocation;
 	//sweeping must never change the height
-	out_NewPos.Z = TerrainHit.ImpactPoint.Z;
+	if(!FMath::IsNearlyZero(out_NewPos.Z - m_LastTerrainTracePos.Z, 0.5f))
+	{
+		out_NewPos = m_LastPlaceablePositionValid;
+		UE_LOG(LogCanyonPlacement, Log, TEXT("\tOutputting last valid pos after sweep bc the sweep changed the height of the hit"));
+		return true;
+	}
+
+	out_NewPos.Z = m_LastTerrainTracePos.Z;
 
 	if(!AreAllCornersGrounded(out_NewPos, pHullComp))
 	{
