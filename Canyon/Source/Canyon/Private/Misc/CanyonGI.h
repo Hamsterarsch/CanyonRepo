@@ -35,6 +35,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 		int32 GetCarryOverScore() const { return m_CarryOverScore; }
 
+	UFUNCTION(BlueprintCallable)
+		inline bool WasGameStarted() { return m_bWasGameStarted; }
+
 	void BuildCarryOverChargesFormSelection(const TArray<APlaceableBase *> &apSelected);
 
 
@@ -104,6 +107,8 @@ private:
 	TSharedPtr<class SObjectWidget> m_pLoadingScreenGC;
 
 	TSharedPtr<class SWidget> m_pLoadingScreenSlate;
+
+	bool m_bWasGameStarted;
 
 
 };

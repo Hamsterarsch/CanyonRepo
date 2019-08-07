@@ -206,7 +206,7 @@ void UCanyonBpfLib::SetTargetMonitor(const int32 Index)
 {	
 	if(GEngine && GEngine->GameViewport)
 	{
-		auto CurrentIndex{ GetCurrentMonitorIndex() };
+		auto CurrentIndex{ GetMonitorIndexFromAppStart() };
 
 		FDisplayMetrics DisplayInfo;
 		FDisplayMetrics::RebuildDisplayMetrics(DisplayInfo);
@@ -223,7 +223,7 @@ void UCanyonBpfLib::SetTargetMonitor(const int32 Index)
 
 }
 
-int32 UCanyonBpfLib::GetCurrentMonitorIndex()
+int32 UCanyonBpfLib::GetMonitorIndexFromAppStart()
 {
 	int32 MonitorNumber{ 1 };
 	FParse::Value(FCommandLine::Get(), TEXT("monitor"), MonitorNumber);

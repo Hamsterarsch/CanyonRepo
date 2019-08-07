@@ -40,7 +40,7 @@ public:
 		static void SetTargetMonitor(int32 Index);
 
 	UFUNCTION(BlueprintCallable)
-		static int32 GetCurrentMonitorIndex();
+		static int32 GetMonitorIndexFromAppStart();
 
 
 };

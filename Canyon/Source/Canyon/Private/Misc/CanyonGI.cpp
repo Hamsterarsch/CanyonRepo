@@ -105,6 +105,7 @@ void UCanyonGI::StartupGame(bool bContinueGame)
 
 	auto *pLoadingScreenWidget{ OnBeginLoadingScreen(*m_pTargetWorld->GetMapName()) };
 	m_bHasLoadingScreenBegun = true;
+	m_bWasGameStarted = true;
 
 	SetupLoadingScreenReferences(pLoadingScreenWidget);
 	GetGameViewportClient()->AddViewportWidgetContent(m_pLoadingScreenSlate.ToSharedRef(), -1);
