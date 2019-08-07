@@ -60,7 +60,6 @@ void ACanyonGM::BeginGame()
 
 void ACanyonGM::InitPointState(int32 CarryOverPoints)
 {
-	m_PointsRequired = CarryOverPoints;
 	m_PointsCurrent = CarryOverPoints;
 	m_PointsOnLevelOpen = CarryOverPoints;
 
@@ -68,8 +67,9 @@ void ACanyonGM::InitPointState(int32 CarryOverPoints)
 
 
 	auto RequiredPointsDelta{ FMath::RoundToInt(m_pRequiredPointsSource->GetFloatValue(m_pDeckSelector->GetDeckGeneration())) };
+	m_PointsRequired = CarryOverPoints + RequiredPointsDelta;
 
-	pPlayer->OnPointsRequiredChanged(m_PointsRequired + RequiredPointsDelta);
+	pPlayer->OnPointsRequiredChanged(m_PointsRequired);
 	pPlayer->OnPointsCurrentChanged(m_PointsCurrent);
 
 	//don't use the regular OnPointsChanged here
@@ -171,7 +171,7 @@ void ACanyonGM::NotifyPlaceableActionSelect(FHitResult &Hit)
 
 	if(pPlaceable->IsA<APlaceablePreview>())
 	{
-		UE_DEBUG_BREAK();
+		//UE_DEBUG_BREAK();
 		UE_LOG(LogCanyonCommon, Warning, TEXT("Placeable preview was clicked on"));
 		return;
 	}
@@ -382,6 +382,8 @@ void ACanyonGM::ReceiveOnPointsChanged()
 	)
 	{
 		NotifyOnLoose();
+		pPlayer->OnGameOver();
+
 	}
 
 	

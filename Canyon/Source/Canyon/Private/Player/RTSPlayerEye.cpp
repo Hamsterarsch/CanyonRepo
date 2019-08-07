@@ -298,7 +298,14 @@ void ARTSPlayerEye::DecreaseBuildingRot()
 
 
 }
+
 #pragma endregion
+
+void ARTSPlayerEye::OnGameOver()
+{
+	m_pMainHudWidget->OnGameOver();
+
+}
 
 void ARTSPlayerEye::SetPreviewCursorPosWs(const FVector &NewPos)
 {
@@ -493,9 +500,19 @@ void ARTSPlayerEye::Tick(float DeltaTime)
 void ARTSPlayerEye::BeginPlay()
 {
 	Super::BeginPlay();
-
 	
+	m_ZoomIndex = m_aZoomNodes.Num() - 1;
 
+	float MovementSpeedMult{ 1 };
+	for(auto &&ZoomData : m_aZoomNodes)
+	{
+		MovementSpeedMult += ZoomData.m_MovementSpeedMultDelta;
+
+	}
+
+	m_MovementSpeedMultCurrent = MovementSpeedMult;
+	OnZoomChanged();
+	
 
 }
 

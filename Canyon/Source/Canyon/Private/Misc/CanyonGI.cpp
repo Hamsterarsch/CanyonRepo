@@ -100,8 +100,7 @@ void UCanyonGI::StartupGame(bool bContinueGame)
 	auto &LevelPath{ m_aFirstLevelsPool[GetRandomIndexSeeded(m_aFirstLevelsPool.Num())] };
 	m_pTargetWorld = SafeLoadObjectPtr(LevelPath);	
 
-	m_CarryOverScore = 0;
-	m_CarryOverCharges.m_Charges.Reset();
+	m_bSkipCarryData = true;
 
 	auto *pLoadingScreenWidget{ OnBeginLoadingScreen(*m_pTargetWorld->GetMapName()) };
 	m_bHasLoadingScreenBegun = true;
@@ -255,7 +254,11 @@ void UCanyonGI::ReceiveOnPreMapLoaded(const FString& MapName)
 	{
 		OnBeginLoadingScreen(MapName);		
 	}
-	FetchCarryOverDataFromOldLevel(GetWorld());
+
+	if(!m_bSkipCarryData)
+	{
+		FetchCarryOverDataFromOldLevel(GetWorld());		
+	}
 
 
 }
@@ -274,9 +277,14 @@ void UCanyonGI::ReceiveOnPostMapLoaded(UWorld* pLoadedWorld)
 	}
 
 	//game has to have started
-	SetupCarryOverDataInNewLevel(pLoadedWorld);
+	if(!m_bSkipCarryData)
+	{
+		SetupCarryOverDataInNewLevel(pLoadedWorld);		
+	}
+	m_bSkipCarryData = false;
 
 	//reset carry over data
+	m_CarryOverScore = 0;
 	m_CarryOverCharges.m_Charges.Empty();
 
 	if(m_bHasLoadingScreenBegun)

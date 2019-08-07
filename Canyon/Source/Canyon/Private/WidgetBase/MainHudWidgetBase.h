@@ -17,6 +17,9 @@ class UMainHudWidgetBase: public UPrettyWidget
 
 public:
 	UFUNCTION(BlueprintImplementableEvent)
+		void OnGameOver();
+
+	UFUNCTION(BlueprintImplementableEvent)
 		void OnNewDeckCommitted(const FDeckData &CommittedDeck);
 
 	UFUNCTION(BlueprintImplementableEvent)
