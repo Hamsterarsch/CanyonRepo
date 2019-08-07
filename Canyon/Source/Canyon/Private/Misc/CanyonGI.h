@@ -96,7 +96,7 @@ private:
 		TArray<UObject *> m_apPreLoadedPlaceables;
 
 	UPROPERTY()
-		UWorld *m_pTargetWorld;
+		TSoftObjectPtr<UWorld> m_TargetWorld;
 
 	int32 m_CarryOverScore;
 

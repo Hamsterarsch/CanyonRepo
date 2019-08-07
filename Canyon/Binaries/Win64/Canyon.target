@@ -1238,6 +1238,10 @@
 			"Type": "DebugNonUFS"
 		},
 		{
+			"Path": "$(ProjectDir)/Content/Slate/Cursor.png",
+			"Type": "UFS"
+		},
+		{
 			"Path": "$(EngineDir)/Binaries/ThirdParty/libsndfile/Win64/libsndfile-1.dll",
 			"Type": "NonUFS"
 		},

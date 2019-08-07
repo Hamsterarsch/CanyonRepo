@@ -57,14 +57,16 @@ void UCanyonGI::Shutdown()
 
 void UCanyonGI::BeginSwitchToNextLevel(const TSoftObjectPtr<UWorld>& NewLevel)
 {
-	m_pTargetWorld = SafeLoadObjectPtr(NewLevel);
+	m_TargetWorld = NewLevel;
+	auto *pTargetWorld = SafeLoadObjectPtr(NewLevel);
+
 
 	FTimerHandle Handle{};
 	FTimerDelegate TimerDelegate{};
 	TimerDelegate.BindUObject(this, &UCanyonGI::OnLoadingScreenTransitionTimeExpired);
 
 	m_bHasLoadingScreenBegun = true;	
-	auto *pLoadingScreen{ OnBeginLoadingScreen(*m_pTargetWorld->GetMapName()) };
+	auto *pLoadingScreen{ OnBeginLoadingScreen(*pTargetWorld->GetMapName()) };
 	if(!m_pLoadingScreenGC.IsValid() || !m_pLoadingScreenSlate.IsValid())
 	{
 		SetupLoadingScreenReferences(pLoadingScreen);
@@ -98,11 +100,12 @@ void UCanyonGI::StartupGame(bool bContinueGame)
 	UE_LOG(LogCanyonCommon, Warning, TEXT("----STARTING UP GAME WITH SEED: %i ----"), m_Seed);
 
 	auto &LevelPath{ m_aFirstLevelsPool[GetRandomIndexSeeded(m_aFirstLevelsPool.Num())] };
-	m_pTargetWorld = SafeLoadObjectPtr(LevelPath);	
+	auto *pTargetWorld = SafeLoadObjectPtr(LevelPath);
+	m_TargetWorld = LevelPath;	
 
 	m_bSkipCarryData = true;
 
-	auto *pLoadingScreenWidget{ OnBeginLoadingScreen(*m_pTargetWorld->GetMapName()) };
+	auto *pLoadingScreenWidget{ OnBeginLoadingScreen(*pTargetWorld->GetMapName()) };
 	m_bHasLoadingScreenBegun = true;
 	m_bWasGameStarted = true;
 
@@ -243,7 +246,8 @@ void UCanyonGI::CleanupWorld(UWorld* pWorld, bool bSessionEnded, bool bCleanupRe
 
 void UCanyonGI::OnLoadingScreenTransitionTimeExpired()
 {
-	UGameplayStatics::OpenLevel(GetWorld(), *m_pTargetWorld->GetMapName());
+	auto *pTarget{ SafeLoadObjectPtr(m_TargetWorld) };
+	UGameplayStatics::OpenLevel(GetWorld(), *pTarget->GetMapName());
 
 
 }
@@ -291,6 +295,8 @@ void UCanyonGI::ReceiveOnPostMapLoaded(UWorld* pLoadedWorld)
 	{
 		OnEndLoadingScreen(pLoadedWorld);		
 	}
-		
+
+	m_TargetWorld.Reset();
+
 
 }
