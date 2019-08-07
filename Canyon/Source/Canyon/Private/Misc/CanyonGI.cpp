@@ -78,6 +78,7 @@ void UCanyonGI::BeginSwitchToNextLevel(const TSoftObjectPtr<UWorld>& NewLevel)
 
 void UCanyonGI::ExitGameloop()
 {
+	NotifyExitGameloop();
 	BeginSwitchToNextLevel(m_MainMenuLevel);
 
 
@@ -107,6 +108,8 @@ void UCanyonGI::StartupGame(bool bContinueGame)
 
 	SetupLoadingScreenReferences(pLoadingScreenWidget);
 	GetGameViewportClient()->AddViewportWidgetContent(m_pLoadingScreenSlate.ToSharedRef(), -1);
+
+	NotifyExitGameloop();
 
 	FTimerHandle Handle{};
 	FTimerDelegate TimerDelegate{};

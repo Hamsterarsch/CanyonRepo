@@ -40,6 +40,12 @@ public:
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
+		void NotifyStartupGame();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void NotifyExitGameloop();
+
+	UFUNCTION(BlueprintImplementableEvent)
 		class UUserWidget *OnBeginLoadingScreen(const FString &MapName);
 
 	UFUNCTION(BlueprintImplementableEvent)

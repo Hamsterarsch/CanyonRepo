@@ -305,8 +305,7 @@ bool CPlacementRuler::HandleBuildingRulesInternal(APlaceableBase *pPlaceable, FV
 		{
 			NewHullPos = SweepStart;
 			UE_LOG(LogCanyonPlacement, Log, TEXT("\tDeny sweep movement bc the first hit has a upward normal"));
-			out_NewPos = TerrainHit.ImpactPoint;
-			return false;
+
 			break;
 		}
 		
