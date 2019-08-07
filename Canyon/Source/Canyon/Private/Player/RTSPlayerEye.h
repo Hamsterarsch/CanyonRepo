@@ -101,6 +101,8 @@ public:
 
 	//End Movement
 
+	void OnGameOver();
+
 	void SetPreviewCursorPosWs(const FVector &NewPos);
 
 	void UpdateCurrentPlaceablePreview();

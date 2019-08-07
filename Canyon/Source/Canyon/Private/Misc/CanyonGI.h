@@ -110,5 +110,6 @@ private:
 
 	bool m_bWasGameStarted;
 
+	bool m_bSkipCarryData;
 
 };
