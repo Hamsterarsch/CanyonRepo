@@ -76,6 +76,13 @@ void UCanyonGI::BeginSwitchToNextLevel(const TSoftObjectPtr<UWorld>& NewLevel)
 
 }
 
+void UCanyonGI::ExitGameloop()
+{
+	BeginSwitchToNextLevel(m_MainMenuLevel);
+
+
+}
+
 void UCanyonGI::StartupGame(bool bContinueGame)
 {
 	if(m_aFirstLevelsPool.Num() <= 0)
@@ -87,11 +94,13 @@ void UCanyonGI::StartupGame(bool bContinueGame)
 
 	m_Seed = FMath::Rand();
 	FMath::SRandInit(m_Seed);
+	UE_LOG(LogCanyonCommon, Warning, TEXT("----STARTING UP GAME WITH SEED: %i ----"), m_Seed);
 
 	auto &LevelPath{ m_aFirstLevelsPool[GetRandomIndexSeeded(m_aFirstLevelsPool.Num())] };
-	m_pTargetWorld = SafeLoadObjectPtr(LevelPath);
-	
-	UE_LOG(LogCanyonCommon, Warning, TEXT("----STARTING UP GAME WITH SEED: %i ----"), m_Seed);
+	m_pTargetWorld = SafeLoadObjectPtr(LevelPath);	
+
+	m_CarryOverScore = 0;
+	m_CarryOverCharges.m_Charges.Reset();
 
 	auto *pLoadingScreenWidget{ OnBeginLoadingScreen(*m_pTargetWorld->GetMapName()) };
 	m_bHasLoadingScreenBegun = true;

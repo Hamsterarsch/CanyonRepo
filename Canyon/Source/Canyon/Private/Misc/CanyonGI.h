@@ -25,6 +25,8 @@ public:
 	//should commit any analytics data, save the game and init the level switch
 	void BeginSwitchToNextLevel(const TSoftObjectPtr<UWorld> &NewLevel);
 
+	UFUNCTION(BlueprintCallable)
+		void ExitGameloop();
 
 	UFUNCTION(BlueprintCallable)
 		//menu hook
@@ -46,6 +48,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level")
 		TArray<TSoftObjectPtr<UWorld>> m_aFirstLevelsPool;
+
+	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level")
+		TSoftObjectPtr<UWorld> m_MainMenuLevel;
 
 	UPROPERTY(EditDefaultsOnly)
 		bool m_bLoadAllPlaceablesOnStartup;
