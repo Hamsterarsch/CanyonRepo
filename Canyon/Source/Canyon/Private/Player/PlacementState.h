@@ -73,6 +73,7 @@ public:
 
 
 protected:
+	float m_CommitStartTime;
 	float m_AbortStartTime;
 
 
