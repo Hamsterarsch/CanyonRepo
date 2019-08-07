@@ -32,6 +32,15 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		static void SetBrushImage(UPARAM(ref) struct FSlateBrush &Target, UObject *pObject);
-	
+
+	UFUNCTION(BlueprintCallable)
+		static int32 GetNumMonitors();
+
+	UFUNCTION(BlueprintCallable)
+		static void SetTargetMonitor(int32 Index);
+
+	UFUNCTION(BlueprintCallable)
+		static int32 GetCurrentMonitorIndex();
+
 
 };

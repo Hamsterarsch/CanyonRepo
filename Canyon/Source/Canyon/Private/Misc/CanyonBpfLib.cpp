@@ -10,6 +10,7 @@
 #include "Paths.h"
 #include "SlateBrush.h"
 #include "AkAudio/Classes/AkGameplayStatics.h"
+#include "SWindow.h"
 #include "CanyonGI.h"
 
 int32 UCanyonBpfLib::PostEventPersistent(class UAkAudioEvent *AkEvent, class UGameInstance *GI)
@@ -187,6 +188,47 @@ uint8 UCanyonBpfLib::EnumStringToEnumByte(UUserDefinedEnum* pEnum, const FString
 void UCanyonBpfLib::SetBrushImage(FSlateBrush &Target, UObject* pObject)
 {
 	Target.SetResourceObject(pObject);
+
+
+}
+
+int32 UCanyonBpfLib::GetNumMonitors()
+{
+	FDisplayMetrics DisplayInfo;
+	FDisplayMetrics::RebuildDisplayMetrics(DisplayInfo);
+
+	return DisplayInfo.MonitorInfo.Num();
+
+
+}
+
+void UCanyonBpfLib::SetTargetMonitor(const int32 Index)
+{	
+	if(GEngine && GEngine->GameViewport)
+	{
+		auto CurrentIndex{ GetCurrentMonitorIndex() };
+
+		FDisplayMetrics DisplayInfo;
+		FDisplayMetrics::RebuildDisplayMetrics(DisplayInfo);
+
+		auto TargetRect{ DisplayInfo.MonitorInfo[Index].DisplayRect };
+		
+		FVector2D NewWindowPos{ static_cast<float>(TargetRect.Left), static_cast<float>(TargetRect.Top) };
+		GEngine->GameViewport->GetWindow()->MoveWindowTo(NewWindowPos);
+		GEngine->GameViewport->GetWindow()->Resize( { static_cast<float>(TargetRect.Right - TargetRect.Left), static_cast<float>(TargetRect.Bottom - TargetRect.Top) } );
+
+
+	}
+
+
+}
+
+int32 UCanyonBpfLib::GetCurrentMonitorIndex()
+{
+	int32 MonitorNumber{ 1 };
+	FParse::Value(FCommandLine::Get(), TEXT("monitor"), MonitorNumber);
+
+	return MonitorNumber - 1;
 
 
 }
