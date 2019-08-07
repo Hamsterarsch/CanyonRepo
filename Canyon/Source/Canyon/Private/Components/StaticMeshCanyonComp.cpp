@@ -11,6 +11,8 @@ UStaticMeshCanyonComp::UStaticMeshCanyonComp()
 
 void UStaticMeshCanyonComp::BeginPlay()
 {
+	Super::BeginPlay();
+
 	SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	
 	SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
