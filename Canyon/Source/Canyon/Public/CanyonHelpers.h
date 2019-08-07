@@ -87,6 +87,14 @@ UClass *SafeLoadClassPtr(const TSoftClassPtr<T> &ClassPtr)
 
 	}
 
+	
+	if(!pClass)
+	{
+		pClass= Cast<UClass>(ClassPtr.ToSoftObjectPath().TryLoad());
+	}
+
+
+
 	return ensureMsgf(pClass, TEXT("Could not load class ptr from soft obj ptr")) ? pClass : nullptr;
 
 
@@ -100,6 +108,11 @@ T *SafeLoadObjectPtr(const TSoftObjectPtr<T> &ObjectPtr)
 	{
 		pObject = ObjectPtr.LoadSynchronous();
 
+	}
+
+	if(!pObject)
+	{
+		pObject = ObjectPtr.ToSoftObjectPath().TryLoad();
 	}
 
 	return ensureMsgf(pObject, TEXT("Could not load class ptr from soft obj ptr")) ? Cast<T>(pObject) : nullptr;
