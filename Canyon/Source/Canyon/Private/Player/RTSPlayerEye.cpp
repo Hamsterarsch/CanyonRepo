@@ -155,7 +155,7 @@ void ARTSPlayerEye::AddForwardMovement(const float AxisValue)
 	}
 	auto Forward = m_pCameraSpringArm->GetForwardVector();
 	//todo: delta time
-	AddActorWorldOffset(Forward.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed * m_MovementSpeedMultCurrent);
+	AddActorWorldOffset(Forward.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed * m_MovementSpeedMultCurrent * GetWorld()->GetDeltaSeconds());
 
 
 
@@ -171,7 +171,7 @@ void ARTSPlayerEye::AddRightMovement(const float AxisValue)
 	}
 	auto Right = m_pCameraSpringArm->GetRightVector();
 	//todo: delta time
-	AddActorWorldOffset(Right.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed * m_MovementSpeedMultCurrent);
+	AddActorWorldOffset(Right.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed * m_MovementSpeedMultCurrent * GetWorld()->GetDeltaSeconds());
 	   
 
 }
@@ -180,7 +180,7 @@ void ARTSPlayerEye::AddForwardMovementFromMouse(float AxisValue)
 {
 	auto Forward = m_pCameraSpringArm->GetForwardVector();
 	//Mouse based shuffle (todo: delta time)
-	AddActorWorldOffset(Forward.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_pCamera->AspectRatio * m_MovementSpeedMultCurrent);
+	AddActorWorldOffset(Forward.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_pCamera->AspectRatio * m_MovementSpeedMultCurrent * GetWorld()->GetDeltaSeconds());
 	
 
 }
@@ -193,7 +193,7 @@ void ARTSPlayerEye::AddRightMovementFromMouse(float AxisValue)
 		return;
 
 	}
-	AddActorWorldOffset(Right.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_MovementSpeedMultCurrent);
+	AddActorWorldOffset(Right.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_MovementSpeedMultCurrent * GetWorld()->GetDeltaSeconds());
 
 }
 
@@ -204,7 +204,7 @@ void ARTSPlayerEye::AddCameraYaw(const float AxisValue)
 		return;
 
 	}
-	m_pCameraSpringArm->AddRelativeRotation(FRotator{ 0, AxisValue * m_KeyTurnSpeed, 0 });
+	m_pCameraSpringArm->AddRelativeRotation(FRotator{ 0, AxisValue * m_KeyTurnSpeed * GetWorld()->GetDeltaSeconds(), 0 });
 
 
 }
@@ -216,7 +216,7 @@ void ARTSPlayerEye::AddCameraYawFromMouse(float AxisValue)
 		return;
 
 	}
-	m_pCameraSpringArm->AddRelativeRotation(FRotator{ 0, AxisValue * m_MouseTurnSpeed, 0 });
+	m_pCameraSpringArm->AddRelativeRotation(FRotator{ 0, AxisValue * m_MouseTurnSpeed * GetWorld()->GetDeltaSeconds(), 0 });
 
 
 }
@@ -229,7 +229,7 @@ void ARTSPlayerEye::AddCameraPitchFromMouse(float AxisValue)
 
 	}
 
-	auto SummedPitch = m_pCameraSpringArm->RelativeRotation.Pitch + AxisValue * m_MouseTurnSpeed * m_pCamera->AspectRatio;
+	auto SummedPitch = m_pCameraSpringArm->RelativeRotation.Pitch + AxisValue * GetWorld()->GetDeltaSeconds() * m_MouseTurnSpeed * m_pCamera->AspectRatio;
 	if (SummedPitch > -m_CameraMaxPitch && SummedPitch < -m_CameraMinPitch)
 	{
 		m_pCameraSpringArm->RelativeRotation.Pitch = SummedPitch;
