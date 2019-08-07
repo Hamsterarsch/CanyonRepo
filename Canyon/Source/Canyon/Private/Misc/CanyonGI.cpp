@@ -105,6 +105,10 @@ void UCanyonGI::StartupGame(bool bContinueGame)
 
 	m_bSkipCarryData = true;
 
+	//reset carry over data
+	m_CarryOverScore = 0;
+	m_CarryOverCharges.m_Charges.Empty();
+
 	auto *pLoadingScreenWidget{ OnBeginLoadingScreen(*pTargetWorld->GetMapName()) };
 	m_bHasLoadingScreenBegun = true;
 	m_bWasGameStarted = true;
@@ -247,7 +251,11 @@ void UCanyonGI::CleanupWorld(UWorld* pWorld, bool bSessionEnded, bool bCleanupRe
 void UCanyonGI::OnLoadingScreenTransitionTimeExpired()
 {
 	auto *pTarget{ SafeLoadObjectPtr(m_TargetWorld) };
-	UGameplayStatics::OpenLevel(GetWorld(), *pTarget->GetMapName());
+
+	auto MapName{ pTarget->GetMapName() };
+	MapName = UWorld::RemovePIEPrefix(MapName);
+
+	UGameplayStatics::OpenLevel(GetWorld(), *MapName);
 
 
 }
@@ -286,10 +294,6 @@ void UCanyonGI::ReceiveOnPostMapLoaded(UWorld* pLoadedWorld)
 		SetupCarryOverDataInNewLevel(pLoadedWorld);		
 	}
 	m_bSkipCarryData = false;
-
-	//reset carry over data
-	m_CarryOverScore = 0;
-	m_CarryOverCharges.m_Charges.Empty();
 
 	if(m_bHasLoadingScreenBegun)
 	{
