@@ -60,7 +60,6 @@ void UCanyonGI::BeginSwitchToNextLevel(const TSoftObjectPtr<UWorld>& NewLevel)
 	m_TargetWorld = NewLevel;
 	auto *pTargetWorld = SafeLoadObjectPtr(NewLevel);
 
-
 	FTimerHandle Handle{};
 	FTimerDelegate TimerDelegate{};
 	TimerDelegate.BindUObject(this, &UCanyonGI::OnLoadingScreenTransitionTimeExpired);
@@ -218,7 +217,7 @@ void UCanyonGI::FetchCarryOverDataFromOldLevel(const UWorld* pWorld)
 
 }
 
-void UCanyonGI::SetupCarryOverDataInNewLevel(UWorld* pWorld) const
+void UCanyonGI::SetupCarryOverDataInNewLevel(UWorld* pWorld)
 {
 	check(pWorld);
 
@@ -235,6 +234,9 @@ void UCanyonGI::SetupCarryOverDataInNewLevel(UWorld* pWorld) const
 	pGM->InitPointState(m_CarryOverScore);
 	pGM->AddCarryOverChargesToIssued(m_CarryOverCharges);
 	pPlayer->AddCarryOverChargesToDeck(m_CarryOverCharges);
+
+	//must be reset so it is not carried over when no buildings are selected on next embark ( and it is not needed for ui, like the point count)
+	m_CarryOverCharges.m_Charges.Reset();
 
 
 }
