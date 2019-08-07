@@ -71,22 +71,40 @@ std::unique_ptr<IPlacementState> CPlacementState_PlacementBuilding::HandleInput(
 	switch (Input)
 	{
 	case EAbstractInputEvent::ActionSelect_Start:
-		if (pParent->GetEye()->TryCommitPlaceablePreview())
+		m_CommitStartTime = pParent->GetEye()->GetWorld()->GetTimeSeconds();
+		break;
+	case EAbstractInputEvent::ActionSelect_End:
+		//auto PassedTimeCommit{ pParent->GetEye()->GetWorld()->GetTimeSeconds() - m_CommitStartTime };
+		if((pParent->GetEye()->GetWorld()->GetTimeSeconds() - m_CommitStartTime) < pParent->GetEye()->GetPlacementAbortSuccessTime())
 		{
-			return std::make_unique<CPlacementState_Idle>();
+			if (pParent->GetEye()->TryCommitPlaceablePreview())
+			{
+				return std::make_unique<CPlacementState_Idle>();
+			}			
 		}
 		break;
+
+
 	case EAbstractInputEvent::ActionContext_Start:
 		m_AbortStartTime = pParent->GetEye()->GetWorld()->GetTimeSeconds();
 		break;
 	case EAbstractInputEvent::ActionContext_End:
-		auto m_PassedTime{ pParent->GetEye()->GetWorld()->GetTimeSeconds() - m_AbortStartTime };
-		if (m_PassedTime < pParent->GetEye()->GetPlacementAbortSuccessTime())
+		//auto PassedTimeAbort{ pParent->GetEye()->GetWorld()->GetTimeSeconds() - m_AbortStartTime };
+		if ((pParent->GetEye()->GetWorld()->GetTimeSeconds() - m_AbortStartTime) < pParent->GetEye()->GetPlacementAbortSuccessTime())
 		{
 			pParent->GetEye()->DiscardCurrentPlaceablePreview(true);
 			return std::make_unique<CPlacementState_Idle>();
 		}
 		break;
+
+	case EAbstractInputEvent::ActionRotate_Inc:
+		pParent->GetEye()->IncreaseBuildingRot();		
+		break;
+
+	case EAbstractInputEvent::ActionRotate_Dec:
+		pParent->GetEye()->DecreaseBuildingRot();
+		break;
+
 	}
 	return nullptr;
 

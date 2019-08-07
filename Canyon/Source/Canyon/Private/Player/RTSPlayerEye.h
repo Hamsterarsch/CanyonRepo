@@ -18,10 +18,8 @@ enum class EAbstractInputEvent : size_t
 	ActionRotate_Start,
 	ActionRotate_End,
 	PlaceBuilding_Start,
-	PlaceInfra_Start,
-	PlayeInfra_End
-
-
+	ActionRotate_Inc,
+	ActionRotate_Dec
 };
 
 enum class ERTSInputState
@@ -96,6 +94,11 @@ public:
 	void ZoomOut();
 
 	void ZoomIn();
+
+	void IncreaseBuildingRot();
+
+	void DecreaseBuildingRot();
+
 	//End Movement
 
 	void SetPreviewCursorPosWs(const FVector &NewPos);
@@ -160,12 +163,16 @@ protected:
 	void EnterSeamlessRotation();
 
 	void LeaveSeamlessRotation();
-
-	void IncreaseBuildingRot();
-
-	void DecreaseBuildingRot();
 	
 	void OnExitCurrentMenu();
+
+	void InputRotateBuildingIncrease();
+
+	void InputRotateBuildingDecrease();
+
+	void EnablePlacementZoomOverride();
+
+	void DisablePlacementZoomOverride();
 	//End Input
 
 	UFUNCTION(BlueprintCallable)
@@ -259,6 +266,7 @@ protected:
 	int32 m_ZoomIndex;
 	FVector m_SeamlessRotationPrePos;
 	float m_MovementSpeedMultCurrent;
+	bool m_bForceZoomDuringPlacement;
 
 	CCameraStateMachine m_CameraState;
 	CPlacementStateMachine m_PlacementState;
@@ -269,3 +277,5 @@ private:
 
 
 };
+
+

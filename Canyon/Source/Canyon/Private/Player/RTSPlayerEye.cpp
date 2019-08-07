@@ -240,25 +240,60 @@ void ARTSPlayerEye::AddCameraPitchFromMouse(float AxisValue)
 
 void ARTSPlayerEye::ZoomOut()
 {
-	if (m_ZoomIndex < (m_aZoomNodes.Num() - 1))
+	//this condition should be handled in the camera state machine
+	if(!GetIsInPlacement() || m_bForceZoomDuringPlacement)
 	{
-		++m_ZoomIndex;
-		m_MovementSpeedMultCurrent += m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
+		if (m_ZoomIndex < (m_aZoomNodes.Num() - 1))
+		{
+			++m_ZoomIndex;
+			m_MovementSpeedMultCurrent += m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
 
-		OnZoomChanged();
+			OnZoomChanged();
+		}
 	}
+	
 
 
 }
 
 void ARTSPlayerEye::ZoomIn()
 {
-	if (m_ZoomIndex > 0)
+	//this condition should be handled in the camera state machine
+	if(!GetIsInPlacement() || m_bForceZoomDuringPlacement)
 	{
-		m_MovementSpeedMultCurrent -= m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
-		--m_ZoomIndex;
+		if (m_ZoomIndex > 0)
+		{
+			m_MovementSpeedMultCurrent -= m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
+			--m_ZoomIndex;
 
-		OnZoomChanged();
+			OnZoomChanged();
+		}
+	}
+
+
+}
+
+void ARTSPlayerEye::IncreaseBuildingRot()
+{
+	if(m_pPlaceablePreviewCurrent)
+	{
+		const auto RotStep{ 360.f / m_BuildingRotationSteps };
+	   
+		m_pCursorRoot->AddWorldRotation( {0, RotStep, 0} );
+		m_PlacementRuler.NotifyBuildingRotated();
+	}
+		
+
+}
+
+void ARTSPlayerEye::DecreaseBuildingRot()
+{
+	if(m_pPlaceablePreviewCurrent)
+	{
+		const auto RotStep{ 360.f / m_BuildingRotationSteps };
+
+		m_pCursorRoot->AddWorldRotation( {0, -RotStep, 0} );
+		m_PlacementRuler.NotifyBuildingRotated();
 	}
 
 
@@ -490,9 +525,12 @@ void ARTSPlayerEye::SetupPlayerInputComponent(UInputComponent *pInputComponent)
 	pInputComponent->BindAction(TEXT("ZoomOut"), IE_Pressed, this, &ARTSPlayerEye::ZoomOut);
 	pInputComponent->BindAction(TEXT("ZoomIn"), IE_Pressed, this, &ARTSPlayerEye::ZoomIn);
 
-	pInputComponent->BindAction(TEXT("IncreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::IncreaseBuildingRot);
-	pInputComponent->BindAction(TEXT("DecreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::DecreaseBuildingRot);
+	pInputComponent->BindAction(TEXT("IncreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::InputRotateBuildingIncrease);
+	pInputComponent->BindAction(TEXT("DecreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::InputRotateBuildingDecrease);
 
+	pInputComponent->BindAction(TEXT("ZoomWhilePlacingOverride"), IE_Pressed, this, &ARTSPlayerEye::EnablePlacementZoomOverride);
+	pInputComponent->BindAction(TEXT("ZoomWhilePlacingOverride"), IE_Released, this, &ARTSPlayerEye::DisablePlacementZoomOverride);
+		
 	pInputComponent->BindAction(TEXT("CloseMenu"), IE_Pressed, this, &ARTSPlayerEye::OnExitCurrentMenu);
 
 
@@ -553,38 +591,47 @@ void ARTSPlayerEye::LeaveSeamlessRotation()
 
 }
 
-void ARTSPlayerEye::IncreaseBuildingRot()
-{
-	if(m_pPlaceablePreviewCurrent)
-	{
-		const auto RotStep{ 360.f / m_BuildingRotationSteps };
-	   
-		m_pCursorRoot->AddWorldRotation( {0, RotStep, 0} );
-		m_PlacementRuler.NotifyBuildingRotated();
-	}
-		
-
-}
-
-void ARTSPlayerEye::DecreaseBuildingRot()
-{
-	if(m_pPlaceablePreviewCurrent)
-	{
-		const auto RotStep{ 360.f / m_BuildingRotationSteps };
-
-		m_pCursorRoot->AddWorldRotation( {0, -RotStep, 0} );
-		m_PlacementRuler.NotifyBuildingRotated();
-	}
-
-
-}
-
 void ARTSPlayerEye::OnExitCurrentMenu()
 {
 	if(m_pMainHudWidget)
 	{
 		m_pMainHudWidget->OnExitCurrentMenu();
 	}
+
+
+}
+
+void ARTSPlayerEye::InputRotateBuildingIncrease()
+{
+	if(!m_bForceZoomDuringPlacement)
+	{
+		m_PlacementState.HandleInput(EAbstractInputEvent::ActionRotate_Inc);
+		
+	}
+
+
+}
+
+void ARTSPlayerEye::InputRotateBuildingDecrease()
+{
+	if(!m_bForceZoomDuringPlacement)
+	{
+		m_PlacementState.HandleInput(EAbstractInputEvent::ActionRotate_Dec);		
+	}
+
+
+}
+
+void ARTSPlayerEye::EnablePlacementZoomOverride()
+{
+	m_bForceZoomDuringPlacement = true;
+
+
+}
+
+void ARTSPlayerEye::DisablePlacementZoomOverride()
+{
+	m_bForceZoomDuringPlacement = false;
 
 
 }
