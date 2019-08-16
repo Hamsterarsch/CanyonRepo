@@ -75,7 +75,7 @@ private:
 
 	void FetchCarryOverDataFromOldLevel(const UWorld *pWorld);
 
-	void SetupCarryOverDataInNewLevel(UWorld *pWorld) const;
+	void SetupCarryOverDataInNewLevel(UWorld *pWorld);
 
 	void CleanupWorld(UWorld *pWorld, bool bSessionEnded, bool bCleanupResources);
 
