@@ -124,7 +124,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level")
 		int32 m_NextLevelRequiredPointsDelta;
 
-	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level", Meta=(ClampMin="1"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Canyon|Level", Meta=(ClampMin="1"))
 		int32 m_CarryOverBuildingCountMax;
 
 

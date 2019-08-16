@@ -17,6 +17,12 @@ class UMainHudWidgetBase: public UPrettyWidget
 
 public:
 	UFUNCTION(BlueprintImplementableEvent)
+		void OnGameOver();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnNewDeckCommitted(const FDeckData &CommittedDeck);
+
+	UFUNCTION(BlueprintImplementableEvent)
 		void OnNewPlaceableIconAvailable(class UPlaceableIconWidgetBase *pIconWidget);
 
 	UFUNCTION(BlueprintImplementableEvent)
@@ -48,6 +54,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnDeckChargeAdded();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnExitCurrentMenu();
 
 	UPROPERTY(EditAnywhere, Meta=(BindWidget))
 		class UButton *m_pAddDeckButton;

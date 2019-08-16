@@ -18,10 +18,8 @@ enum class EAbstractInputEvent : size_t
 	ActionRotate_Start,
 	ActionRotate_End,
 	PlaceBuilding_Start,
-	PlaceInfra_Start,
-	PlayeInfra_End
-
-
+	ActionRotate_Inc,
+	ActionRotate_Dec
 };
 
 enum class ERTSInputState
@@ -96,7 +94,14 @@ public:
 	void ZoomOut();
 
 	void ZoomIn();
+
+	void IncreaseBuildingRot();
+
+	void DecreaseBuildingRot();
+
 	//End Movement
+
+	void OnGameOver();
 
 	void SetPreviewCursorPosWs(const FVector &NewPos);
 
@@ -112,7 +117,8 @@ public:
 
 	void NotifyOnNewDeckAvailable();
 
-	bool GetAreDecksSelectable() const;
+	UFUNCTION(BlueprintCallable)
+		bool GetAreDecksSelectable() const;
 
 	inline float GetPlacementAbortSuccessTime() const { return m_PlacementAbortSuccessTime; }
 
@@ -125,6 +131,9 @@ public:
 	void SwitchToPlaceableSelectionMode();
 
 	void SwitchToPlaceablePlacementMode();
+
+	int32 GetDeckChargesCurrent() const;
+
 
 	const static FName s_AxisMouseX;
 
@@ -156,10 +165,16 @@ protected:
 	void EnterSeamlessRotation();
 
 	void LeaveSeamlessRotation();
+	
+	void OnExitCurrentMenu();
 
-	void IncreaseBuildingRot();
+	void InputRotateBuildingIncrease();
 
-	void DecreaseBuildingRot();
+	void InputRotateBuildingDecrease();
+
+	void EnablePlacementZoomOverride();
+
+	void DisablePlacementZoomOverride();
 	//End Input
 
 	UFUNCTION(BlueprintCallable)
@@ -185,13 +200,11 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnUnitTransferEnabled();
-
-
 	
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere)
 		class USpringArmComponent *m_pCameraSpringArm;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere)
 		class UCameraComponent *m_pCamera;
 	
 	UPROPERTY(EditDefaultsOnly, DisplayName="Mouse Shuffle Speed", Category="Controls")
@@ -255,6 +268,7 @@ protected:
 	int32 m_ZoomIndex;
 	FVector m_SeamlessRotationPrePos;
 	float m_MovementSpeedMultCurrent;
+	bool m_bForceZoomDuringPlacement;
 
 	CCameraStateMachine m_CameraState;
 	CPlacementStateMachine m_PlacementState;
@@ -265,3 +279,5 @@ private:
 
 
 };
+
+

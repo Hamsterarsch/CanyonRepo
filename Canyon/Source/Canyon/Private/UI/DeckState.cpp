@@ -6,6 +6,7 @@
 #include "Player/RTSPlayerEye.h"
 #include "WidgetBase/PlaceableIconWidgetBase.h"
 #include "Misc/CanyonBpfLib.h"
+#include "Misc/CanyonLogs.h"
 #include "WidgetBase/InfluenceTooltipWidgetBase.h"
 
 //Public-------------------
@@ -56,9 +57,16 @@ void UDeckState::AddDeckCharge()
 
 void UDeckState::NotifyAddDeckButtonClicked()
 {
-	if(m_pGM->IsInEndlessMode())
+	if(m_pGM->IsInEndlessMode() && m_aPendingSelectableDecks.Num() == 0)
 	{
-		
+		UE_LOG(LogCanyonCommon, Log, TEXT("Using endless filler deck"));
+
+		auto EndlessDeckData{ m_pGM->GetEndlessDeckData() };
+		m_eOnDeckCommitted.Broadcast(EndlessDeckData);
+		AddDeck(EndlessDeckData);
+		return;
+
+
 	}
 
 	if(m_aPendingSelectableDecks.Num() >= m_DesiredDeckAmount)
@@ -71,15 +79,6 @@ void UDeckState::NotifyAddDeckButtonClicked()
 	const auto NewDeckAmount{ m_DesiredDeckAmount - m_aPendingSelectableDecks.Num() };
 
 	m_aPendingSelectableDecks.Append(m_pGM->GetDeckData(NewDeckAmount));
-
-	//no valid deck exist, assume endless mode
-	if(m_aPendingSelectableDecks.Num() == 0)
-	{
-		AddDeck(m_pGM->GetEndlessDeckData());
-		return;
-
-
-	}
 	
 	TArray<TSubclassOf<UPrettyWidget>> aDeckWidgetClasses{};
 	for(auto &&DeckData : m_aPendingSelectableDecks)
@@ -101,6 +100,7 @@ void UDeckState::NotifyOnDeckWidgetClicked(int32 Index)
 	m_pGM->FillUpDeckDataNonEndless(m_aPendingSelectableDecks[Index]);
 
 	AddDeck(m_aPendingSelectableDecks[Index]);
+	m_eOnDeckCommitted.Broadcast(m_aPendingSelectableDecks[Index]);
 	m_aPendingSelectableDecks.RemoveAt(Index);
 
 
@@ -190,8 +190,9 @@ UWidget* UDeckState::GetTooltipWidgetForDeckWidget(const UWidget* pInstigator)
 
 	auto *pTooltipClass{ LoadClass<UInfluenceTooltipWidgetBase>(nullptr, TEXT("WidgetBlueprint'/Game/Widgets/TooltipWidget_BP.TooltipWidget_BP_C'")) };
 	auto *pWidget { CreateWidget<UInfluenceTooltipWidgetBase>(m_pGM->GetWorld(), pTooltipClass) };
-	
+
 	pWidget->SetHeaderName(m_pGM->GetPrettyNameForCategory(pWidgetData->m_CategoryName));
+	pWidget->SetBaseValue(m_pGM->GetInfluenceBasisForCategory(pWidgetData->m_CategoryName));
 	pWidget->SetInfluenceRelationships(m_pGM->GetTempInfluenceMappingForCategory(pWidgetData->m_CategoryName));
 
 	return pWidget;

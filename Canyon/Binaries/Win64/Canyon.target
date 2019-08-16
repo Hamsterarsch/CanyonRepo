@@ -9,8 +9,8 @@
 	{
 		"MajorVersion": 4,
 		"MinorVersion": 22,
-		"PatchVersion": 2,
-		"Changelist": 6574378,
+		"PatchVersion": 1,
+		"Changelist": 6063286,
 		"CompatibleChangelist": 5660361,
 		"IsLicenseeVersion": 0,
 		"IsPromotedBuild": 1,
@@ -1236,6 +1236,10 @@
 		{
 			"Path": "$(EngineDir)/Content/SlateDebug/Fonts/LastResort.ttf",
 			"Type": "DebugNonUFS"
+		},
+		{
+			"Path": "$(ProjectDir)/Content/Slate/Cursor.png",
+			"Type": "UFS"
 		},
 		{
 			"Path": "$(EngineDir)/Binaries/ThirdParty/libsndfile/Win64/libsndfile-1.dll",

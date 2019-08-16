@@ -7,6 +7,7 @@
 #include "ConstructorHelpers.h"
 #include "Engine/Font.h"
 #include "ScaleBox.h"
+#include "WidgetBase/PointCircleWidgetBase.h"
 #include "ScaleBoxSlot.h"
 
 
@@ -17,13 +18,16 @@ UPlaceableIconWidgetBase::UPlaceableIconWidgetBase(const FObjectInitializer& Obj
 	static ConstructorHelpers::FObjectFinder<UFont> RobotoFontObj(*UWidget::GetDefaultFontName());
 	m_ChargesFontStyle = FSlateFontInfo(RobotoFontObj.Object, 24, FName("Bold"));
 	m_ChargesFontStyle.OutlineSettings.OutlineSize = 1;
-	
+
+
+	static ConstructorHelpers::FClassFinder<UPointCircleWidgetBase> PointCounterClass{TEXT("WidgetBlueprint'/Game/Widgets/PointCircleIndicator.PointCircleIndicator_C'")};
+	m_pPointCounterClass = PointCounterClass.Class;
 
 }
 
 void UPlaceableIconWidgetBase::SetChargeAmount(const uint32 Charges)
 {
-	m_pChargesTextBlock->SetText( FText::FromString(FString::FromInt(static_cast<int32>(Charges))) );
+	m_pPointCounter->SetCounter(static_cast<int32>(Charges));
 	
 	
 }
@@ -95,25 +99,21 @@ void UPlaceableIconWidgetBase::ClearDelegateOnTooltipInvoked()
 void UPlaceableIconWidgetBase::NativeConstruct()
 {
 	Super::NativeConstruct();
+	
+	m_pPointCounter = NewObject<UPointCircleWidgetBase>(this, m_pPointCounterClass.Get());
+	m_pPointCounter->SetCounter(0);		
 
-	if(!m_pChargesTextBlock)
-	{
-		m_pChargesTextBlock = NewObject<UTextBlock>(this);
-		m_pChargesTextBlock->SetText(FText::FromString("0"));		
-		m_pChargesTextBlock->SetFont(m_ChargesFontStyle);		
-	}
-
-	auto *pSlot{ Cast<UCanvasPanel>(GetRootWidget())->AddChildToCanvas(m_pChargesTextBlock) };
-	pSlot->SetAnchors(FAnchors{ 1, 1, 1, 1 });	
+	auto *pSlot{ Cast<UCanvasPanel>(GetRootWidget())->AddChildToCanvas(m_pPointCounter) };
+	pSlot->SetAnchors(FAnchors{ 1, 0, 1, 0 });	
 	pSlot->SetAutoSize(true);
-	pSlot->SetAlignment(FVector2D{ 1, 1 });
+	pSlot->SetAlignment(FVector2D{ 1.25f, 0.f });
 	pSlot->SetOffsets(FMargin{ 0 });
 
 
 }
 
 FReply UPlaceableIconWidgetBase::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
-{
+{	
 	m_eOnClicked.Broadcast(this);
 		
 	return FReply::Handled();

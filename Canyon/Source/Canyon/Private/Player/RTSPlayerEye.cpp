@@ -155,7 +155,7 @@ void ARTSPlayerEye::AddForwardMovement(const float AxisValue)
 	}
 	auto Forward = m_pCameraSpringArm->GetForwardVector();
 	//todo: delta time
-	AddActorWorldOffset(Forward.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed * m_MovementSpeedMultCurrent);
+	AddActorWorldOffset(Forward.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed * m_MovementSpeedMultCurrent * GetWorld()->GetDeltaSeconds());
 
 
 
@@ -171,7 +171,7 @@ void ARTSPlayerEye::AddRightMovement(const float AxisValue)
 	}
 	auto Right = m_pCameraSpringArm->GetRightVector();
 	//todo: delta time
-	AddActorWorldOffset(Right.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed * m_MovementSpeedMultCurrent);
+	AddActorWorldOffset(Right.GetSafeNormal2D() * AxisValue * m_KeyShuffleSpeed * m_MovementSpeedMultCurrent * GetWorld()->GetDeltaSeconds());
 	   
 
 }
@@ -180,7 +180,7 @@ void ARTSPlayerEye::AddForwardMovementFromMouse(float AxisValue)
 {
 	auto Forward = m_pCameraSpringArm->GetForwardVector();
 	//Mouse based shuffle (todo: delta time)
-	AddActorWorldOffset(Forward.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_pCamera->AspectRatio * m_MovementSpeedMultCurrent);
+	AddActorWorldOffset(Forward.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_pCamera->AspectRatio * m_MovementSpeedMultCurrent * GetWorld()->GetDeltaSeconds());
 	
 
 }
@@ -193,7 +193,7 @@ void ARTSPlayerEye::AddRightMovementFromMouse(float AxisValue)
 		return;
 
 	}
-	AddActorWorldOffset(Right.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_MovementSpeedMultCurrent);
+	AddActorWorldOffset(Right.GetSafeNormal2D() * -AxisValue * m_MouseShuffleSpeed * m_MovementSpeedMultCurrent * GetWorld()->GetDeltaSeconds());
 
 }
 
@@ -204,7 +204,7 @@ void ARTSPlayerEye::AddCameraYaw(const float AxisValue)
 		return;
 
 	}
-	m_pCameraSpringArm->AddRelativeRotation(FRotator{ 0, AxisValue * m_KeyTurnSpeed, 0 });
+	m_pCameraSpringArm->AddRelativeRotation(FRotator{ 0, AxisValue * m_KeyTurnSpeed * GetWorld()->GetDeltaSeconds(), 0 });
 
 
 }
@@ -216,7 +216,7 @@ void ARTSPlayerEye::AddCameraYawFromMouse(float AxisValue)
 		return;
 
 	}
-	m_pCameraSpringArm->AddRelativeRotation(FRotator{ 0, AxisValue * m_MouseTurnSpeed, 0 });
+	m_pCameraSpringArm->AddRelativeRotation(FRotator{ 0, AxisValue * m_MouseTurnSpeed * GetWorld()->GetDeltaSeconds(), 0 });
 
 
 }
@@ -229,7 +229,7 @@ void ARTSPlayerEye::AddCameraPitchFromMouse(float AxisValue)
 
 	}
 
-	auto SummedPitch = m_pCameraSpringArm->RelativeRotation.Pitch + AxisValue * m_MouseTurnSpeed * m_pCamera->AspectRatio;
+	auto SummedPitch = m_pCameraSpringArm->RelativeRotation.Pitch + AxisValue * GetWorld()->GetDeltaSeconds() * m_MouseTurnSpeed * m_pCamera->AspectRatio;
 	if (SummedPitch > -m_CameraMaxPitch && SummedPitch < -m_CameraMinPitch)
 	{
 		m_pCameraSpringArm->RelativeRotation.Pitch = SummedPitch;
@@ -240,30 +240,72 @@ void ARTSPlayerEye::AddCameraPitchFromMouse(float AxisValue)
 
 void ARTSPlayerEye::ZoomOut()
 {
-	if (m_ZoomIndex < (m_aZoomNodes.Num() - 1))
+	//this condition should be handled in the camera state machine
+	if(!GetIsInPlacement() || m_bForceZoomDuringPlacement)
 	{
-		++m_ZoomIndex;
-		m_MovementSpeedMultCurrent += m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
+		if (m_ZoomIndex < (m_aZoomNodes.Num() - 1))
+		{
+			++m_ZoomIndex;
+			m_MovementSpeedMultCurrent += m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
 
-		OnZoomChanged();
+			OnZoomChanged();
+		}
 	}
+	
 
 
 }
 
 void ARTSPlayerEye::ZoomIn()
 {
-	if (m_ZoomIndex > 0)
+	//this condition should be handled in the camera state machine
+	if(!GetIsInPlacement() || m_bForceZoomDuringPlacement)
 	{
-		m_MovementSpeedMultCurrent -= m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
-		--m_ZoomIndex;
+		if (m_ZoomIndex > 0)
+		{
+			m_MovementSpeedMultCurrent -= m_aZoomNodes[m_ZoomIndex].m_MovementSpeedMultDelta;
+			--m_ZoomIndex;
 
-		OnZoomChanged();
+			OnZoomChanged();
+		}
 	}
 
 
 }
+
+void ARTSPlayerEye::IncreaseBuildingRot()
+{
+	if(m_pPlaceablePreviewCurrent)
+	{
+		const auto RotStep{ 360.f / m_BuildingRotationSteps };
+	   
+		m_pCursorRoot->AddWorldRotation( {0, RotStep, 0} );
+		m_PlacementRuler.NotifyBuildingRotated();
+	}
+		
+
+}
+
+void ARTSPlayerEye::DecreaseBuildingRot()
+{
+	if(m_pPlaceablePreviewCurrent)
+	{
+		const auto RotStep{ 360.f / m_BuildingRotationSteps };
+
+		m_pCursorRoot->AddWorldRotation( {0, -RotStep, 0} );
+		m_PlacementRuler.NotifyBuildingRotated();
+	}
+
+
+}
+
 #pragma endregion
+
+void ARTSPlayerEye::OnGameOver()
+{
+	m_pMainHudWidget->OnGameOver();
+
+}
 
 void ARTSPlayerEye::SetPreviewCursorPosWs(const FVector &NewPos)
 {
@@ -423,6 +465,14 @@ void ARTSPlayerEye::SwitchToPlaceablePlacementMode()
 
 }
 
+int32 ARTSPlayerEye::GetDeckChargesCurrent() const
+{
+	return m_pDeckState->GetDeckChargesCurrent();
+
+
+}
+
+
 //Protected------------------
 
 void ARTSPlayerEye::PostInitializeComponents()
@@ -450,9 +500,19 @@ void ARTSPlayerEye::Tick(float DeltaTime)
 void ARTSPlayerEye::BeginPlay()
 {
 	Super::BeginPlay();
-
 	
+	m_ZoomIndex = m_aZoomNodes.Num() - 1;
 
+	float MovementSpeedMult{ 1 };
+	for(auto &&ZoomData : m_aZoomNodes)
+	{
+		MovementSpeedMult += ZoomData.m_MovementSpeedMultDelta;
+
+	}
+
+	m_MovementSpeedMultCurrent = MovementSpeedMult;
+	OnZoomChanged();
+	
 
 }
 
@@ -482,8 +542,13 @@ void ARTSPlayerEye::SetupPlayerInputComponent(UInputComponent *pInputComponent)
 	pInputComponent->BindAction(TEXT("ZoomOut"), IE_Pressed, this, &ARTSPlayerEye::ZoomOut);
 	pInputComponent->BindAction(TEXT("ZoomIn"), IE_Pressed, this, &ARTSPlayerEye::ZoomIn);
 
-	pInputComponent->BindAction(TEXT("IncreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::IncreaseBuildingRot);
-	pInputComponent->BindAction(TEXT("DecreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::DecreaseBuildingRot);
+	pInputComponent->BindAction(TEXT("IncreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::InputRotateBuildingIncrease);
+	pInputComponent->BindAction(TEXT("DecreaseBuildingRot"), IE_Pressed, this, &ARTSPlayerEye::InputRotateBuildingDecrease);
+
+	pInputComponent->BindAction(TEXT("ZoomWhilePlacingOverride"), IE_Pressed, this, &ARTSPlayerEye::EnablePlacementZoomOverride);
+	pInputComponent->BindAction(TEXT("ZoomWhilePlacingOverride"), IE_Released, this, &ARTSPlayerEye::DisablePlacementZoomOverride);
+		
+	pInputComponent->BindAction(TEXT("CloseMenu"), IE_Pressed, this, &ARTSPlayerEye::OnExitCurrentMenu);
 
 
 }
@@ -543,28 +608,47 @@ void ARTSPlayerEye::LeaveSeamlessRotation()
 
 }
 
-void ARTSPlayerEye::IncreaseBuildingRot()
+void ARTSPlayerEye::OnExitCurrentMenu()
 {
-	if(m_pPlaceablePreviewCurrent)
+	if(m_pMainHudWidget)
 	{
-		const auto RotStep{ 360.f / m_BuildingRotationSteps };
-	   
-		m_pCursorRoot->AddWorldRotation( {0, RotStep, 0} );
-		m_PlacementRuler.NotifyBuildingRotated();
+		m_pMainHudWidget->OnExitCurrentMenu();
 	}
-		
+
 
 }
 
-void ARTSPlayerEye::DecreaseBuildingRot()
+void ARTSPlayerEye::InputRotateBuildingIncrease()
 {
-	if(m_pPlaceablePreviewCurrent)
+	if(!m_bForceZoomDuringPlacement)
 	{
-		const auto RotStep{ 360.f / m_BuildingRotationSteps };
-
-		m_pCursorRoot->AddWorldRotation( {0, -RotStep, 0} );
-		m_PlacementRuler.NotifyBuildingRotated();
+		m_PlacementState.HandleInput(EAbstractInputEvent::ActionRotate_Inc);
+		
 	}
+
+
+}
+
+void ARTSPlayerEye::InputRotateBuildingDecrease()
+{
+	if(!m_bForceZoomDuringPlacement)
+	{
+		m_PlacementState.HandleInput(EAbstractInputEvent::ActionRotate_Dec);		
+	}
+
+
+}
+
+void ARTSPlayerEye::EnablePlacementZoomOverride()
+{
+	m_bForceZoomDuringPlacement = true;
+
+
+}
+
+void ARTSPlayerEye::DisablePlacementZoomOverride()
+{
+	m_bForceZoomDuringPlacement = false;
 
 
 }

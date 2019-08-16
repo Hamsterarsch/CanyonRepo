@@ -11,6 +11,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDeckStateChangedDelegate, TSubclassOf<UPlaceableIconWidgetBase>, WidgetClassOfChanged, const FCategoryData &, NewData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeckStateNewDecksSetDelegate, const TArray<TSubclassOf<class UPrettyWidget>> &, aWidgetClasses);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDeckChargeAddedDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeckCommitted, const FDeckData &, CommitedDeck);
 
 /**
  * 
@@ -27,7 +28,9 @@ public:
 	
 	inline int32 GetChargesCurrent() const { return m_ChargesAmount; }
 
-	inline bool GetAreDecksSelectable() const { return m_DeckChargeCount > 0; }
+	inline int32 GetDeckChargesCurrent() const { return m_DeckChargeCount; }
+
+	inline bool GetAreDecksSelectable() const { return m_aPendingSelectableDecks.Num() > 0; }
 
 	void AddDeckCharge();
 
@@ -50,7 +53,9 @@ public:
 
 	UPROPERTY()
 		FDeckChargeAddedDelegate m_eOnDeckChargeAdded;
-	
+
+	UPROPERTY()
+		FOnDeckCommitted m_eOnDeckCommitted;
 
 
 private:

@@ -50,7 +50,7 @@ std::unique_ptr<ICameraState> CCameraState_Idle::HandleInput(EAbstractInputEvent
 	case EAbstractInputEvent::ActionRotate_Start:
 		return std::make_unique<CCameraState_Rotate>();
 		break;
-	case EAbstractInputEvent::ActionContext_Start:
+	case EAbstractInputEvent::ActionSelect_Start:
 		return std::make_unique<CCameraState_Move>();
 		break;
 	}
@@ -66,7 +66,7 @@ std::unique_ptr<ICameraState> CCameraState_Move::HandleInput(EAbstractInputEvent
 	case EAbstractInputEvent::ActionRotate_Start:
 		return std::make_unique<CCameraState_Rotate>();
 		break;
-	case EAbstractInputEvent::ActionContext_End:
+	case EAbstractInputEvent::ActionSelect_End:
 		return std::make_unique<CCameraState_Idle>();
 		break;
 	}
@@ -96,7 +96,7 @@ std::unique_ptr<ICameraState> CCameraState_Rotate::HandleInput(EAbstractInputEve
 {
 	switch (Input)
 	{
-	case EAbstractInputEvent::ActionContext_Start:
+	case EAbstractInputEvent::ActionSelect_Start:
 		return std::make_unique<CCameraState_Move>();
 		break;
 	case EAbstractInputEvent::ActionRotate_End:

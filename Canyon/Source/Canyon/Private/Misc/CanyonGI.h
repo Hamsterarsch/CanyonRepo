@@ -20,10 +20,13 @@ public:
 
 	virtual void Init() override;
 
+	virtual void Shutdown() override;
 
 	//should commit any analytics data, save the game and init the level switch
-	void BeginLevelSwitch(const TSoftObjectPtr<UWorld> &NewLevel);
+	void BeginSwitchToNextLevel(const TSoftObjectPtr<UWorld> &NewLevel);
 
+	UFUNCTION(BlueprintCallable)
+		void ExitGameloop();
 
 	UFUNCTION(BlueprintCallable)
 		//menu hook
@@ -32,12 +35,21 @@ public:
 	UFUNCTION(BlueprintCallable)
 		int32 GetCarryOverScore() const { return m_CarryOverScore; }
 
+	UFUNCTION(BlueprintCallable)
+		inline bool WasGameStarted() { return m_bWasGameStarted; }
+
 	void BuildCarryOverChargesFormSelection(const TArray<APlaceableBase *> &apSelected);
 
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
-		void OnBeginLoadingScreen(const FString &MapName);
+		void NotifyStartupGame();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void NotifyExitGameloop();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		class UUserWidget *OnBeginLoadingScreen(const FString &MapName);
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnEndLoadingScreen(UWorld *pLoadedWorld);
@@ -46,17 +58,30 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level")
 		TArray<TSoftObjectPtr<UWorld>> m_aFirstLevelsPool;
 
+	UPROPERTY(EditDefaultsOnly, Category="Canyon|Level")
+		TSoftObjectPtr<UWorld> m_MainMenuLevel;
+
 	UPROPERTY(EditDefaultsOnly)
 		bool m_bLoadAllPlaceablesOnStartup;
 
+	UPROPERTY(EditDefaultsOnly)
+		float m_LoadingScreenTransitionTime;
+
 
 private:
+	void LoadPlaceables();
+
+	void SetupLoadingScreenReferences(class UUserWidget *pLoadingScreen);
+
 	void FetchCarryOverDataFromOldLevel(const UWorld *pWorld);
 
-	void SetupCarryOverDataInNewLevel(UWorld *pWorld) const;
+	void SetupCarryOverDataInNewLevel(UWorld *pWorld);
 
 	void CleanupWorld(UWorld *pWorld, bool bSessionEnded, bool bCleanupResources);
 
+
+	UFUNCTION()
+		void OnLoadingScreenTransitionTimeExpired();
 
 	UFUNCTION()
 		void ReceiveOnPreMapLoaded(const FString &MapName);
@@ -70,9 +95,21 @@ private:
 	UPROPERTY()
 		TArray<UObject *> m_apPreLoadedPlaceables;
 
+	UPROPERTY()
+		TSoftObjectPtr<UWorld> m_TargetWorld;
+
 	int32 m_CarryOverScore;
 
 	int32 m_Seed;
 
+	bool m_bHasLoadingScreenBegun;
+
+	TSharedPtr<class SObjectWidget> m_pLoadingScreenGC;
+
+	TSharedPtr<class SWidget> m_pLoadingScreenSlate;
+
+	bool m_bWasGameStarted;
+
+	bool m_bSkipCarryData;
 
 };

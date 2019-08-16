@@ -60,6 +60,7 @@ TArray<FDeckData> UDeckSelector::GetDeckData(int32 ForAmount)
 	}
 
 	TArray<FDeckData> aOutData{};
+	RegenerateValidDeckData();
 
 	//track decks to remove from valid
 	std::list<int32> UsedIndicesList{};
@@ -335,7 +336,12 @@ void UDeckSelector::AddFillerCharges
 			auto *pIssueMapItem{ m_IssuedChargesMap.Find(FillerCategory) };
 			auto ChargesAlreadyIssued{ pIssueMapItem ? *pIssueMapItem : 0 };
 
-			NumCharges = FMath::Clamp(NumCharges, 0, MaxChargeTypeOnMap - ChargesAlreadyIssued);
+			if(ChargesAlreadyIssued >= MaxChargeTypeOnMap)
+			{
+				continue;
+
+
+			}			
 		}
 		checkf(NumCharges >= 0, TEXT("Deck Selector charges smaller than zero"));
 			   
@@ -432,15 +438,6 @@ FDeckData UDeckSelector::GetDeckDataFromValidDeckAt(const int32 Index)
 			auto Category{ pDeckDataAsset->GetDependencyCategoryAtIndex(DataIndex) };
 			auto NumCharges{ pDeckDataAsset->GetMinAmountAtIndex(DataIndex) };
 
-			//constraint charge amount per map
-			auto MaxChargeTypeOnMap{ static_cast<int32>(m_pPlaceableMaxPerMap->GetValueForCategory(Category)) };
-			if(MaxChargeTypeOnMap >= 1)
-			{
-				auto *pIssueMapItem{ m_IssuedChargesMap.Find(Category) };
-				auto ChargesAlreadyIssued{ pIssueMapItem ? *pIssueMapItem : 0 };
-
-				NumCharges = FMath::Clamp(NumCharges, 0, MaxChargeTypeOnMap - ChargesAlreadyIssued);
-			}
 			checkf(NumCharges >= 0, TEXT("Deck Selector charges smaller than zero"));
 
 			//postpone this to endless decks only
